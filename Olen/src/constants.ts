@@ -10,6 +10,7 @@ import type {
   ElysianTheme,
   SessionCompletionState,
   CalendarSettings,
+  TemplateRegistryEntry,
 } from "./types";
 
 // --- View Type ---
@@ -227,6 +228,16 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   activityGridColumns: 2,
 };
 
+// --- Default Template Registry ---
+
+export const DEFAULT_TEMPLATE_REGISTRY: TemplateRegistryEntry[] = [
+  {
+    activityType: "workout",
+    templatePath: "Templates/Workout.js",
+    enabled: true,
+  },
+];
+
 // --- Default Calendar Settings ---
 
 export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
@@ -306,6 +317,9 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
 
   // Calendar
   calendar: DEFAULT_CALENDAR_SETTINGS,
+
+  // Template Registry
+  templateRegistry: DEFAULT_TEMPLATE_REGISTRY,
 
   // Quote
   quoteFolderPath: "",

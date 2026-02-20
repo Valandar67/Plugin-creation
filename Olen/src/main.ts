@@ -3,17 +3,19 @@
 // Registers views, commands, ribbon icon, settings migration
 // ============================================================
 
-import { Plugin, debounce, TFile, Notice } from "obsidian";
+import { Plugin, debounce, TFile, Notice, MarkdownView } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { VIEW_TYPE_OLEN, VIEW_TYPE_SESSION, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS } from "./constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_SESSION, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_TEMPLATE_REGISTRY } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { SessionView } from "./views/SessionView";
 import { EmbeddedMdView, VIEW_TYPE_EMBEDDED } from "./views/EmbeddedMdView";
 import type { EmbeddedViewState } from "./views/EmbeddedMdView";
 import { OlenSettingTab } from "./settings/OlenSettings";
+import { TemplateEngine } from "./templates/TemplateEngine";
 
 export default class OlenPlugin extends Plugin {
   settings!: OlenSettings;
+  templateEngine!: TemplateEngine;
 
   async onload(): Promise<void> {
     // Load settings with defaults
@@ -49,6 +51,12 @@ export default class OlenPlugin extends Plugin {
       DEFAULT_CALENDAR_SETTINGS,
       this.settings.calendar
     );
+    if (!this.settings.templateRegistry) {
+      this.settings.templateRegistry = DEFAULT_TEMPLATE_REGISTRY;
+    }
+
+    // Initialize Template Engine
+    this.templateEngine = new TemplateEngine(this.app, this);
 
     // Migrate from TrackHabitRank on first run
     if (!this.settings.migrated) {
@@ -138,6 +146,18 @@ export default class OlenPlugin extends Plugin {
 
     // Settings tab
     this.addSettingTab(new OlenSettingTab(this.app, this));
+
+    // --- Template Registry: Frontmatter-driven rendering ---
+    this.registerTemplatePostProcessor();
+
+    // Invalidate template cache when template .js files are modified
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (file instanceof TFile && file.extension === "js") {
+          this.templateEngine.invalidateCache(file.path);
+        }
+      })
+    );
   }
 
   onunload(): void {
@@ -210,6 +230,78 @@ export default class OlenPlugin extends Plugin {
     }
 
     await workspace.revealLeaf(targetLeaf);
+  }
+
+  // --- Template Registry: Post-Processor ---
+
+  private registerTemplatePostProcessor(): void {
+    // Track which files we've already rendered templates for in the current
+    // view cycle, to avoid duplicate rendering across multiple sections.
+    const renderedFiles = new WeakSet<HTMLElement>();
+
+    this.registerMarkdownPostProcessor(async (el, ctx) => {
+      // Find the file being rendered
+      const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+      if (!file || !(file instanceof TFile)) return;
+
+      // Check frontmatter for an "activity" field
+      const cache = this.app.metadataCache.getFileCache(file);
+      const activityType = cache?.frontmatter?.activity as string | undefined;
+      if (!activityType) return;
+
+      // Look up template in the registry
+      const entry = this.templateEngine.findTemplate(activityType);
+      if (!entry) return;
+
+      // Avoid duplicate rendering: check the parent preview container
+      const previewSizer = el.closest(".markdown-preview-sizer") ?? el.parentElement;
+      if (previewSizer && renderedFiles.has(previewSizer as HTMLElement)) return;
+      if (previewSizer) renderedFiles.add(previewSizer as HTMLElement);
+
+      // Clear default rendered content and inject template
+      el.empty();
+      el.addClass("olen-template-host");
+
+      const container = el.createDiv({ cls: "olen-template-root" });
+
+      await this.templateEngine.render(entry.templatePath, file, container);
+    });
+
+    // Also handle file-open for notes with only frontmatter (no body sections)
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", async (leaf) => {
+        if (!leaf) return;
+        const view = leaf.view;
+        if (!(view instanceof MarkdownView)) return;
+
+        const file = view.file;
+        if (!file) return;
+
+        // Small delay to let metadata cache populate
+        await sleep(100);
+
+        const cache = this.app.metadataCache.getFileCache(file);
+        const activityType = cache?.frontmatter?.activity as string | undefined;
+        if (!activityType) return;
+
+        const entry = this.templateEngine.findTemplate(activityType);
+        if (!entry) return;
+
+        // Check if a template has already been rendered by the post-processor
+        const contentEl = view.containerEl.querySelector(".markdown-reading-view .markdown-preview-sizer");
+        if (contentEl?.querySelector(".olen-template-root")) return;
+
+        // If in reading mode but no template was injected (empty body note),
+        // inject into the preview content
+        if (contentEl) {
+          const container = document.createElement("div");
+          container.className = "olen-template-root";
+          contentEl.appendChild(container);
+
+          await this.templateEngine.render(entry.templatePath, file, container);
+        }
+      })
+    );
   }
 
   // --- Calendar Plugin Integration ---
