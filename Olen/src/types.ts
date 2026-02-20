@@ -261,6 +261,14 @@ export interface DevConfig {
   activityGridColumns: number;
 }
 
+// --- Template Registry ---
+
+export interface TemplateRegistryEntry {
+  activityType: string;    // e.g. "workout", "guitar", "meditation"
+  templatePath: string;    // vault path to .js template file, e.g. "Templates/Workout.js"
+  enabled: boolean;
+}
+
 // --- Main Settings ---
 
 export interface OlenSettings {
@@ -324,6 +332,9 @@ export interface OlenSettings {
 
   // Calendar
   calendar: CalendarSettings;
+
+  // Template Registry — maps activity types in frontmatter to template files
+  templateRegistry: TemplateRegistryEntry[];
 
   // Quote
   quoteFolderPath: string;
