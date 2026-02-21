@@ -255,44 +255,20 @@ export class DashboardView extends ItemView {
     if (!activity) return;
 
     if (activity.hasSession) {
-      // Check workspace source: custom .md or built-in?
-      if (activity.workspaceSource && activity.workspaceSource !== "builtin") {
-        // Open embedded .md session template inside Olen shell
-        this.plugin.settings.activeSession = {
-          activityId: activity.id,
-          activityName: activity.name,
-          emoji: activity.emoji,
-          category: activity.category,
-          startTime: new Date().toISOString(),
-          skills: [],
-          hasSession: true,
-          sessionFolder: activity.sessionFolder,
-          skillFolder: activity.skillFolder,
-        };
-        await this.plugin.saveSettings();
-        await this.plugin.activateEmbeddedView({
-          filePath: activity.workspaceSource,
-          activityId: activity.id,
-          activityName: activity.name,
-          activityEmoji: activity.emoji,
-          mode: "workspace",
-        });
-      } else {
-        // Built-in: Open native Olen SessionView
-        this.plugin.settings.activeSession = {
-          activityId: activity.id,
-          activityName: activity.name,
-          emoji: activity.emoji,
-          category: activity.category,
-          startTime: new Date().toISOString(),
-          skills: [],
-          hasSession: true,
-          sessionFolder: activity.sessionFolder,
-          skillFolder: activity.skillFolder,
-        };
-        await this.plugin.saveSettings();
-        this.plugin.activateSessionView();
-      }
+      // Open native Olen SessionView
+      this.plugin.settings.activeSession = {
+        activityId: activity.id,
+        activityName: activity.name,
+        emoji: activity.emoji,
+        category: activity.category,
+        startTime: new Date().toISOString(),
+        skills: [],
+        hasSession: true,
+        sessionFolder: activity.sessionFolder,
+        skillFolder: activity.skillFolder,
+      };
+      await this.plugin.saveSettings();
+      this.plugin.activateSessionView();
     } else {
       // Non-session activities: mark done immediately
       await this.markActivityDone(activity);

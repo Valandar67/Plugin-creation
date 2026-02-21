@@ -87,7 +87,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     damagePerCompletion: 1, weeklyTarget: 7, trackingMode: "daily",
     hasSession: true, priority: 8, neglectThreshold: 2,
     preferredTime: "morning", estimatedDuration: 60,
-    dashboardSource: "builtin", workspaceSource: "Workout session",
   },
   {
     id: "cardio", name: "Cardio", emoji: "\u{1F3C3}", category: "body",
@@ -96,7 +95,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     hasSession: true, priority: 7, neglectThreshold: 3,
     preferredTime: "morning", estimatedDuration: 30,
     alternatesWith: "workout",
-    dashboardSource: "builtin", workspaceSource: "Cardio session",
   },
   {
     id: "reading", name: "Reading", emoji: "\u{1F4D6}", category: "mind",
@@ -104,7 +102,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
     hasSession: true, priority: 6, neglectThreshold: 3,
     preferredTime: "evening", estimatedDuration: 45,
-    dashboardSource: "builtin", workspaceSource: "Reading session",
   },
   {
     id: "drumming", name: "Drumming", emoji: "\u{1F941}", category: "spirit",
@@ -112,7 +109,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
     hasSession: true, priority: 6, neglectThreshold: 3,
     preferredTime: "afternoon", estimatedDuration: 45,
-    dashboardSource: "builtin", workspaceSource: "Drum practice session",
   },
   {
     id: "health-study", name: "Health Study", emoji: "\u{1F9EC}", category: "mind",
@@ -120,7 +116,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     damagePerCompletion: 1, weeklyTarget: 3, trackingMode: "daily",
     hasSession: true, priority: 4, neglectThreshold: 4,
     preferredTime: "afternoon", estimatedDuration: 30,
-    dashboardSource: "builtin", workspaceSource: "Research about health session",
   },
   {
     id: "social", name: "Social", emoji: "\u{1F91D}", category: "spirit",
@@ -128,7 +123,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     damagePerCompletion: 1, weeklyTarget: 2, trackingMode: "daily",
     hasSession: true, priority: 5, neglectThreshold: 5,
     preferredTime: "evening", estimatedDuration: 60,
-    dashboardSource: "builtin", workspaceSource: "Social session",
   },
   {
     id: "drawing", name: "Drawing", emoji: "\u{1F3A8}", category: "spirit",
@@ -136,7 +130,6 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     damagePerCompletion: 1, weeklyTarget: 4, trackingMode: "daily",
     hasSession: true, priority: 7, neglectThreshold: 3,
     preferredTime: "afternoon", estimatedDuration: 60,
-    dashboardSource: "builtin", workspaceSource: "Drawing Session",
   },
 ];
 

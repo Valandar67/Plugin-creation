@@ -219,8 +219,6 @@ export class OlenSettingTab extends PluginSettingTab {
             neglectThreshold: 3,
             preferredTime: "anytime",
             estimatedDuration: 30,
-            dashboardSource: "builtin",
-            workspaceSource: "builtin",
           };
           this.plugin.settings.activities.push(newActivity);
           await this.plugin.saveSettings();
@@ -422,89 +420,6 @@ export class OlenSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
-
-    // --- View Sources ---
-    details.createEl("div", {
-      text: "View Sources",
-      attr: { style: "font-weight: 600; font-size: 0.9em; margin: 12px 0 4px; color: var(--text-normal);" },
-    });
-    details.createEl("div", {
-      text: "Choose between built-in Olen UI or your own .md templates rendered inside Olen.",
-      attr: { style: "font-size: 0.8em; color: var(--text-muted); margin-bottom: 8px;" },
-    });
-
-    // Dashboard source
-    const dashPathSetting = new Setting(details)
-      .setName("Dashboard .md path")
-      .setDesc("Vault path to hub template (without .md extension)")
-      .addText((t) =>
-        t.setPlaceholder("Home/Hubs/Drawing hub")
-          .setValue(activity.dashboardSource === "builtin" ? "" : (activity.dashboardSource ?? ""))
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].dashboardSource = v.trim() || "builtin";
-            await this.plugin.saveSettings();
-          })
-      );
-
-    const isDashCustom = activity.dashboardSource && activity.dashboardSource !== "builtin";
-    dashPathSetting.settingEl.style.display = isDashCustom ? "" : "none";
-
-    new Setting(details)
-      .setName("Dashboard source")
-      .setDesc("Hub view when you tap an activity")
-      .addDropdown((d) =>
-        d.addOptions({ builtin: "Built-in (Native)", custom: "Custom .md file" })
-          .setValue(isDashCustom ? "custom" : "builtin")
-          .onChange(async (v) => {
-            if (v === "builtin") {
-              this.plugin.settings.activities[index].dashboardSource = "builtin";
-              dashPathSetting.settingEl.style.display = "none";
-            } else {
-              dashPathSetting.settingEl.style.display = "";
-            }
-            await this.plugin.saveSettings();
-          })
-      );
-
-    // Re-insert path setting after dropdown (it was created first for reference)
-    dashPathSetting.settingEl.remove();
-    details.appendChild(dashPathSetting.settingEl);
-
-    // Workspace source
-    const wsPathSetting = new Setting(details)
-      .setName("Workspace .md path")
-      .setDesc("Vault path to session template (without .md extension)")
-      .addText((t) =>
-        t.setPlaceholder("Drawing Session")
-          .setValue(activity.workspaceSource === "builtin" ? "" : (activity.workspaceSource ?? ""))
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].workspaceSource = v.trim() || "builtin";
-            await this.plugin.saveSettings();
-          })
-      );
-
-    const isWsCustom = activity.workspaceSource && activity.workspaceSource !== "builtin";
-    wsPathSetting.settingEl.style.display = isWsCustom ? "" : "none";
-
-    new Setting(details)
-      .setName("Workspace source")
-      .setDesc("Session view when you begin a session")
-      .addDropdown((d) =>
-        d.addOptions({ builtin: "Built-in (Native)", custom: "Custom .md file" })
-          .setValue(isWsCustom ? "custom" : "builtin")
-          .onChange(async (v) => {
-            if (v === "builtin") {
-              this.plugin.settings.activities[index].workspaceSource = "builtin";
-              wsPathSetting.settingEl.style.display = "none";
-            } else {
-              wsPathSetting.settingEl.style.display = "";
-            }
-            await this.plugin.saveSettings();
-          })
-      );
-
-    wsPathSetting.settingEl.remove();
-    details.appendChild(wsPathSetting.settingEl);
 
     // Delete button
     new Setting(details)

@@ -47,10 +47,6 @@ export interface ActivityConfig {
   blocks?: string[];
   alternatesWith?: string;
   chainAfter?: string;
-
-  // View Sources — "builtin" uses native Olen UI, vault path renders embedded .md
-  dashboardSource: string; // "builtin" or vault path to hub .md
-  workspaceSource: string; // "builtin" or vault path to session .md
 }
 
 // --- Completion Data ---

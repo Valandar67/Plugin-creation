@@ -8,8 +8,6 @@ import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_SESSION, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_TEMPLATE_REGISTRY } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { SessionView } from "./views/SessionView";
-import { EmbeddedMdView, VIEW_TYPE_EMBEDDED } from "./views/EmbeddedMdView";
-import type { EmbeddedViewState } from "./views/EmbeddedMdView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
 
@@ -73,12 +71,6 @@ export default class OlenPlugin extends Plugin {
     this.registerView(
       VIEW_TYPE_SESSION,
       (leaf) => new SessionView(leaf, this)
-    );
-
-    // Register embedded markdown view
-    this.registerView(
-      VIEW_TYPE_EMBEDDED,
-      (leaf) => new EmbeddedMdView(leaf, this)
     );
 
     // Ribbon icon
@@ -207,29 +199,6 @@ export default class OlenPlugin extends Plugin {
 
   activateDashboardView(): void {
     this.activateDashboard();
-  }
-
-  async activateEmbeddedView(state: EmbeddedViewState): Promise<void> {
-    const { workspace } = this.app;
-
-    // Close existing embedded views
-    workspace.getLeavesOfType(VIEW_TYPE_EMBEDDED).forEach((leaf) => leaf.detach());
-
-    // Open in the dashboard's tab
-    const dashLeaves = workspace.getLeavesOfType(VIEW_TYPE_OLEN);
-    const targetLeaf = dashLeaves[0] ?? workspace.getLeaf("tab");
-    if (!targetLeaf) return;
-
-    await targetLeaf.setViewState({ type: VIEW_TYPE_EMBEDDED, active: true });
-
-    // Set the state on the view instance
-    const view = targetLeaf.view as unknown as EmbeddedMdView;
-    if (view && typeof view.setEmbeddedState === "function") {
-      view.setEmbeddedState(state);
-      await view.render();
-    }
-
-    await workspace.revealLeaf(targetLeaf);
   }
 
   // --- Template Registry: Post-Processor ---
@@ -540,8 +509,6 @@ export default class OlenPlugin extends Plugin {
           neglectThreshold: 3,
           preferredTime: "anytime",
           estimatedDuration: 30,
-          dashboardSource: "builtin",
-          workspaceSource: "builtin",
         });
       }
     }
