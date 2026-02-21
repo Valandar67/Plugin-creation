@@ -5,9 +5,9 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { VIEW_TYPE_OLEN, VIEW_TYPE_SESSION, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_TEMPLATE_REGISTRY } from "./constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS } from "./constants";
 import { DashboardView } from "./views/DashboardView";
-import { SessionView } from "./views/SessionView";
+import { WorkspaceView } from "./views/WorkspaceView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
 
@@ -49,9 +49,9 @@ export default class OlenPlugin extends Plugin {
       DEFAULT_CALENDAR_SETTINGS,
       this.settings.calendar
     );
-    if (!this.settings.templateRegistry) {
-      this.settings.templateRegistry = DEFAULT_TEMPLATE_REGISTRY;
-    }
+
+    // Migrate legacy field names from session → workspace
+    await this.migrateSessionToWorkspace();
 
     // Initialize Template Engine
     this.templateEngine = new TemplateEngine(this.app, this);
@@ -67,10 +67,10 @@ export default class OlenPlugin extends Plugin {
       (leaf) => new DashboardView(leaf, this)
     );
 
-    // Register session view
+    // Register workspace view
     this.registerView(
-      VIEW_TYPE_SESSION,
-      (leaf) => new SessionView(leaf, this)
+      VIEW_TYPE_WORKSPACE,
+      (leaf) => new WorkspaceView(leaf, this)
     );
 
     // Ribbon icon
@@ -182,18 +182,18 @@ export default class OlenPlugin extends Plugin {
     }
   }
 
-  async activateSessionView(): Promise<void> {
+  async activateWorkspaceView(): Promise<void> {
     const { workspace } = this.app;
 
-    // Close existing session views
-    workspace.getLeavesOfType(VIEW_TYPE_SESSION).forEach((leaf) => leaf.detach());
+    // Close existing workspace views
+    workspace.getLeavesOfType(VIEW_TYPE_WORKSPACE).forEach((leaf) => leaf.detach());
 
-    // Open session in the same tab as the dashboard if possible
+    // Open workspace in the same tab as the dashboard if possible
     const dashLeaves = workspace.getLeavesOfType(VIEW_TYPE_OLEN);
     const targetLeaf = dashLeaves[0] ?? workspace.getLeaf("tab");
     if (!targetLeaf) return;
 
-    await targetLeaf.setViewState({ type: VIEW_TYPE_SESSION, active: true });
+    await targetLeaf.setViewState({ type: VIEW_TYPE_WORKSPACE, active: true });
     await workspace.revealLeaf(targetLeaf);
   }
 
@@ -504,7 +504,7 @@ export default class OlenPlugin extends Plugin {
           damagePerCompletion: habit.damagePerCompletion ?? 1,
           weeklyTarget: habit.weeklyTarget ?? 3,
           trackingMode: "daily",
-          hasSession: false,
+          hasWorkspace: false,
           priority: 5,
           neglectThreshold: 3,
           preferredTime: "anytime",
@@ -514,6 +514,75 @@ export default class OlenPlugin extends Plugin {
     }
 
     return result;
+  }
+
+  /**
+   * One-time migration: rename legacy session fields → workspace,
+   * and move templateRegistry entries into per-activity workspaceTemplate.
+   */
+  private async migrateSessionToWorkspace(): Promise<void> {
+    const raw = this.settings as any;
+    let changed = false;
+
+    // Migrate top-level settings fields
+    if (raw.sessionCompletionStates && !raw.workspaceCompletionStates) {
+      raw.workspaceCompletionStates = raw.sessionCompletionStates;
+      delete raw.sessionCompletionStates;
+      changed = true;
+    }
+    if (raw.activeSession !== undefined && raw.activeWorkspace === undefined) {
+      raw.activeWorkspace = raw.activeSession;
+      delete raw.activeSession;
+      changed = true;
+    }
+
+    // Migrate per-activity fields
+    for (const activity of this.settings.activities) {
+      const a = activity as any;
+      if (a.hasSession !== undefined && a.hasWorkspace === undefined) {
+        a.hasWorkspace = a.hasSession;
+        delete a.hasSession;
+        changed = true;
+      }
+      if (a.sessionFolder !== undefined && a.workspaceFolder === undefined) {
+        a.workspaceFolder = a.sessionFolder;
+        delete a.sessionFolder;
+        changed = true;
+      }
+    }
+
+    // Migrate activeWorkspace inner fields
+    if (this.settings.activeWorkspace) {
+      const aw = this.settings.activeWorkspace as any;
+      if (aw.hasSession !== undefined && aw.hasWorkspace === undefined) {
+        aw.hasWorkspace = aw.hasSession;
+        delete aw.hasSession;
+        changed = true;
+      }
+      if (aw.sessionFolder !== undefined && aw.workspaceFolder === undefined) {
+        aw.workspaceFolder = aw.sessionFolder;
+        delete aw.sessionFolder;
+        changed = true;
+      }
+    }
+
+    // Migrate templateRegistry → per-activity workspaceTemplate
+    if (raw.templateRegistry && Array.isArray(raw.templateRegistry) && raw.templateRegistry.length > 0) {
+      for (const entry of raw.templateRegistry) {
+        if (!entry.enabled || !entry.templatePath) continue;
+        const activity = this.settings.activities.find((a) => a.id === entry.activityType);
+        if (activity && !activity.workspaceTemplate) {
+          activity.workspaceTemplate = entry.templatePath;
+          changed = true;
+        }
+      }
+      delete raw.templateRegistry;
+      changed = true;
+    }
+
+    if (changed) {
+      await this.saveSettings();
+    }
   }
 }
 

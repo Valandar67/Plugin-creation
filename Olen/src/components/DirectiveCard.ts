@@ -12,13 +12,13 @@ export function renderDirectiveCard(
   settings: OlenSettings,
   engine: OlenEngine,
   staggerIndex: number,
-  onBeginSession?: (activityId: string) => void
+  onEnterWorkspace?: (activityId: string) => void
 ): void {
   const suggestion = engine.getSuggestion();
   if (!suggestion) return;
 
   const label = settings.devConfig.labels.directive_title ?? "THE DIRECTIVE";
-  const beginLabel = settings.devConfig.labels.begin_session ?? "BEGIN SESSION";
+  const beginLabel = settings.devConfig.labels.begin_workspace ?? "ENTER WORKSPACE";
   const notNowLabel = settings.devConfig.labels.not_now ?? "NOT NOW";
 
   // Section title
@@ -57,7 +57,7 @@ export function renderDirectiveCard(
   });
   beginBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    onBeginSession?.(suggestion.activityId);
+    onEnterWorkspace?.(suggestion.activityId);
   });
 
   const notNowBtn = actions.createEl("button", {
@@ -77,7 +77,7 @@ export function renderDirectiveCard(
 
   // Tap card to expand
   card.addEventListener("click", () => {
-    showExpandedDirective(container, settings, suggestion, beginLabel, notNowLabel, onBeginSession);
+    showExpandedDirective(container, settings, suggestion, beginLabel, notNowLabel, onEnterWorkspace);
   });
 }
 
@@ -87,7 +87,7 @@ function showExpandedDirective(
   suggestion: { activityId: string; activityName: string; emoji: string; reason: PriorityReason; daysSinceLastDone: number; loreText: string },
   beginLabel: string,
   notNowLabel: string,
-  onBeginSession?: (activityId: string) => void
+  onEnterWorkspace?: (activityId: string) => void
 ): void {
   // Create overlay
   const overlay = document.createElement("div");
@@ -152,7 +152,7 @@ function showExpandedDirective(
   beginBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     closeSheet();
-    onBeginSession?.(suggestion.activityId);
+    onEnterWorkspace?.(suggestion.activityId);
   });
 
   const notNowBtn = actions.createEl("button", {

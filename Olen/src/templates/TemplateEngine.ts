@@ -7,7 +7,6 @@
 
 import { App, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { TemplateRegistryEntry } from "../types";
 
 /**
  * The context object passed to every template at runtime.
@@ -71,22 +70,24 @@ export class TemplateEngine {
     this.plugin = plugin;
   }
 
-  // --- Registry Lookup ---
+  // --- Activity Lookup ---
 
   /**
-   * Find the template registry entry for a given activity type.
+   * Find the workspace template for a given activity type.
+   * Looks up the activity by ID in settings and returns its workspaceTemplate path.
    */
-  findTemplate(activityType: string): TemplateRegistryEntry | null {
-    const entry = this.plugin.settings.templateRegistry.find(
-      (e) => e.activityType === activityType && e.enabled,
+  findTemplate(activityType: string): { templatePath: string } | null {
+    const activity = this.plugin.settings.activities.find(
+      (a) => a.id === activityType && a.enabled && a.workspaceTemplate,
     );
-    return entry ?? null;
+    if (!activity) return null;
+    return { templatePath: activity.workspaceTemplate! };
   }
 
   // --- Template Loading ---
 
   /**
-   * Load the template source from vault. Caches for the session.
+   * Load the template source from vault. Caches until invalidated.
    */
   async loadTemplateSource(templatePath: string): Promise<string | null> {
     // Check cache first
@@ -245,7 +246,7 @@ export class TemplateEngine {
       this.renderError(
         container,
         `Template not found: ${templatePath}`,
-        "Create the template file in your vault, or update the path in Olen Settings → Template Registry.",
+        "Create the template file in your vault, or update the path in Olen Settings → Activities → Configure.",
       );
       return false;
     }

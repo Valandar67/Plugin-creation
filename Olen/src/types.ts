@@ -7,7 +7,7 @@ export type PreferredTime = "morning" | "afternoon" | "evening" | "anytime";
 export type SystemState = "active" | "paused";
 export type DayMapStatus = "pending" | "done" | "skipped" | "active";
 export type PriorityReason = "death" | "boss" | "neglect" | "weekly" | "chain" | "time" | "balanced";
-export type SessionType = "discipline" | "flow" | "skipped";
+export type WorkspaceType = "discipline" | "flow" | "skipped";
 export type CalendarTaskSource = "daily-note" | "tasks-plugin" | "quick-task";
 
 // --- Activity Configuration ---
@@ -30,8 +30,9 @@ export interface ActivityConfig {
   damagePerCompletion: number;
   weeklyTarget: number;
   trackingMode: "daily" | "weekly";
-  hasSession: boolean;
-  sessionFolder?: string;
+  hasWorkspace: boolean;
+  workspaceFolder?: string;
+  workspaceTemplate?: string;
   skillFolder?: string;
 
   // Priority
@@ -123,10 +124,10 @@ export interface CategoryLevel {
   progressToNext: number; // 0-100
 }
 
-// --- Session ---
+// --- Workspace ---
 
-export interface SessionCompletionState {
-  id: SessionType;
+export interface WorkspaceCompletionState {
+  id: WorkspaceType;
   name: string;
   icon: string;
   color: string;
@@ -135,23 +136,23 @@ export interface SessionCompletionState {
   xpMultiplier: number;
 }
 
-export interface ActiveSession {
+export interface ActiveWorkspace {
   activityId: string;
   activityName: string;
   emoji: string;
   category: Category;
   startTime: string; // ISO
   skills: string[];
-  hasSession: boolean;
-  sessionFolder?: string;
+  hasWorkspace: boolean;
+  workspaceFolder?: string;
   skillFolder?: string;
 }
 
-export interface SessionResult {
+export interface WorkspaceResult {
   activityId: string;
   activityName: string;
   category: Category;
-  type: SessionType;
+  type: WorkspaceType;
   startTime: string;
   endTime: string;
   durationMinutes: number;
@@ -257,14 +258,6 @@ export interface DevConfig {
   activityGridColumns: number;
 }
 
-// --- Template Registry ---
-
-export interface TemplateRegistryEntry {
-  activityType: string;    // e.g. "workout", "guitar", "meditation"
-  templatePath: string;    // vault path to .js template file, e.g. "Templates/Workout.js"
-  enabled: boolean;
-}
-
 // --- Main Settings ---
 
 export interface OlenSettings {
@@ -322,15 +315,12 @@ export interface OlenSettings {
   // Dev Dashboard
   devConfig: DevConfig;
 
-  // Sessions
-  sessionCompletionStates: SessionCompletionState[];
-  activeSession: ActiveSession | null;
+  // Workspace
+  workspaceCompletionStates: WorkspaceCompletionState[];
+  activeWorkspace: ActiveWorkspace | null;
 
   // Calendar
   calendar: CalendarSettings;
-
-  // Template Registry — maps activity types in frontmatter to template files
-  templateRegistry: TemplateRegistryEntry[];
 
   // Quote
   quoteFolderPath: string;

@@ -1,14 +1,14 @@
 // ============================================================
-// Olen — Session View
-// Active session screen with timer, skills, finish flow
+// Olen — Workspace View
+// Active workspace screen with timer, skills, finish flow
 // ============================================================
 
 import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActiveSession, SessionType, SessionResult } from "../types";
-import { VIEW_TYPE_SESSION, FALLBACK_QUOTES } from "../constants";
+import type { ActiveWorkspace, WorkspaceType, WorkspaceResult } from "../types";
+import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
 
-export class SessionView extends ItemView {
+export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
   private timerInterval: number | null = null;
   private startTime: Date;
@@ -21,12 +21,12 @@ export class SessionView extends ItemView {
   }
 
   getViewType(): string {
-    return VIEW_TYPE_SESSION;
+    return VIEW_TYPE_WORKSPACE;
   }
 
   getDisplayText(): string {
-    const session = this.plugin.settings.activeSession;
-    return session ? `Session: ${session.activityName}` : "Session";
+    const workspace = this.plugin.settings.activeWorkspace;
+    return workspace ? `Workspace: ${workspace.activityName}` : "Workspace";
   }
 
   getIcon(): string {
@@ -34,14 +34,14 @@ export class SessionView extends ItemView {
   }
 
   async onOpen(): Promise<void> {
-    const session = this.plugin.settings.activeSession;
-    if (!session) {
-      this.contentEl.createEl("div", { text: "No active session." });
+    const workspace = this.plugin.settings.activeWorkspace;
+    if (!workspace) {
+      this.contentEl.createEl("div", { text: "No active workspace." });
       return;
     }
 
-    this.startTime = new Date(session.startTime);
-    this.render(session);
+    this.startTime = new Date(workspace.startTime);
+    this.render(workspace);
     this.startTimer();
   }
 
@@ -53,7 +53,7 @@ export class SessionView extends ItemView {
   private startTimer(): void {
     this.timerInterval = window.setInterval(() => {
       this.elapsed = Math.floor((Date.now() - this.startTime.getTime()) / 1000);
-      const timerEl = this.contentEl.querySelector(".olen-session-timer");
+      const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
       if (timerEl) timerEl.textContent = this.formatTime(this.elapsed);
     }, 1000);
   }
@@ -65,65 +65,65 @@ export class SessionView extends ItemView {
     }
   }
 
-  private render(session: ActiveSession): void {
+  private render(workspace: ActiveWorkspace): void {
     const container = this.contentEl;
     container.empty();
 
-    const root = container.createDiv({ cls: "olen-dashboard olen-session-root" });
+    const root = container.createDiv({ cls: "olen-dashboard olen-workspace-root" });
 
     // Top bar
-    const topBar = root.createDiv({ cls: "olen-session-topbar" });
+    const topBar = root.createDiv({ cls: "olen-workspace-topbar" });
 
-    const actInfo = topBar.createDiv({ cls: "olen-session-act-info" });
-    actInfo.createEl("span", { cls: "olen-session-emoji", text: session.emoji });
-    actInfo.createEl("span", { cls: "olen-session-act-name", text: session.activityName });
+    const actInfo = topBar.createDiv({ cls: "olen-workspace-act-info" });
+    actInfo.createEl("span", { cls: "olen-workspace-emoji", text: workspace.emoji });
+    actInfo.createEl("span", { cls: "olen-workspace-act-name", text: workspace.activityName });
 
     const timerEl = topBar.createEl("div", {
-      cls: "olen-session-timer",
+      cls: "olen-workspace-timer",
       text: "00:00",
     });
 
     const finishBtn = topBar.createEl("button", {
-      cls: "olen-btn olen-btn-primary olen-session-finish-btn",
+      cls: "olen-btn olen-btn-primary olen-workspace-finish-btn",
       text: "FINISH",
     });
-    finishBtn.addEventListener("click", () => this.showFinishModal(session));
+    finishBtn.addEventListener("click", () => this.showFinishModal(workspace));
 
     // Category accent line
-    const accentColor = this.plugin.settings.categoryColors[session.category] ?? "#928d85";
-    const accent = root.createDiv({ cls: "olen-session-accent" });
+    const accentColor = this.plugin.settings.categoryColors[workspace.category] ?? "#928d85";
+    const accent = root.createDiv({ cls: "olen-workspace-accent" });
     accent.style.background = `linear-gradient(90deg, ${accentColor}, transparent)`;
 
     // Main content area
-    const content = root.createDiv({ cls: "olen-session-content" });
+    const content = root.createDiv({ cls: "olen-workspace-content" });
 
     // Skills section
-    const skillsSection = content.createDiv({ cls: "olen-session-skills-section" });
-    skillsSection.createEl("div", { cls: "olen-heading", text: "SESSION SKILLS" });
+    const skillsSection = content.createDiv({ cls: "olen-workspace-skills-section" });
+    skillsSection.createEl("div", { cls: "olen-heading", text: "WORKSPACE SKILLS" });
 
-    const skillsContainer = skillsSection.createDiv({ cls: "olen-session-skills" });
+    const skillsContainer = skillsSection.createDiv({ cls: "olen-workspace-skills" });
 
-    if (session.skills.length === 0) {
+    if (workspace.skills.length === 0) {
       skillsContainer.createEl("div", {
-        cls: "olen-session-no-skills",
+        cls: "olen-workspace-no-skills",
         text: "No skills tagged yet",
       });
     } else {
-      for (const skill of session.skills) {
-        const chip = skillsContainer.createDiv({ cls: "olen-session-skill-chip" });
+      for (const skill of workspace.skills) {
+        const chip = skillsContainer.createDiv({ cls: "olen-workspace-skill-chip" });
         chip.textContent = skill;
       }
     }
 
     // Add skills button
     const addSkillBtn = skillsSection.createEl("button", {
-      cls: "olen-btn olen-btn-secondary olen-session-add-skill",
+      cls: "olen-btn olen-btn-secondary olen-workspace-add-skill",
       text: "+ ADD SKILL",
     });
-    addSkillBtn.addEventListener("click", () => this.showSkillPicker(session));
+    addSkillBtn.addEventListener("click", () => this.showSkillPicker(workspace));
 
     // Focus zone — motivational area
-    const focusZone = content.createDiv({ cls: "olen-session-focus" });
+    const focusZone = content.createDiv({ cls: "olen-workspace-focus" });
     const quote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
     focusZone.createEl("div", {
       cls: "olen-quote-text",
@@ -135,16 +135,16 @@ export class SessionView extends ItemView {
     });
 
     // Bottom bar
-    const bottomBar = root.createDiv({ cls: "olen-session-bottombar" });
-    const catLabel = session.category.charAt(0).toUpperCase() + session.category.slice(1);
+    const bottomBar = root.createDiv({ cls: "olen-workspace-bottombar" });
+    const catLabel = workspace.category.charAt(0).toUpperCase() + workspace.category.slice(1);
     bottomBar.createEl("div", {
-      cls: "olen-session-category-label",
+      cls: "olen-workspace-category-label",
       text: catLabel,
     });
     bottomBar.style.borderLeftColor = accentColor;
   }
 
-  private showSkillPicker(session: ActiveSession): void {
+  private showSkillPicker(workspace: ActiveWorkspace): void {
     // Prompt for skill name via a simple input
     const overlay = document.createElement("div");
     overlay.className = "olen-sheet-overlay";
@@ -155,17 +155,17 @@ export class SessionView extends ItemView {
 
     const inputWrap = sheet.createDiv({ attr: { style: "margin: 20px 0;" } });
     const input = inputWrap.createEl("input", {
-      cls: "olen-session-skill-input",
+      cls: "olen-workspace-skill-input",
       attr: { type: "text", placeholder: "Skill name..." },
     });
 
     // If skill folder exists, load existing skills
-    if (session.skillFolder) {
-      const skills = this.loadSkillsFromFolder(session.skillFolder);
+    if (workspace.skillFolder) {
+      const skills = this.loadSkillsFromFolder(workspace.skillFolder);
       if (skills.length > 0) {
-        const existing = sheet.createDiv({ cls: "olen-session-skills", attr: { style: "margin-bottom: 16px;" } });
+        const existing = sheet.createDiv({ cls: "olen-workspace-skills", attr: { style: "margin-bottom: 16px;" } });
         for (const skill of skills) {
-          const chip = existing.createDiv({ cls: "olen-session-skill-chip olen-clickable" });
+          const chip = existing.createDiv({ cls: "olen-workspace-skill-chip olen-clickable" });
           chip.textContent = skill;
           chip.addEventListener("click", () => {
             addSkill(skill);
@@ -200,11 +200,11 @@ export class SessionView extends ItemView {
     });
 
     const addSkill = (name: string) => {
-      if (!session.skills.includes(name)) {
-        session.skills.push(name);
-        this.plugin.settings.activeSession = session;
+      if (!workspace.skills.includes(name)) {
+        workspace.skills.push(name);
+        this.plugin.settings.activeWorkspace = workspace;
         this.plugin.saveSettings();
-        this.render(session);
+        this.render(workspace);
       }
     };
 
@@ -229,7 +229,7 @@ export class SessionView extends ItemView {
       .sort();
   }
 
-  private showFinishModal(session: ActiveSession): void {
+  private showFinishModal(workspace: ActiveWorkspace): void {
     this.stopTimer();
     const endTime = new Date();
     const durationMinutes = Math.round((endTime.getTime() - this.startTime.getTime()) / 60000);
@@ -244,33 +244,33 @@ export class SessionView extends ItemView {
     sheet.createEl("div", {
       cls: "olen-body-italic",
       attr: { style: "margin: 12px 0 20px;" },
-      text: `${session.emoji} ${session.activityName} · ${durationMinutes} minutes`,
+      text: `${workspace.emoji} ${workspace.activityName} · ${durationMinutes} minutes`,
     });
 
     // Completion state buttons
-    const states = this.plugin.settings.sessionCompletionStates.filter((s) => s.enabled);
-    const statesGrid = sheet.createDiv({ cls: "olen-session-states-grid" });
+    const states = this.plugin.settings.workspaceCompletionStates.filter((s) => s.enabled);
+    const statesGrid = sheet.createDiv({ cls: "olen-workspace-states-grid" });
 
     for (const state of states) {
-      const btn = statesGrid.createDiv({ cls: "olen-session-state-btn" });
+      const btn = statesGrid.createDiv({ cls: "olen-workspace-state-btn" });
       btn.style.borderColor = state.color;
 
-      btn.createEl("div", { cls: "olen-session-state-icon", text: state.icon });
-      btn.createEl("div", { cls: "olen-session-state-name", text: state.name });
+      btn.createEl("div", { cls: "olen-workspace-state-icon", text: state.icon });
+      btn.createEl("div", { cls: "olen-workspace-state-name", text: state.name });
 
       btn.addEventListener("click", async () => {
-        const result: SessionResult = {
-          activityId: session.activityId,
-          activityName: session.activityName,
-          category: session.category,
+        const result: WorkspaceResult = {
+          activityId: workspace.activityId,
+          activityName: workspace.activityName,
+          category: workspace.category,
           type: state.id,
-          startTime: session.startTime,
+          startTime: workspace.startTime,
           endTime: endTime.toISOString(),
           durationMinutes,
-          skills: session.skills,
+          skills: workspace.skills,
         };
 
-        await this.finishSession(result, session);
+        await this.finishWorkspace(result, workspace);
         closeSheet();
       });
     }
@@ -290,25 +290,25 @@ export class SessionView extends ItemView {
     requestAnimationFrame(() => overlay.classList.add("visible"));
   }
 
-  private async finishSession(result: SessionResult, session: ActiveSession): Promise<void> {
-    // 1. Create session markdown file
-    if (session.sessionFolder) {
-      await this.createSessionFile(result, session);
+  private async finishWorkspace(result: WorkspaceResult, workspace: ActiveWorkspace): Promise<void> {
+    // 1. Create workspace markdown file
+    if (workspace.workspaceFolder) {
+      await this.createWorkspaceFile(result, workspace);
     }
 
     // 2. Update the activity's daily note frontmatter
-    await this.markActivityDone(session, result);
+    await this.markActivityDone(workspace, result);
 
     // 3. Apply XP
-    const state = this.plugin.settings.sessionCompletionStates.find((s) => s.id === result.type);
+    const state = this.plugin.settings.workspaceCompletionStates.find((s) => s.id === result.type);
     if (state && state.xpMultiplier > 0) {
       const xpGain = Math.round(this.plugin.settings.devConfig.xpPerCompletion * state.xpMultiplier);
-      this.plugin.settings.categoryXP[session.category] += xpGain;
+      this.plugin.settings.categoryXP[workspace.category] += xpGain;
     }
 
     // 4. Apply boss damage (unless skipped)
     if (result.type !== "skipped") {
-      const activity = this.plugin.settings.activities.find((a) => a.id === session.activityId);
+      const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
       if (activity) {
         this.plugin.settings.bossCurrentHP = Math.max(
           0,
@@ -317,32 +317,32 @@ export class SessionView extends ItemView {
       }
     }
 
-    // 5. Clear active session
-    this.plugin.settings.activeSession = null;
+    // 5. Clear active workspace
+    this.plugin.settings.activeWorkspace = null;
     await this.plugin.saveSettings();
 
     // 6. Show notice
-    const stateLabel = this.plugin.settings.sessionCompletionStates.find((s) => s.id === result.type)?.name ?? result.type;
-    new Notice(`${session.emoji} ${session.activityName} — ${stateLabel} · ${result.durationMinutes}m`);
+    const stateLabel = this.plugin.settings.workspaceCompletionStates.find((s) => s.id === result.type)?.name ?? result.type;
+    new Notice(`${workspace.emoji} ${workspace.activityName} — ${stateLabel} · ${result.durationMinutes}m`);
 
     // 7. Switch back to dashboard
     this.plugin.activateDashboardView();
   }
 
-  private async createSessionFile(result: SessionResult, session: ActiveSession): Promise<void> {
-    const folder = session.sessionFolder!;
-    const activity = this.plugin.settings.activities.find((a) => a.id === session.activityId);
-    const property = activity?.property ?? session.activityName;
+  private async createWorkspaceFile(result: WorkspaceResult, workspace: ActiveWorkspace): Promise<void> {
+    const folder = workspace.workspaceFolder!;
+    const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
+    const property = activity?.property ?? workspace.activityName;
 
     const endTime = new Date(result.endTime);
     const startTime = new Date(result.startTime);
     const dateStr = endTime.toISOString().slice(0, 10);
-    // Match existing naming: "Session YYYY-MM-DD HHMM"
+    // Naming: "Workspace YYYY-MM-DD HHMM"
     const timeStr = `${String(endTime.getHours()).padStart(2, "0")}${String(endTime.getMinutes()).padStart(2, "0")}`;
-    const fileName = `Session ${dateStr} ${timeStr}`;
+    const fileName = `Workspace ${dateStr} ${timeStr}`;
     const filePath = `${folder}/${fileName}.md`;
 
-    // Build timezone-aware timestamp (matches existing session format)
+    // Build timezone-aware timestamp
     const tzOffset = -startTime.getTimezoneOffset();
     const tzHours = String(Math.floor(Math.abs(tzOffset) / 60)).padStart(2, "0");
     const tzMins = String(Math.abs(tzOffset) % 60).padStart(2, "0");
@@ -358,8 +358,7 @@ export class SessionView extends ItemView {
     const typeName = result.type.charAt(0).toUpperCase() + result.type.slice(1);
     const durationStr = `${Math.floor(result.durationMinutes / 60)}h ${result.durationMinutes % 60}m`;
 
-    // Build frontmatter matching existing session file format:
-    // {Property}: true, {Property}-Type: "Discipline", Timestamp, skills, endTime, duration
+    // Build frontmatter
     const fmLines = [
       "---",
       "editor-width: 100",
@@ -368,7 +367,7 @@ export class SessionView extends ItemView {
       `Timestamp: "${timestamp}"`,
       `endTime: "${endTimestamp}"`,
       `duration: "${durationStr}"`,
-      `category: "${session.category}"`,
+      `category: "${workspace.category}"`,
       result.skills.length > 0
         ? `skills: [${result.skills.map((s) => `"${s}"`).join(", ")}]`
         : "skills: []",
@@ -379,7 +378,7 @@ export class SessionView extends ItemView {
 
     const body = [
       "",
-      `# ${session.emoji} ${session.activityName} Session`,
+      `# ${workspace.emoji} ${workspace.activityName} Workspace`,
       "",
       `> "${quote.text}"`,
       `> — ${quote.attribution}`,
@@ -411,9 +410,9 @@ export class SessionView extends ItemView {
     await this.app.vault.create(finalPath, content);
   }
 
-  private async markActivityDone(session: ActiveSession, result?: SessionResult): Promise<void> {
+  private async markActivityDone(workspace: ActiveWorkspace, result?: WorkspaceResult): Promise<void> {
     // Find today's note in the activity folder and set the property to true
-    const activity = this.plugin.settings.activities.find((a) => a.id === session.activityId);
+    const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
     if (!activity) return;
 
     const now = this.plugin.settings.simulatedDate

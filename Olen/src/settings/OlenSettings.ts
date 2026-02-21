@@ -5,7 +5,7 @@
 
 import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActivityConfig, Category, TempleTask, TemplateRegistryEntry } from "../types";
+import type { ActivityConfig, Category, TempleTask } from "../types";
 import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG } from "../constants";
 
 export class OlenSettingTab extends PluginSettingTab {
@@ -38,7 +38,6 @@ export class OlenSettingTab extends PluginSettingTab {
     this.renderProfileSection(containerEl);
     this.renderActivitiesSection(containerEl);
     this.renderCategoriesSection(containerEl);
-    this.renderTemplateRegistrySection(containerEl);
     this.renderTempleSection(containerEl);
     this.renderCalendarSection(containerEl);
     this.renderThemeSection(containerEl);
@@ -214,7 +213,7 @@ export class OlenSettingTab extends PluginSettingTab {
             damagePerCompletion: 1,
             weeklyTarget: 3,
             trackingMode: "daily",
-            hasSession: false,
+            hasWorkspace: false,
             priority: 5,
             neglectThreshold: 3,
             preferredTime: "anytime",
@@ -362,12 +361,50 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(details)
-      .setName("Has session view")
+      .setName("Has workspace")
+      .setDesc("Opens workspace view with timer when started, instead of marking done immediately")
       .addToggle((toggle) =>
-        toggle.setValue(activity.hasSession).onChange(async (v) => {
-          this.plugin.settings.activities[index].hasSession = v;
+        toggle.setValue(activity.hasWorkspace).onChange(async (v) => {
+          this.plugin.settings.activities[index].hasWorkspace = v;
           await this.plugin.saveSettings();
         })
+      );
+
+    new Setting(details)
+      .setName("Workspace template")
+      .setDesc("Vault path to .js template file (e.g. Templates/Workout.js). Leave empty for no custom workspace.")
+      .addText((t) =>
+        t.setPlaceholder("e.g. Templates/Workout.js")
+          .setValue(activity.workspaceTemplate ?? "")
+          .onChange(async (v) => {
+            this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
+            this.plugin.templateEngine.invalidateCache();
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(details)
+      .setName("Workspace folder")
+      .setDesc("Vault folder where workspace log files are saved after completing")
+      .addText((t) =>
+        t.setPlaceholder("e.g. Home/Starts/Drawing/Workspaces")
+          .setValue(activity.workspaceFolder ?? "")
+          .onChange(async (v) => {
+            this.plugin.settings.activities[index].workspaceFolder = v.trim() || undefined;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(details)
+      .setName("Skill folder")
+      .setDesc("Vault folder containing skill tree notes")
+      .addText((t) =>
+        t.setPlaceholder("e.g. Home/Starts/Drawing/Skill tree")
+          .setValue(activity.skillFolder ?? "")
+          .onChange(async (v) => {
+            this.plugin.settings.activities[index].skillFolder = v.trim() || undefined;
+            await this.plugin.saveSettings();
+          })
       );
 
     new Setting(details)
@@ -395,30 +432,6 @@ export class OlenSettingTab extends PluginSettingTab {
           this.plugin.settings.activities[index].chainAfter = v.trim() || undefined;
           await this.plugin.saveSettings();
         })
-      );
-
-    new Setting(details)
-      .setName("Session folder")
-      .setDesc("Vault folder for session files")
-      .addText((t) =>
-        t.setPlaceholder("e.g. Home/Starts/Drawing/Sessions")
-          .setValue(activity.sessionFolder ?? "")
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].sessionFolder = v.trim() || undefined;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(details)
-      .setName("Skill folder")
-      .setDesc("Vault folder containing skill tree notes")
-      .addText((t) =>
-        t.setPlaceholder("e.g. Home/Starts/Drawing/Skill tree")
-          .setValue(activity.skillFolder ?? "")
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].skillFolder = v.trim() || undefined;
-            await this.plugin.saveSettings();
-          })
       );
 
     // Delete button
@@ -468,118 +481,6 @@ export class OlenSettingTab extends PluginSettingTab {
           .onChange(async (v) => {
             this.plugin.settings.titleOverride = v;
             await this.plugin.saveSettings();
-          })
-      );
-  }
-
-  // --- Template Registry ---
-
-  private renderTemplateRegistrySection(container: HTMLElement): void {
-    const body = this.createCollapsibleSection(container, "Template Registry", "\u{1F4DC}");
-
-    body.createEl("p", {
-      text: "Map activity types to template files. Notes with activity: <type> in frontmatter will render the associated template UI instead of raw markdown.",
-      attr: { style: "font-size: 0.85em; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;" },
-    });
-
-    body.createEl("p", {
-      text: "Templates are .js files in your vault. The plugin passes a ctx object with data-binding to the note's frontmatter.",
-      attr: { style: "font-size: 0.8em; color: var(--text-muted); margin-bottom: 12px; font-style: italic;" },
-    });
-
-    const registry = this.plugin.settings.templateRegistry ?? [];
-
-    for (let i = 0; i < registry.length; i++) {
-      const entry = registry[i];
-      this.renderTemplateRegistryItem(body, entry, i);
-    }
-
-    // Add button
-    new Setting(body)
-      .addButton((btn) =>
-        btn.setButtonText("+ Add Template Mapping").onClick(async () => {
-          this.plugin.settings.templateRegistry.push({
-            activityType: "",
-            templatePath: "",
-            enabled: true,
-          });
-          await this.plugin.saveSettings();
-          this.display();
-        })
-      );
-  }
-
-  private renderTemplateRegistryItem(
-    container: HTMLElement,
-    entry: TemplateRegistryEntry,
-    index: number,
-  ): void {
-    const wrapper = container.createDiv({
-      attr: {
-        style: `
-          border: 1px solid var(--background-modifier-border);
-          border-radius: 6px;
-          padding: 10px;
-          margin-bottom: 8px;
-        `,
-      },
-    });
-
-    // Activity type → template path
-    new Setting(wrapper)
-      .setName(entry.activityType ? `${entry.activityType} → ${entry.templatePath || "(no path)"}` : "New mapping")
-      .setDesc(entry.enabled ? "Active" : "Disabled")
-      .addToggle((toggle) =>
-        toggle.setValue(entry.enabled).onChange(async (value) => {
-          this.plugin.settings.templateRegistry[index].enabled = value;
-          this.plugin.templateEngine.invalidateCache();
-          await this.plugin.saveSettings();
-        })
-      );
-
-    const detailsToggle = wrapper.createEl("details");
-    detailsToggle.createEl("summary", {
-      text: "Configure",
-      attr: { style: "cursor: pointer; font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;" },
-    });
-
-    const details = detailsToggle.createDiv();
-
-    new Setting(details)
-      .setName("Activity type")
-      .setDesc("The value of the 'activity' frontmatter field (e.g., workout, guitar)")
-      .addText((t) =>
-        t.setPlaceholder("workout")
-          .setValue(entry.activityType)
-          .onChange(async (v) => {
-            this.plugin.settings.templateRegistry[index].activityType = v.trim().toLowerCase();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(details)
-      .setName("Template path")
-      .setDesc("Vault path to the .js template file (e.g., Templates/Workout.js)")
-      .addText((t) =>
-        t.setPlaceholder("Templates/Workout.js")
-          .setValue(entry.templatePath)
-          .onChange(async (v) => {
-            this.plugin.settings.templateRegistry[index].templatePath = v.trim();
-            this.plugin.templateEngine.invalidateCache();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(details)
-      .addButton((btn) =>
-        btn
-          .setButtonText("Delete Mapping")
-          .setWarning()
-          .onClick(async () => {
-            this.plugin.settings.templateRegistry.splice(index, 1);
-            this.plugin.templateEngine.invalidateCache();
-            await this.plugin.saveSettings();
-            this.display();
           })
       );
   }

@@ -8,15 +8,14 @@ import type {
   OlenSettings,
   DevConfig,
   ElysianTheme,
-  SessionCompletionState,
+  WorkspaceCompletionState,
   CalendarSettings,
-  TemplateRegistryEntry,
 } from "./types";
 
 // --- View Type ---
 
 export const VIEW_TYPE_OLEN = "olen-dashboard-view";
-export const VIEW_TYPE_SESSION = "olen-session-view";
+export const VIEW_TYPE_WORKSPACE = "olen-workspace-view";
 
 // --- Boss Definitions (13 tiers) ---
 
@@ -85,14 +84,15 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     id: "workout", name: "Workout", emoji: "\u{1F4AA}", category: "body",
     enabled: true, folder: "Personal Life/01 Workout", property: "Workout",
     damagePerCompletion: 1, weeklyTarget: 7, trackingMode: "daily",
-    hasSession: true, priority: 8, neglectThreshold: 2,
+    hasWorkspace: true, workspaceTemplate: "Templates/Workout.js",
+    priority: 8, neglectThreshold: 2,
     preferredTime: "morning", estimatedDuration: 60,
   },
   {
     id: "cardio", name: "Cardio", emoji: "\u{1F3C3}", category: "body",
     enabled: true, folder: "Personal Life/02 Cardio", property: "Cardio",
     damagePerCompletion: 1, weeklyTarget: 4, trackingMode: "daily",
-    hasSession: true, priority: 7, neglectThreshold: 3,
+    hasWorkspace: true, priority: 7, neglectThreshold: 3,
     preferredTime: "morning", estimatedDuration: 30,
     alternatesWith: "workout",
   },
@@ -100,35 +100,35 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     id: "reading", name: "Reading", emoji: "\u{1F4D6}", category: "mind",
     enabled: true, folder: "Personal Life/03 Reading", property: "Reading",
     damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
-    hasSession: true, priority: 6, neglectThreshold: 3,
+    hasWorkspace: true, priority: 6, neglectThreshold: 3,
     preferredTime: "evening", estimatedDuration: 45,
   },
   {
     id: "drumming", name: "Drumming", emoji: "\u{1F941}", category: "spirit",
     enabled: true, folder: "Personal Life/04 Drumming", property: "Drumming",
     damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
-    hasSession: true, priority: 6, neglectThreshold: 3,
+    hasWorkspace: true, priority: 6, neglectThreshold: 3,
     preferredTime: "afternoon", estimatedDuration: 45,
   },
   {
     id: "health-study", name: "Health Study", emoji: "\u{1F9EC}", category: "mind",
     enabled: true, folder: "Personal Life/05 Health Study", property: "Health Study",
     damagePerCompletion: 1, weeklyTarget: 3, trackingMode: "daily",
-    hasSession: true, priority: 4, neglectThreshold: 4,
+    hasWorkspace: true, priority: 4, neglectThreshold: 4,
     preferredTime: "afternoon", estimatedDuration: 30,
   },
   {
     id: "social", name: "Social", emoji: "\u{1F91D}", category: "spirit",
     enabled: true, folder: "Personal Life/06 Social", property: "Social",
     damagePerCompletion: 1, weeklyTarget: 2, trackingMode: "daily",
-    hasSession: true, priority: 5, neglectThreshold: 5,
+    hasWorkspace: true, priority: 5, neglectThreshold: 5,
     preferredTime: "evening", estimatedDuration: 60,
   },
   {
     id: "drawing", name: "Drawing", emoji: "\u{1F3A8}", category: "spirit",
     enabled: true, folder: "Personal Life/07 Drawing", property: "Drawing",
     damagePerCompletion: 1, weeklyTarget: 4, trackingMode: "daily",
-    hasSession: true, priority: 7, neglectThreshold: 3,
+    hasWorkspace: true, priority: 7, neglectThreshold: 3,
     preferredTime: "afternoon", estimatedDuration: 60,
   },
 ];
@@ -177,9 +177,9 @@ export function toRoman(num: number): string {
   return result;
 }
 
-// --- Default Session Completion States ---
+// --- Default Workspace Completion States ---
 
-export const DEFAULT_SESSION_STATES: SessionCompletionState[] = [
+export const DEFAULT_WORKSPACE_STATES: WorkspaceCompletionState[] = [
   { id: "discipline", name: "Discipline", icon: "\u25C6", color: "#928d85", enabled: true, quoteFolderPath: "", xpMultiplier: 1.0 },
   { id: "flow", name: "Flow", icon: "\u2248", color: "#c9a84c", enabled: true, quoteFolderPath: "", xpMultiplier: 1.5 },
   { id: "skipped", name: "Skipped", icon: "\u25CB", color: "#8b2d35", enabled: true, quoteFolderPath: "", xpMultiplier: 0 },
@@ -200,7 +200,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
     temple_title: "THE TEMPLE",
     eudaimonia_title: "Eudaimonia Index",
     daymap_title: "YOUR DAY",
-    begin_session: "BEGIN SESSION",
+    begin_workspace: "ENTER WORKSPACE",
     not_now: "NOT NOW",
   },
   xpPerCompletion: 10,
@@ -220,16 +220,6 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   hiddenSections: [],
   activityGridColumns: 2,
 };
-
-// --- Default Template Registry ---
-
-export const DEFAULT_TEMPLATE_REGISTRY: TemplateRegistryEntry[] = [
-  {
-    activityType: "workout",
-    templatePath: "Templates/Workout.js",
-    enabled: true,
-  },
-];
 
 // --- Default Calendar Settings ---
 
@@ -304,15 +294,12 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   // Dev
   devConfig: DEFAULT_DEV_CONFIG,
 
-  // Sessions
-  sessionCompletionStates: DEFAULT_SESSION_STATES,
-  activeSession: null,
+  // Workspace
+  workspaceCompletionStates: DEFAULT_WORKSPACE_STATES,
+  activeWorkspace: null,
 
   // Calendar
   calendar: DEFAULT_CALENDAR_SETTINGS,
-
-  // Template Registry
-  templateRegistry: DEFAULT_TEMPLATE_REGISTRY,
 
   // Quote
   quoteFolderPath: "",

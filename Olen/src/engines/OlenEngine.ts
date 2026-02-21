@@ -232,7 +232,7 @@ export class OlenEngine {
     if (this.settings.titleOverride) return this.settings.titleOverride;
 
     const levels = this.getAllCategoryLevels();
-    const totalSessions = this.getTotalCompletions();
+    const totalCompletions = this.getTotalCompletions();
 
     const categoryCompletions: Record<Category, number> = { body: 0, mind: 0, spirit: 0 };
     for (const activity of this.getEnabledActivities()) {
@@ -249,7 +249,7 @@ export class OlenEngine {
       spirit: total > 0 ? categoryCompletions.spirit / total : 0,
     };
 
-    const tier = totalSessions < 50 ? "light" : totalSessions < 200 ? "mid" : "heavy";
+    const tier = totalCompletions < 50 ? "light" : totalCompletions < 200 ? "mid" : "heavy";
 
     // Check single dominant (>= 70%)
     for (const cat of ["body", "mind", "spirit"] as Category[]) {

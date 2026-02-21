@@ -1339,17 +1339,17 @@
 }
 
 /* ============================================================
-   SESSION VIEW
+   WORKSPACE VIEW
    ============================================================ */
 
-.olen-session-root {
+.olen-workspace-root {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
 /* Top bar */
-.olen-session-topbar {
+.olen-workspace-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1362,19 +1362,19 @@
   background-image: linear-gradient(180deg, var(--bg-primary) 80%, transparent 100%);
 }
 
-.olen-session-act-info {
+.olen-workspace-act-info {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
 
-.olen-session-emoji {
+.olen-workspace-emoji {
   font-size: 24px;
   flex-shrink: 0;
 }
 
-.olen-session-act-name {
+.olen-workspace-act-name {
   font-family: "Georgia", serif;
   font-size: 16px;
   font-weight: 600;
@@ -1384,7 +1384,7 @@
   text-overflow: ellipsis;
 }
 
-.olen-session-timer {
+.olen-workspace-timer {
   font-family: "SF Mono", "Fira Code", "Courier New", monospace;
   font-size: 28px;
   font-weight: 700;
@@ -1394,7 +1394,7 @@
   flex-shrink: 0;
 }
 
-.olen-session-finish-btn {
+.olen-workspace-finish-btn {
   padding: 8px 20px !important;
   font-size: 10px !important;
   letter-spacing: 2.5px !important;
@@ -1402,13 +1402,13 @@
 }
 
 /* Accent line */
-.olen-session-accent {
+.olen-workspace-accent {
   height: 2px;
   margin: 0 var(--spacing);
 }
 
 /* Content */
-.olen-session-content {
+.olen-workspace-content {
   flex: 1;
   padding: var(--spacing-lg) var(--spacing);
   display: flex;
@@ -1417,19 +1417,19 @@
 }
 
 /* Skills section */
-.olen-session-skills-section {
+.olen-workspace-skills-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.olen-session-skills {
+.olen-workspace-skills {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.olen-session-skill-chip {
+.olen-workspace-skill-chip {
   padding: 8px 16px;
   background: var(--card-bg);
   -webkit-backdrop-filter: var(--card-blur);
@@ -1442,25 +1442,25 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.olen-session-skill-chip.olen-clickable:active {
+.olen-workspace-skill-chip.olen-clickable:active {
   transform: scale(0.95);
   border-color: var(--card-border-hover);
 }
 
-.olen-session-no-skills {
+.olen-workspace-no-skills {
   font-family: "Georgia", serif;
   font-size: 13px;
   font-style: italic;
   color: var(--text-dim);
 }
 
-.olen-session-add-skill {
+.olen-workspace-add-skill {
   align-self: flex-start;
   padding: 8px 18px !important;
   font-size: 10px !important;
 }
 
-.olen-session-skill-input {
+.olen-workspace-skill-input {
   width: 100%;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.04);
@@ -1473,27 +1473,27 @@
   transition: border-color var(--transition);
 }
 
-.olen-session-skill-input:focus {
+.olen-workspace-skill-input:focus {
   border-color: var(--card-border-hover);
   box-shadow: 0 0 16px rgba(212, 168, 67, 0.08);
 }
 
 /* Focus zone */
-.olen-session-focus {
+.olen-workspace-focus {
   text-align: center;
   padding: 40px 20px;
   margin-top: auto;
 }
 
 /* Bottom bar */
-.olen-session-bottombar {
+.olen-workspace-bottombar {
   padding: 16px var(--spacing);
   border-left: 3px solid var(--accent-gold);
   margin-left: var(--spacing);
   margin-bottom: var(--spacing);
 }
 
-.olen-session-category-label {
+.olen-workspace-category-label {
   font-family: "Times New Roman", serif;
   font-size: 10px;
   text-transform: uppercase;
@@ -1502,14 +1502,14 @@
 }
 
 /* Finish modal — completion states grid */
-.olen-session-states-grid {
+.olen-workspace-states-grid {
   display: flex;
   gap: 12px;
   margin: 20px 0;
   justify-content: center;
 }
 
-.olen-session-state-btn {
+.olen-workspace-state-btn {
   flex: 1;
   max-width: 120px;
   padding: 20px 12px;
@@ -1527,17 +1527,17 @@
   box-shadow: var(--shadow-card);
 }
 
-.olen-session-state-btn:active {
+.olen-workspace-state-btn:active {
   transform: scale(0.95);
   box-shadow: var(--glow-gold-strong);
 }
 
-.olen-session-state-icon {
+.olen-workspace-state-icon {
   font-size: 28px;
   line-height: 1;
 }
 
-.olen-session-state-name {
+.olen-workspace-state-name {
   font-family: "Times New Roman", serif;
   font-size: 10px;
   text-transform: uppercase;

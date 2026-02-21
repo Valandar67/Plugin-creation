@@ -103,7 +103,7 @@ export class DashboardView extends ItemView {
 
         case "daymap":
           renderDayTimeline(root, settings, engine, staggerIdx++, {
-            onAccept: (activityId) => this.handleBeginSession(activityId),
+            onAccept: (activityId) => this.handleEnterWorkspace(activityId),
             onSkip: (activityId) => this.handleSkipActivity(activityId, engine),
             onCalendarDone: (entry) => this.handleCalendarTaskDone(entry),
             onCalendarPostpone: (entry) => this.handleCalendarTaskPostpone(entry),
@@ -113,7 +113,7 @@ export class DashboardView extends ItemView {
 
         case "directive":
           renderDirectiveCard(root, settings, engine, staggerIdx++, (activityId) => {
-            this.handleBeginSession(activityId);
+            this.handleEnterWorkspace(activityId);
           });
           break;
 
@@ -250,27 +250,27 @@ export class DashboardView extends ItemView {
 
   // --- Handlers ---
 
-  private async handleBeginSession(activityId: string): Promise<void> {
+  private async handleEnterWorkspace(activityId: string): Promise<void> {
     const activity = this.plugin.settings.activities.find((a) => a.id === activityId);
     if (!activity) return;
 
-    if (activity.hasSession) {
-      // Open native Olen SessionView
-      this.plugin.settings.activeSession = {
+    if (activity.hasWorkspace) {
+      // Open native Olen WorkspaceView
+      this.plugin.settings.activeWorkspace = {
         activityId: activity.id,
         activityName: activity.name,
         emoji: activity.emoji,
         category: activity.category,
         startTime: new Date().toISOString(),
         skills: [],
-        hasSession: true,
-        sessionFolder: activity.sessionFolder,
+        hasWorkspace: true,
+        workspaceFolder: activity.workspaceFolder,
         skillFolder: activity.skillFolder,
       };
       await this.plugin.saveSettings();
-      this.plugin.activateSessionView();
+      this.plugin.activateWorkspaceView();
     } else {
-      // Non-session activities: mark done immediately
+      // Non-workspace activities: mark done immediately
       await this.markActivityDone(activity);
       new Notice(`${activity.emoji} ${activity.name} marked done!`);
       await this.render();
