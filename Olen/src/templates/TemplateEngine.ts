@@ -7,6 +7,7 @@
 
 import { App, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
+import { BUILTIN_TEMPLATES } from "./builtins";
 
 /**
  * The context object passed to every template at runtime.
@@ -74,14 +75,15 @@ export class TemplateEngine {
 
   /**
    * Find the workspace template for a given activity type.
-   * Looks up the activity by ID in settings and returns its workspaceTemplate path.
+   * Looks up the activity by ID in settings and returns its workspaceTemplate ID.
+   * The ID may refer to a built-in template (e.g. "workout") or a vault path.
    */
-  findTemplate(activityType: string): { templatePath: string } | null {
+  findTemplate(activityType: string): { templateId: string } | null {
     const activity = this.plugin.settings.activities.find(
       (a) => a.id === activityType && a.enabled && a.workspaceTemplate,
     );
     if (!activity) return null;
-    return { templatePath: activity.workspaceTemplate! };
+    return { templateId: activity.workspaceTemplate! };
   }
 
   // --- Template Loading ---
@@ -232,21 +234,27 @@ export class TemplateEngine {
   // --- Rendering ---
 
   /**
-   * Main render method. Loads a template and renders it into a container
-   * bound to the given note's frontmatter.
+   * Main render method. Resolves a template ID (built-in or vault path)
+   * and renders it into a container bound to the given note's frontmatter.
    */
   async render(
-    templatePath: string,
+    templateId: string,
     file: TFile,
     container: HTMLElement,
   ): Promise<boolean> {
-    // 1. Load template source
-    const source = await this.loadTemplateSource(templatePath);
+    // 1. Resolve template source: check built-in templates first, then vault
+    let source: string | null = BUILTIN_TEMPLATES[templateId] ?? null;
+
+    if (!source) {
+      // Fall back to loading from vault as a .js file path
+      source = await this.loadTemplateSource(templateId);
+    }
+
     if (!source) {
       this.renderError(
         container,
-        `Template not found: ${templatePath}`,
-        "Create the template file in your vault, or update the path in Olen Settings → Activities → Configure.",
+        `Template not found: ${templateId}`,
+        "Check the template ID in Olen Settings → Activities → Configure. Built-in templates: workout.",
       );
       return false;
     }
@@ -272,11 +280,11 @@ export class TemplateEngine {
 
       return true;
     } catch (err) {
-      console.error(`Olen TemplateEngine: Error executing template ${templatePath}:`, err);
+      console.error(`Olen TemplateEngine: Error executing template ${templateId}:`, err);
       this.renderError(
         container,
         `Template error: ${(err as Error).message}`,
-        `In template: ${templatePath}`,
+        `In template: ${templateId}`,
       );
       return false;
     }

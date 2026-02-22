@@ -284,8 +284,8 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(details)
-      .setName("Vault folder")
-      .setDesc("Folder with YYYY-MM-DD notes")
+      .setName("Activity folder")
+      .setDesc("Vault folder with YYYY-MM-DD notes and workspace logs")
       .addText((t) => t.setValue(activity.folder).onChange(async (v) => {
         this.plugin.settings.activities[index].folder = v;
         await this.plugin.saveSettings();
@@ -372,25 +372,13 @@ export class OlenSettingTab extends PluginSettingTab {
 
     new Setting(details)
       .setName("Workspace template")
-      .setDesc("Vault path to .js template file (e.g. Templates/Workout.js). Leave empty for no custom workspace.")
+      .setDesc("Built-in template ID (e.g. 'workout') or vault path to .js file. Leave empty for default workspace.")
       .addText((t) =>
-        t.setPlaceholder("e.g. Templates/Workout.js")
+        t.setPlaceholder("e.g. workout")
           .setValue(activity.workspaceTemplate ?? "")
           .onChange(async (v) => {
             this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
             this.plugin.templateEngine.invalidateCache();
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(details)
-      .setName("Workspace folder")
-      .setDesc("Vault folder where workspace log files are saved after completing")
-      .addText((t) =>
-        t.setPlaceholder("e.g. Home/Starts/Drawing/Workspaces")
-          .setValue(activity.workspaceFolder ?? "")
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].workspaceFolder = v.trim() || undefined;
             await this.plugin.saveSettings();
           })
       );

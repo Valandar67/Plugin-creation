@@ -9,6 +9,7 @@ const watch = process.argv.includes("--watch");
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
+  loader: { ".tpl": "text" },
   external: [
     "obsidian",
     "electron",

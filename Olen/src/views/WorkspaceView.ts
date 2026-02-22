@@ -291,9 +291,10 @@ export class WorkspaceView extends ItemView {
   }
 
   private async finishWorkspace(result: WorkspaceResult, workspace: ActiveWorkspace): Promise<void> {
-    // 1. Create workspace markdown file
-    if (workspace.workspaceFolder) {
-      await this.createWorkspaceFile(result, workspace);
+    // 1. Create workspace markdown file in the activity folder
+    const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
+    if (activity?.folder) {
+      await this.createWorkspaceFile(result, activity.folder);
     }
 
     // 2. Update the activity's daily note frontmatter
@@ -329,10 +330,9 @@ export class WorkspaceView extends ItemView {
     this.plugin.activateDashboardView();
   }
 
-  private async createWorkspaceFile(result: WorkspaceResult, workspace: ActiveWorkspace): Promise<void> {
-    const folder = workspace.workspaceFolder!;
-    const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
-    const property = activity?.property ?? workspace.activityName;
+  private async createWorkspaceFile(result: WorkspaceResult, folder: string): Promise<void> {
+    const activity = this.plugin.settings.activities.find((a) => a.id === result.activityId);
+    const property = activity?.property ?? result.activityName;
 
     const endTime = new Date(result.endTime);
     const startTime = new Date(result.startTime);
@@ -367,7 +367,7 @@ export class WorkspaceView extends ItemView {
       `Timestamp: "${timestamp}"`,
       `endTime: "${endTimestamp}"`,
       `duration: "${durationStr}"`,
-      `category: "${workspace.category}"`,
+      `category: "${result.category}"`,
       result.skills.length > 0
         ? `skills: [${result.skills.map((s) => `"${s}"`).join(", ")}]`
         : "skills: []",
@@ -378,7 +378,7 @@ export class WorkspaceView extends ItemView {
 
     const body = [
       "",
-      `# ${workspace.emoji} ${workspace.activityName} Workspace`,
+      `# ${activity?.emoji ?? ""} ${result.activityName} Workspace`,
       "",
       `> "${quote.text}"`,
       `> — ${quote.attribution}`,

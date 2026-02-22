@@ -264,7 +264,6 @@ export class DashboardView extends ItemView {
         startTime: new Date().toISOString(),
         skills: [],
         hasWorkspace: true,
-        workspaceFolder: activity.workspaceFolder,
         skillFolder: activity.skillFolder,
       };
       await this.plugin.saveSettings();

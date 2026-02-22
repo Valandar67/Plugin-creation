@@ -233,7 +233,7 @@ export default class OlenPlugin extends Plugin {
 
       const container = el.createDiv({ cls: "olen-template-root" });
 
-      await this.templateEngine.render(entry.templatePath, file, container);
+      await this.templateEngine.render(entry.templateId, file, container);
     });
 
     // Also handle file-open for notes with only frontmatter (no body sections)
@@ -267,7 +267,7 @@ export default class OlenPlugin extends Plugin {
           container.className = "olen-template-root";
           contentEl.appendChild(container);
 
-          await this.templateEngine.render(entry.templatePath, file, container);
+          await this.templateEngine.render(entry.templateId, file, container);
         }
       })
     );
@@ -518,7 +518,8 @@ export default class OlenPlugin extends Plugin {
 
   /**
    * One-time migration: rename legacy session fields → workspace,
-   * and move templateRegistry entries into per-activity workspaceTemplate.
+   * merge workspaceFolder into folder, and move templateRegistry entries
+   * into per-activity workspaceTemplate.
    */
   private async migrateSessionToWorkspace(): Promise<void> {
     const raw = this.settings as any;
@@ -544,9 +545,15 @@ export default class OlenPlugin extends Plugin {
         delete a.hasSession;
         changed = true;
       }
-      if (a.sessionFolder !== undefined && a.workspaceFolder === undefined) {
-        a.workspaceFolder = a.sessionFolder;
+      // Merge sessionFolder / workspaceFolder into folder
+      if (a.sessionFolder !== undefined) {
+        if (!a.folder) a.folder = a.sessionFolder;
         delete a.sessionFolder;
+        changed = true;
+      }
+      if (a.workspaceFolder !== undefined) {
+        if (!a.folder) a.folder = a.workspaceFolder;
+        delete a.workspaceFolder;
         changed = true;
       }
     }
@@ -559,18 +566,16 @@ export default class OlenPlugin extends Plugin {
         delete aw.hasSession;
         changed = true;
       }
-      if (aw.sessionFolder !== undefined && aw.workspaceFolder === undefined) {
-        aw.workspaceFolder = aw.sessionFolder;
-        delete aw.sessionFolder;
-        changed = true;
-      }
+      // Clean up legacy folder fields from activeWorkspace
+      delete aw.sessionFolder;
+      delete aw.workspaceFolder;
     }
 
     // Migrate templateRegistry → per-activity workspaceTemplate
     if (raw.templateRegistry && Array.isArray(raw.templateRegistry) && raw.templateRegistry.length > 0) {
       for (const entry of raw.templateRegistry) {
         if (!entry.enabled || !entry.templatePath) continue;
-        const activity = this.settings.activities.find((a) => a.id === entry.activityType);
+        const activity = this.settings.activities.find((a: any) => a.id === entry.activityType);
         if (activity && !activity.workspaceTemplate) {
           activity.workspaceTemplate = entry.templatePath;
           changed = true;

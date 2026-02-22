@@ -84,7 +84,7 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     id: "workout", name: "Workout", emoji: "\u{1F4AA}", category: "body",
     enabled: true, folder: "Personal Life/01 Workout", property: "Workout",
     damagePerCompletion: 1, weeklyTarget: 7, trackingMode: "daily",
-    hasWorkspace: true, workspaceTemplate: "Templates/Workout.js",
+    hasWorkspace: true, workspaceTemplate: "workout",
     priority: 8, neglectThreshold: 2,
     preferredTime: "morning", estimatedDuration: 60,
   },

@@ -31,7 +31,6 @@ export interface ActivityConfig {
   weeklyTarget: number;
   trackingMode: "daily" | "weekly";
   hasWorkspace: boolean;
-  workspaceFolder?: string;
   workspaceTemplate?: string;
   skillFolder?: string;
 
@@ -144,7 +143,6 @@ export interface ActiveWorkspace {
   startTime: string; // ISO
   skills: string[];
   hasWorkspace: boolean;
-  workspaceFolder?: string;
   skillFolder?: string;
 }
 
