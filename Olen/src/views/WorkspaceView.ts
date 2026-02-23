@@ -1,11 +1,13 @@
 // ============================================================
 // Olen — Workspace View
-// Active workspace screen with timer, skills, finish flow
+// Active workspace screen with timer, skills, finish flow.
+// When an activity has a workspaceTemplate, the template is
+// rendered instead of the default timer UI.
 // ============================================================
 
 import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActiveWorkspace, WorkspaceType, WorkspaceResult } from "../types";
+import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult } from "../types";
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
 
 export class WorkspaceView extends ItemView {
@@ -13,6 +15,10 @@ export class WorkspaceView extends ItemView {
   private timerInterval: number | null = null;
   private startTime: Date;
   private elapsed = 0; // seconds
+  /** When in template mode, tracks the daily note file the template is bound to */
+  private templateNoteFile: TFile | null = null;
+  /** Tracks whether we already processed a completion (prevents double-apply) */
+  private completionApplied = false;
 
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
@@ -40,15 +46,183 @@ export class WorkspaceView extends ItemView {
       return;
     }
 
-    this.startTime = new Date(workspace.startTime);
-    this.render(workspace);
-    this.startTimer();
+    const activity = this.plugin.settings.activities.find(
+      (a) => a.id === workspace.activityId,
+    );
+
+    if (activity?.workspaceTemplate) {
+      // Template mode: render the activity template bound to today's daily note
+      await this.renderTemplateMode(workspace, activity);
+    } else {
+      // Default mode: timer + skills + finish
+      this.startTime = new Date(workspace.startTime);
+      this.render(workspace);
+      this.startTimer();
+    }
   }
 
   async onClose(): Promise<void> {
     this.stopTimer();
+    this.templateNoteFile = null;
+    this.completionApplied = false;
     this.contentEl.empty();
   }
+
+  // ================================================================
+  // Template Mode
+  // ================================================================
+
+  private async renderTemplateMode(
+    workspace: ActiveWorkspace,
+    activity: ActivityConfig,
+  ): Promise<void> {
+    const container = this.contentEl;
+    container.empty();
+
+    // Find or create today's daily note for this activity
+    const file = await this.findOrCreateDailyNote(activity);
+    if (!file) {
+      container.createEl("div", {
+        text: "Could not load activity note.",
+        attr: { style: "color: var(--text-error); padding: 20px; text-align: center;" },
+      });
+      return;
+    }
+
+    this.templateNoteFile = file;
+
+    // Wait for metadata cache to populate (important for newly created files)
+    await this.waitForMetadata(file);
+
+    // Render template into the view's content area
+    const templateContainer = container.createDiv({ cls: "olen-template-root" });
+    await this.plugin.templateEngine.render(
+      activity.workspaceTemplate!,
+      file,
+      templateContainer,
+    );
+
+    // Watch for the template marking the activity as done in frontmatter.
+    // When the activity property becomes true, apply plugin-level effects
+    // (XP, boss damage, clear activeWorkspace).
+    this.registerEvent(
+      this.app.metadataCache.on("changed", (changedFile) => {
+        if (this.completionApplied) return;
+        if (changedFile.path !== file.path) return;
+
+        const cache = this.app.metadataCache.getFileCache(changedFile);
+        const fm = cache?.frontmatter;
+        if (fm?.[activity.property] === true) {
+          this.completionApplied = true;
+          const completionType = fm[`${activity.property}-Type`] as string | undefined;
+          this.applyTemplateCompletion(workspace, activity, completionType);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Find today's daily note in the activity folder, or create one.
+   * Ensures the note has `activity: <id>` in frontmatter so the
+   * template post-processor also works when opening the note directly.
+   */
+  private async findOrCreateDailyNote(activity: ActivityConfig): Promise<TFile | null> {
+    const now = this.plugin.settings.simulatedDate
+      ? new Date(this.plugin.settings.simulatedDate)
+      : new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const folder = activity.folder;
+    const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
+
+    // Look for existing daily note
+    const files = this.app.vault.getMarkdownFiles();
+    const existing = files.find(
+      (f) =>
+        (f.path === folder || f.path.startsWith(normalizedFolder)) &&
+        f.basename === dateStr,
+    );
+
+    if (existing) {
+      // Ensure it has the activity field in frontmatter
+      await this.app.fileManager.processFrontMatter(existing, (fm) => {
+        if (!fm.activity) fm.activity = activity.id;
+      });
+      return existing;
+    }
+
+    // Ensure folder exists
+    const abstractFolder = this.app.vault.getAbstractFileByPath(folder);
+    if (!abstractFolder) {
+      try {
+        await this.app.vault.createFolder(folder);
+      } catch {
+        // Folder may already exist
+      }
+    }
+
+    // Create new daily note with activity frontmatter
+    const filePath = `${normalizedFolder}${dateStr}.md`;
+    const content = `---\nactivity: ${activity.id}\n---\n`;
+    try {
+      return await this.app.vault.create(filePath, content);
+    } catch {
+      // File might already exist with a different casing or race condition
+      return null;
+    }
+  }
+
+  /**
+   * Wait until the metadata cache has indexed a file's frontmatter.
+   */
+  private async waitForMetadata(file: TFile): Promise<void> {
+    let attempts = 0;
+    while (attempts < 20) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache?.frontmatter) return;
+      await sleep(50);
+      attempts++;
+    }
+  }
+
+  /**
+   * Called when the template marks the activity as done in frontmatter.
+   * Applies plugin-level effects: XP, boss damage, clear workspace.
+   */
+  private async applyTemplateCompletion(
+    workspace: ActiveWorkspace,
+    activity: ActivityConfig,
+    completionType?: string,
+  ): Promise<void> {
+    // Map the template's completion type to a workspace state
+    const wsType = completionType?.toLowerCase() as WorkspaceType | undefined;
+    const state = wsType
+      ? this.plugin.settings.workspaceCompletionStates.find((s) => s.id === wsType)
+      : this.plugin.settings.workspaceCompletionStates.find((s) => s.id === "discipline");
+
+    // Apply XP
+    if (state && state.xpMultiplier > 0) {
+      const xpGain = Math.round(
+        this.plugin.settings.devConfig.xpPerCompletion * state.xpMultiplier,
+      );
+      this.plugin.settings.categoryXP[workspace.category] += xpGain;
+    }
+
+    // Apply boss damage (unless skipped)
+    if (wsType !== "skipped") {
+      this.plugin.settings.bossCurrentHP = Math.max(
+        0,
+        this.plugin.settings.bossCurrentHP - activity.damagePerCompletion,
+      );
+    }
+
+    // Clear active workspace
+    this.plugin.settings.activeWorkspace = null;
+    await this.plugin.saveSettings();
+  }
+
+  // ================================================================
+  // Default Mode (timer + skills + finish)
+  // ================================================================
 
   private startTimer(): void {
     this.timerInterval = window.setInterval(() => {
@@ -309,11 +483,11 @@ export class WorkspaceView extends ItemView {
 
     // 4. Apply boss damage (unless skipped)
     if (result.type !== "skipped") {
-      const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
-      if (activity) {
+      const act = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
+      if (act) {
         this.plugin.settings.bossCurrentHP = Math.max(
           0,
-          this.plugin.settings.bossCurrentHP - activity.damagePerCompletion
+          this.plugin.settings.bossCurrentHP - act.damagePerCompletion
         );
       }
     }
@@ -461,4 +635,9 @@ export class WorkspaceView extends ItemView {
     }
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
+}
+
+// Utility
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
