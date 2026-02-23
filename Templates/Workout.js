@@ -1,18 +1,43 @@
 // ============================================================
-// Olen Template — Workout Tracker
-// Renders inside any note with `activity: workout` in frontmatter.
-// All data is read/written via ctx.getData / ctx.setData — the
-// note body stays empty; the UI is generated entirely here.
+// Olen Template — Workout Tracker v4.0
+// Renders inside the Olen workspace for the "workout" activity.
+// All UI lives here — daily notes only store YAML frontmatter.
+// Data is read/written via ctx.getData / ctx.setData.
 // ============================================================
 
 const { container, getData, setData, setMultipleData, app, moment, notice,
         createEl, file, readFile, getFilesInFolder, getFileMetadata } = ctx;
 
-// ── Configuration ──
-const WORKOUT_FOLDER = "Personal Life/01 Workout";
-const STATS_FILE = "Personal Life/Personal Stats.md";
-const EXERCISE_DB_FOLDER = "Home/Activities/Exercises database";
+// ============================================================
+// SETTINGS — Edit these to match your vault structure
+// ============================================================
+const SETTINGS = {
+  // Where daily workout notes are stored
+  workoutFolder: "Personal Life/01 Workout",
+  // File containing Weight, Height, Birthdate in frontmatter
+  personalStatsFile: "Personal Life/Personal Stats.md",
+  // Folder containing exercise standard .md files (e.g. "Bench Press.md")
+  exerciseDbFolder: "Home/Activities/Exercises database",
+  // Default personal stats (used when stats file is missing)
+  defaultWeight: 61,
+  defaultHeight: 175,
+  defaultBirthdate: "2005-11-29",
+};
 
+// Muscle groups available for selection, with optional subgroups
+const MUSCLE_GROUPS = {
+  "Neck":      { subgroups: null, icon: "\uD83E\uDDB4" },
+  "Back":      { subgroups: ["Lats", "Traps", "Rhomboids", "Lower Back", "Rear Delts"], icon: "\uD83D\uDD19" },
+  "Chest":     { subgroups: null, icon: "\uD83D\uDCAA" },
+  "Shoulders": { subgroups: ["Front Delts", "Side Delts", "Rear Delts"], icon: "\uD83C\uDFAF" },
+  "Core":      { subgroups: null, icon: "\uD83C\uDFAF" },
+  "Legs":      { subgroups: ["Quads", "Hamstrings", "Glutes", "Calves", "Adductors"], icon: "\uD83E\uDDB5" },
+  "Arms":      { subgroups: ["Biceps", "Triceps", "Forearms"], icon: "\uD83D\uDCAA" },
+};
+
+// ============================================================
+// THEME & CONSTANTS
+// ============================================================
 const THEME = {
   color: "#9a8c7a",
   colorHover: "#aa9c8a",
@@ -26,24 +51,28 @@ const THEME = {
 };
 
 const STRENGTH_LEVELS = {
-  "Untrained": { color: "#6a6a6a", icon: "\u25CB" },
-  "Beginner":  { color: "#a89860", icon: "\u25D0" },
-  "Novice":    { color: "#7a9a7d", icon: "\u25D1" },
+  "Untrained":    { color: "#6a6a6a", icon: "\u25CB" },
+  "Beginner":     { color: "#a89860", icon: "\u25D0" },
+  "Novice":       { color: "#7a9a7d", icon: "\u25D1" },
   "Intermediate": { color: "#6a8a9a", icon: "\u25D5" },
-  "Advanced":  { color: "#8a7a9a", icon: "\u25CF" },
-  "Elite":     { color: "#9a6a7a", icon: "\u2605" }
+  "Advanced":     { color: "#8a7a9a", icon: "\u25CF" },
+  "Elite":        { color: "#9a6a7a", icon: "\u2605" }
 };
 
-// ── State (from frontmatter) ──
+// ============================================================
+// STATE (from frontmatter)
+// ============================================================
 let exercises = getData("exercises") || [];
 let muscleGroups = getData("muscleGroups") || [];
 let currentMuscleIndex = getData("currentMuscleIndex") || 0;
 const isCompleted = getData("Workout") === true;
 
-// ── Inject styles once ──
-if (!document.getElementById("olen-tpl-workout-v1")) {
+// ============================================================
+// STYLES
+// ============================================================
+if (!document.getElementById("olen-tpl-workout-v4")) {
   const style = document.createElement("style");
-  style.id = "olen-tpl-workout-v1";
+  style.id = "olen-tpl-workout-v4";
   style.textContent = `
     .otw-container * { box-sizing: border-box; }
     .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0; font-family: Georgia, serif; }
@@ -83,12 +112,20 @@ if (!document.getElementById("olen-tpl-workout-v1")) {
     .otw-summary-complete h2 { margin: 0; color: #7a9a7d; font-size: 16px; font-weight: 700; letter-spacing: 3px; }
     .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: #0c0c0c; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
     .otw-feel-btn:active { background: #101010; }
-    .otw-corners { position: absolute; pointer-events: none; }
+    .otw-muscle-toggle { padding: 12px 18px; background: #0f0f0f; border: 1px solid #3a342a; color: #9a8c7a; font-size: 13px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; }
+    .otw-muscle-toggle.active { background: rgba(154,140,122,0.3) !important; border-color: #9a8c7a !important; }
+    .otw-muscle-toggle:active { transform: translateY(-1px); }
+    .otw-subgroup-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; opacity: 0; padding: 0 12px; }
+    .otw-subgroup-container.expanded { max-height: 200px; opacity: 1; padding: 12px; }
+    .otw-sub-toggle { padding: 8px 14px; background: #0f0f0f; border: 1px solid #3a342a; color: #6a5a4a; font-size: 12px; cursor: pointer; transition: all 0.3s ease; }
+    .otw-sub-toggle.active { background: rgba(154,140,122,0.2); border-color: #9a8c7a; color: #9a8c7a; }
   `;
   document.head.appendChild(style);
 }
 
-// ── Utility Functions ──
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
 
 function addCorners(el, color, size = 14) {
   ["TL", "TR", "BL", "BR"].forEach((pos) => {
@@ -116,10 +153,18 @@ function updateWarmupWeights(ex, newW) {
   });
 }
 
+// ============================================================
+// PERSONAL STATS & STRENGTH STANDARDS
+// ============================================================
+
 async function getPersonalStats() {
-  const fm = getFileMetadata(STATS_FILE);
-  if (!fm) return { weight: 61, height: 175, birthdate: "2005-11-29" };
-  return { weight: fm.Weight || 61, height: fm.Height || 175, birthdate: fm.Birthdate || "2005-11-29" };
+  const fm = getFileMetadata(SETTINGS.personalStatsFile);
+  if (!fm) return { weight: SETTINGS.defaultWeight, height: SETTINGS.defaultHeight, birthdate: SETTINGS.defaultBirthdate };
+  return {
+    weight: fm.Weight || SETTINGS.defaultWeight,
+    height: fm.Height || SETTINGS.defaultHeight,
+    birthdate: fm.Birthdate || SETTINGS.defaultBirthdate
+  };
 }
 
 function calculateAge(bd) {
@@ -142,7 +187,7 @@ function parseStandardValue(val) {
 }
 
 async function getStrengthStandard(exerciseName) {
-  const filePath = EXERCISE_DB_FOLDER + "/" + exerciseName + ".md";
+  const filePath = SETTINGS.exerciseDbFolder + "/" + exerciseName + ".md";
   const fm = getFileMetadata(filePath);
   const isBW = fm?.Type === "Bodyweight";
   const content = await readFile(filePath);
@@ -220,10 +265,14 @@ async function hasStrengthStandard(name) {
   return std !== null && std.hasValidData;
 }
 
+// ============================================================
+// WORKOUT DATA — PR lookup, previous exercise loading
+// ============================================================
+
 async function getExercisePR(name) {
   const std = await getStrengthStandard(name);
   const isBW = std?.isBodyweight || false;
-  const files = getFilesInFolder(WORKOUT_FOLDER);
+  const files = getFilesInFolder(SETTINGS.workoutFolder);
   let best = null, bestV = 0;
   for (const f of files) {
     const fm = getFileMetadata(f.path);
@@ -246,7 +295,47 @@ async function getExercisePR(name) {
   return best;
 }
 
-// ── Save current state to frontmatter ──
+function getLastWorkoutForMuscleGroup(muscleGroup) {
+  const files = getFilesInFolder(SETTINGS.workoutFolder)
+    .sort((a, b) => b.basename.localeCompare(a.basename));
+  for (const f of files) {
+    if (f.path === file.path) continue; // skip current note
+    const fm = getFileMetadata(f.path);
+    if (fm?.exercises && Array.isArray(fm.exercises)) {
+      const relevant = fm.exercises.filter(ex => ex.muscle === muscleGroup || ex.muscleGroup === muscleGroup);
+      if (relevant.length > 0) return { date: f.basename, exercises: relevant };
+    }
+  }
+  return null;
+}
+
+function loadPreviousExercises(selectedMuscleGroups) {
+  const exercisesArray = [];
+  for (const muscle of selectedMuscleGroups) {
+    const lastWorkout = getLastWorkoutForMuscleGroup(muscle);
+    if (lastWorkout) {
+      for (const ex of lastWorkout.exercises) {
+        exercisesArray.push({
+          name: ex.name,
+          muscle: muscle,
+          muscleGroup: muscle,
+          sets: ex.sets ? ex.sets.map(s => ({
+            weight: s.weight || 0,
+            reps: s.reps || 10,
+            completed: false,
+            isWarmup: s.isWarmup || false
+          })) : [{ weight: 0, reps: 10, completed: false, isWarmup: false }]
+        });
+      }
+    }
+  }
+  return exercisesArray;
+}
+
+// ============================================================
+// SAVE STATE
+// ============================================================
+
 async function saveState() {
   await setMultipleData({
     exercises: exercises,
@@ -254,7 +343,10 @@ async function saveState() {
   });
 }
 
-// ── Modal System ──
+// ============================================================
+// MODAL SYSTEM
+// ============================================================
+
 let activeModal = null;
 
 function closeModal() {
@@ -291,16 +383,19 @@ function createModal(title, contentBuilder) {
   return modal;
 }
 
-// ── Finish Workout ──
+// ============================================================
+// FINISH WORKOUT
+// ============================================================
+
 async function finishWorkout(type) {
   await setMultipleData({
     Workout: true,
     "Workout-Type": type,
+    Timestamp: moment().format(),
     exercises: exercises,
     currentMuscleIndex: currentMuscleIndex,
   });
   notice("Workout logged as " + (type === "discipline" ? "Discipline Win" : "Flow State") + "!");
-  // Re-render to show completion state
   render();
 }
 
@@ -334,7 +429,10 @@ function openFinishModal() {
   });
 }
 
-// ── Add Exercise Modal ──
+// ============================================================
+// ADD EXERCISE MODAL
+// ============================================================
+
 function openAddExerciseModal(muscle) {
   createModal("Add Exercise - " + muscle, (content) => {
     const nameInput = document.createElement("input");
@@ -416,7 +514,10 @@ function openAddExerciseModal(muscle) {
   });
 }
 
-// ── Render a single set row ──
+// ============================================================
+// RENDER: SET ROW
+// ============================================================
+
 function renderSet(setsContainer, set, setIdx, ex, warmupRefs) {
   const row = document.createElement("div");
   row.className = "otw-set-row" + (set.completed ? " completed" : "");
@@ -510,7 +611,10 @@ function renderSet(setsContainer, set, setIdx, ex, warmupRefs) {
   return refs;
 }
 
-// ── Render Exercise Card ──
+// ============================================================
+// RENDER: EXERCISE CARD
+// ============================================================
+
 async function renderExercise(exContainer, ex) {
   const card = document.createElement("div");
   card.className = "otw-card";
@@ -610,7 +714,132 @@ async function renderExercise(exContainer, ex) {
   card.appendChild(addSetBtn);
 }
 
-// ── Main Render ──
+// ============================================================
+// RENDER: MUSCLE GROUP SELECTION (first-time entry)
+// ============================================================
+
+function renderMuscleSelection(root) {
+  const selectedMuscles = new Set();
+  const selectedSubgroups = new Map();
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "otw-card otw-card-breathe otw-header";
+  addCorners(header, THEME.color);
+  header.innerHTML = `
+    <div style="font-size:32px;margin-bottom:12px;">\uD83C\uDFCB\uFE0F</div>
+    <h2 class="otw-title">NEW WORKOUT</h2>
+    <div class="otw-progress-label">Select muscle groups to train</div>
+  `;
+  root.appendChild(header);
+
+  // Muscle group grid
+  const muscleGrid = document.createElement("div");
+  muscleGrid.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:8px;";
+  root.appendChild(muscleGrid);
+
+  // Subgroup area (below the grid)
+  const subgroupArea = document.createElement("div");
+  subgroupArea.style.cssText = "display:flex;flex-direction:column;gap:8px;width:100%;";
+  root.appendChild(subgroupArea);
+
+  Object.entries(MUSCLE_GROUPS).forEach(([name, config]) => {
+    const btn = document.createElement("button");
+    btn.className = "otw-muscle-toggle";
+    btn.textContent = `${config.icon} ${name}`;
+    muscleGrid.appendChild(btn);
+
+    let subgroupContainer = null;
+    if (config.subgroups) {
+      subgroupContainer = document.createElement("div");
+      subgroupContainer.className = "otw-subgroup-container";
+      subgroupContainer.style.cssText += `display:flex;flex-wrap:wrap;gap:8px;background:#0c0c0c;border:1px solid ${THEME.colorBorder};border-radius:4px;`;
+      const subLabel = document.createElement("div");
+      subLabel.style.cssText = `width:100%;color:${THEME.colorMuted};font-size:11px;margin-bottom:4px;`;
+      subLabel.textContent = name + " subgroups:";
+      subgroupContainer.appendChild(subLabel);
+      selectedSubgroups.set(name, new Set());
+
+      config.subgroups.forEach(sub => {
+        const subBtn = document.createElement("button");
+        subBtn.className = "otw-sub-toggle";
+        subBtn.textContent = sub;
+        subBtn.onclick = (e) => {
+          e.stopPropagation();
+          const subs = selectedSubgroups.get(name);
+          if (subs.has(sub)) { subs.delete(sub); subBtn.classList.remove("active"); }
+          else { subs.add(sub); subBtn.classList.add("active"); }
+        };
+        subgroupContainer.appendChild(subBtn);
+      });
+      subgroupArea.appendChild(subgroupContainer);
+    }
+
+    btn.onclick = () => {
+      if (selectedMuscles.has(name)) {
+        selectedMuscles.delete(name);
+        btn.classList.remove("active");
+        if (subgroupContainer) subgroupContainer.classList.remove("expanded");
+      } else {
+        selectedMuscles.add(name);
+        btn.classList.add("active");
+        if (subgroupContainer) subgroupContainer.classList.add("expanded");
+      }
+    };
+  });
+
+  // Quote
+  const quote = document.createElement("div");
+  quote.style.cssText = `padding:16px;background:#0c0c0c;border-left:2px solid ${THEME.color};margin:16px 0;`;
+  quote.innerHTML = `<p style="color:${THEME.colorMuted};font-style:italic;font-size:12px;margin:0;">"There is a general principle here: <strong style="color:${THEME.color};">perform any amount of warming-up that you believe to be minimally required.</strong>"</p><p style="color:${THEME.colorMuted};font-size:11px;margin:8px 0 0 0;text-align:right;">\u2014 Mike Mentzer</p>`;
+  root.appendChild(quote);
+
+  // Start button
+  const startBtn = document.createElement("button");
+  startBtn.textContent = "\uD83C\uDFCB\uFE0F START WORKOUT";
+  startBtn.className = "otw-btn otw-btn-primary";
+  startBtn.style.cssText += "padding:16px 24px;font-size:15px;font-weight:700;";
+  startBtn.onclick = async () => {
+    if (selectedMuscles.size === 0) { notice("Please select at least one muscle group"); return; }
+
+    // Build final muscle list: use subgroups if selected, otherwise the parent group
+    const muscleGroupsArray = [];
+    selectedMuscles.forEach(muscle => {
+      const subs = selectedSubgroups.get(muscle);
+      if (subs && subs.size > 0) {
+        subs.forEach(sub => muscleGroupsArray.push(sub));
+      } else {
+        muscleGroupsArray.push(muscle);
+      }
+    });
+
+    // Load previous exercises for these muscle groups
+    const loadedExercises = loadPreviousExercises(muscleGroupsArray);
+
+    // Save to frontmatter and update local state
+    muscleGroups = muscleGroupsArray;
+    exercises = loadedExercises;
+    currentMuscleIndex = 0;
+
+    await setMultipleData({
+      muscleGroups: muscleGroups,
+      exercises: exercises,
+      currentMuscleIndex: 0,
+      Workout: false,
+      "Workout-Type": "",
+      Timestamp: moment().format(),
+    });
+
+    // Re-render — now we'll enter workout tracking mode
+    render();
+  };
+  root.appendChild(startBtn);
+}
+
+// ============================================================
+// MAIN RENDER
+// ============================================================
+
 async function render() {
   container.innerHTML = "";
   const root = document.createElement("div");
@@ -655,24 +884,13 @@ async function render() {
     return;
   }
 
-  // ── Active Workout UI ──
+  // No muscle groups selected yet — show selection screen
   if (muscleGroups.length === 0) {
-    // No muscle groups selected — show empty state
-    const empty = document.createElement("div");
-    empty.className = "otw-card";
-    empty.style.textAlign = "center";
-    empty.style.padding = "40px 20px";
-    addCorners(empty, THEME.color);
-    empty.innerHTML = `
-      <div style="font-size:32px;margin-bottom:12px;">\uD83C\uDFCB\uFE0F</div>
-      <h2 style="margin:0;color:${THEME.color};font-size:16px;letter-spacing:3px;">WORKOUT</h2>
-      <p style="color:${THEME.colorMuted};font-size:13px;margin-top:12px;font-style:italic;">This note has activity: workout but no muscle groups defined.</p>
-      <p style="color:${THEME.colorMuted};font-size:12px;margin-top:8px;">Add <code>muscleGroups</code> to the frontmatter to begin tracking.</p>
-    `;
-    root.appendChild(empty);
+    renderMuscleSelection(root);
     return;
   }
 
+  // ── Active Workout UI ──
   const currentMuscle = muscleGroups[currentMuscleIndex] || muscleGroups[0];
   const muscleExercises = exercises.filter((e) => e.muscle === currentMuscle || e.muscleGroup === currentMuscle);
 
