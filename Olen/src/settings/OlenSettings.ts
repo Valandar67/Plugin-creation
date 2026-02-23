@@ -396,6 +396,47 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(details)
+      .setName("After completion")
+      .setDesc("Where to go after finishing: 'dashboard', 'stay', or a vault file path (e.g. Home.md)")
+      .addDropdown((d) =>
+        d.addOptions({
+          dashboard: "Return to Olen Dashboard",
+          stay: "Stay on note",
+          custom: "Open a file...",
+        })
+          .setValue(
+            !activity.completionReturnTo || activity.completionReturnTo === "dashboard"
+              ? "dashboard"
+              : activity.completionReturnTo === "stay"
+                ? "stay"
+                : "custom"
+          )
+          .onChange(async (v) => {
+            if (v === "dashboard" || v === "stay") {
+              this.plugin.settings.activities[index].completionReturnTo = v;
+            }
+            // If "custom" is selected, the text field below will be used
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    // Show file path input only when custom is selected
+    if (activity.completionReturnTo && activity.completionReturnTo !== "dashboard" && activity.completionReturnTo !== "stay") {
+      new Setting(details)
+        .setName("Return file path")
+        .setDesc("Vault path to the file to open after completion")
+        .addText((t) =>
+          t.setPlaceholder("e.g. Home.md")
+            .setValue(activity.completionReturnTo ?? "")
+            .onChange(async (v) => {
+              this.plugin.settings.activities[index].completionReturnTo = v.trim() || "dashboard";
+              await this.plugin.saveSettings();
+            })
+        );
+    }
+
+    new Setting(details)
       .setName("Blocks (comma-separated activity IDs)")
       .addText((t) =>
         t.setValue((activity.blocks ?? []).join(", ")).onChange(async (v) => {

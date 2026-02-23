@@ -76,13 +76,15 @@ if (!document.getElementById("olen-tpl-workout-v4")) {
   style.textContent = `
     .otw-container * { box-sizing: border-box; }
     .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0; font-family: Georgia, serif; }
+    .otw-container button, .otw-container input, .otw-modal-overlay button, .otw-modal-overlay input { border-radius: 0 !important; -webkit-appearance: none; appearance: none; }
+    .otw-container input[type="number"] { -moz-appearance: textfield; }
     @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 20px rgba(154,140,122,0.03); } 50% { box-shadow: inset 0 0 40px rgba(154,140,122,0.08); } }
     .otw-card { background: #0a0a0a; border: 1px solid #3a342a; padding: 16px; position: relative; margin-bottom: 16px; }
     .otw-card-breathe { animation: otw-breathe 6s ease-in-out infinite; }
     .otw-header { text-align: center; padding: 20px; }
     .otw-title { margin: 0; color: #9a8c7a; font-size: 24px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; }
     .otw-progress-label { color: #6a5a4a; font-size: 12px; margin-top: 8px; }
-    .otw-btn { padding: 14px 24px; border: none; font-size: 13px; font-weight: 600; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; }
+    .otw-btn { padding: 14px 24px; border: none; border-radius: 0 !important; font-size: 13px; font-weight: 600; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; -webkit-appearance: none; appearance: none; }
     .otw-btn-primary { background: #9a8c7a; color: #0a0a0a; width: 100%; }
     .otw-btn-primary:active { transform: scale(0.98); }
     .otw-btn-secondary { background: #0f0f0f; border: 1px solid #3a342a; color: #6a5a4a; }
@@ -94,10 +96,10 @@ if (!document.getElementById("olen-tpl-workout-v4")) {
     .otw-nav-row .otw-btn { flex: 1; text-align: center; }
     .otw-set-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px; padding: 12px; background: #0f0f0f; border: 1px solid #3a342a; margin-bottom: 6px; }
     .otw-set-row.completed { opacity: 0.6; }
-    .otw-checkbox { width: 24px; height: 24px; border: 2px solid #3a342a; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0a0a0a; font-weight: bold; transition: all 0.2s; flex-shrink: 0; }
+    .otw-checkbox { width: 24px; height: 24px; border: 2px solid #3a342a; border-radius: 0 !important; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0a0a0a; font-weight: bold; transition: all 0.2s; flex-shrink: 0; }
     .otw-checkbox.checked { background: #7a9a7d; border-color: #7a9a7d; }
-    .otw-input { padding: 6px; background: #0a0a0a; border: 1px solid #3a342a; color: #9a8c7a; text-align: center; font-size: 14px; font-weight: 600; width: 50px; }
-    .otw-ctrl-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #0f0f0f; border: 1px solid #3a342a; color: #9a8c7a; cursor: pointer; font-size: 16px; flex-shrink: 0; }
+    .otw-input { padding: 6px; background: #0a0a0a; border: 1px solid #3a342a; border-radius: 0 !important; color: #9a8c7a; text-align: center; font-size: 14px; font-weight: 600; width: 50px; -webkit-appearance: none; appearance: none; }
+    .otw-ctrl-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #0f0f0f; border: 1px solid #3a342a; border-radius: 0 !important; color: #9a8c7a; cursor: pointer; font-size: 16px; flex-shrink: 0; -webkit-appearance: none; appearance: none; }
     .otw-ctrl-btn:active { background: #9a8c7a; color: #0a0a0a; }
     .otw-warmup-badge { font-size: 9px; color: #6a8a9a; padding: 2px 6px; background: rgba(106,138,154,0.15); border-radius: 3px; }
     .otw-strength-bar { height: 6px; background: #1a1a1a; border-radius: 3px; overflow: hidden; margin-top: 6px; }
@@ -112,12 +114,12 @@ if (!document.getElementById("olen-tpl-workout-v4")) {
     .otw-summary-complete h2 { margin: 0; color: #7a9a7d; font-size: 16px; font-weight: 700; letter-spacing: 3px; }
     .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: #0c0c0c; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
     .otw-feel-btn:active { background: #101010; }
-    .otw-muscle-toggle { padding: 12px 18px; background: #0f0f0f; border: 1px solid #3a342a; color: #9a8c7a; font-size: 13px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; }
+    .otw-muscle-toggle { padding: 12px 18px; background: #0f0f0f; border: 1px solid #3a342a; border-radius: 0 !important; color: #9a8c7a; font-size: 13px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
     .otw-muscle-toggle.active { background: rgba(154,140,122,0.3) !important; border-color: #9a8c7a !important; }
     .otw-muscle-toggle:active { transform: translateY(-1px); }
     .otw-subgroup-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; opacity: 0; padding: 0 12px; }
     .otw-subgroup-container.expanded { max-height: 200px; opacity: 1; padding: 12px; }
-    .otw-sub-toggle { padding: 8px 14px; background: #0f0f0f; border: 1px solid #3a342a; color: #6a5a4a; font-size: 12px; cursor: pointer; transition: all 0.3s ease; }
+    .otw-sub-toggle { padding: 8px 14px; background: #0f0f0f; border: 1px solid #3a342a; border-radius: 0 !important; color: #6a5a4a; font-size: 12px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
     .otw-sub-toggle.active { background: rgba(154,140,122,0.2); border-color: #9a8c7a; color: #9a8c7a; }
   `;
   document.head.appendChild(style);
@@ -384,6 +386,40 @@ function createModal(title, contentBuilder) {
 }
 
 // ============================================================
+// POST-COMPLETION NAVIGATION
+// ============================================================
+
+function getReturnDestination() {
+  // Look up the current activity's config from plugin settings
+  const activityId = getData("activity");
+  const activities = ctx.plugin?.settings?.activities;
+  if (activities && activityId) {
+    const actConfig = activities.find(a => a.id === activityId);
+    if (actConfig?.completionReturnTo) return actConfig.completionReturnTo;
+  }
+  return "dashboard"; // default
+}
+
+function navigateAfterCompletion() {
+  const dest = getReturnDestination();
+  if (dest === "stay") return; // do nothing, stay on completion summary
+  if (dest === "dashboard") {
+    // Use Olen's built-in dashboard activation
+    if (ctx.plugin?.activateDashboardView) {
+      setTimeout(() => ctx.plugin.activateDashboardView(), 600);
+    }
+    return;
+  }
+  // Custom file path — open it
+  const targetFile = app.vault.getAbstractFileByPath(dest);
+  if (targetFile) {
+    setTimeout(() => app.workspace.getLeaf(false).openFile(targetFile), 600);
+  } else {
+    notice("Return file not found: " + dest);
+  }
+}
+
+// ============================================================
 // FINISH WORKOUT
 // ============================================================
 
@@ -396,36 +432,159 @@ async function finishWorkout(type) {
     currentMuscleIndex: currentMuscleIndex,
   });
   notice("Workout logged as " + (type === "discipline" ? "Discipline Win" : "Flow State") + "!");
-  render();
+  navigateAfterCompletion();
 }
 
-function openFinishModal() {
-  createModal("Workout Complete", (content) => {
-    const summaryDiv = document.createElement("div");
-    summaryDiv.className = "otw-summary-complete";
-    summaryDiv.innerHTML = "<h2>WORKOUT COMPLETE</h2>";
-    content.appendChild(summaryDiv);
+async function openFinishModal() {
+  // Build session analytics data
+  const summaryData = [];
+  for (const ex of exercises) {
+    const completed = ex.sets.filter(s => !s.isWarmup && s.completed);
+    if (completed.length > 0) {
+      const pr = await getExercisePR(ex.name);
+      let bestW = 0, bestR = 0, maxR = 0, sessionBest = 0;
+      for (const s of completed) {
+        if (s.reps > maxR) maxR = s.reps;
+        if (s.weight > 0) {
+          const est = calculate1RM(s.weight, s.reps);
+          if (est > sessionBest) { sessionBest = est; bestW = s.weight; bestR = s.reps; }
+        } else if (s.reps > sessionBest) { sessionBest = s.reps; bestR = s.reps; }
+      }
+      const sl = await calculateStrengthLevel(ex.name, bestW, bestR, maxR);
+      summaryData.push({ name: ex.name, muscle: ex.muscle || ex.muscleGroup, bestW, bestR, maxR, sessionBest, sl, pr, completedSets: completed.length, totalSets: ex.sets.filter(s => !s.isWarmup).length });
+    }
+  }
 
+  createModal(null, (content) => {
+    // Scrollable area
+    const scroll = document.createElement("div");
+    scroll.style.cssText = "overflow-y:auto;display:flex;flex-direction:column;gap:16px;flex:1;max-height:70vh;";
+    content.appendChild(scroll);
+
+    // Title
+    const title = document.createElement("h2");
+    title.textContent = "WORKOUT COMPLETE";
+    title.style.cssText = `margin:0;color:${THEME.systemGreen};font-size:16px;font-weight:700;letter-spacing:3px;text-align:center;`;
+    scroll.appendChild(title);
+
+    // Session summary cards
+    if (summaryData.length > 0) {
+      const sec = document.createElement("div");
+      sec.style.cssText = "display:flex;flex-direction:column;gap:12px;";
+      scroll.appendChild(sec);
+
+      const secTitle = document.createElement("div");
+      secTitle.textContent = "SESSION SUMMARY";
+      secTitle.style.cssText = `color:${THEME.colorMuted};font-size:11px;letter-spacing:2px;text-align:center;`;
+      sec.appendChild(secTitle);
+
+      for (const ex of summaryData) {
+        const card = document.createElement("div");
+        card.style.cssText = `padding:14px;background:#0c0c0c;border:1px solid ${THEME.colorBorder};`;
+        sec.appendChild(card);
+
+        // Exercise name + strength badge
+        const hdr = document.createElement("div");
+        hdr.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;";
+        card.appendChild(hdr);
+
+        const nm = document.createElement("span");
+        nm.textContent = ex.name;
+        nm.style.cssText = `color:${THEME.color};font-weight:600;font-size:14px;`;
+        hdr.appendChild(nm);
+
+        if (ex.sl) {
+          const li = STRENGTH_LEVELS[ex.sl.level];
+          const badge = document.createElement("span");
+          badge.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:${ex.sl.color}20;border:1px solid ${ex.sl.color}50;color:${ex.sl.color};font-size:11px;font-weight:700;letter-spacing:1px;`;
+          badge.textContent = (li?.icon || "\u25CB") + " " + ex.sl.level.toUpperCase();
+          hdr.appendChild(badge);
+        }
+
+        // Best set + estimated 1RM
+        const stats = document.createElement("div");
+        stats.style.cssText = `display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px;`;
+        card.appendChild(stats);
+
+        const setInfo = document.createElement("span");
+        setInfo.textContent = ex.sl?.isBodyweight ? "Best: " + ex.maxR + " reps" : "Best: " + ex.bestW + "kg \u00D7 " + ex.bestR;
+        setInfo.style.cssText = `color:${THEME.colorMuted};`;
+        stats.appendChild(setInfo);
+
+        if (ex.sl) {
+          const rmInfo = document.createElement("span");
+          rmInfo.textContent = ex.sl.displayLabel + ": " + ex.sl.currentValue + ex.sl.unit;
+          rmInfo.style.cssText = `color:${THEME.color};font-weight:600;`;
+          stats.appendChild(rmInfo);
+        }
+
+        // Sets completed
+        const setsInfo = document.createElement("div");
+        setsInfo.style.cssText = `font-size:11px;color:${THEME.colorMuted};margin-bottom:8px;`;
+        setsInfo.textContent = ex.completedSets + "/" + ex.totalSets + " working sets completed";
+        card.appendChild(setsInfo);
+
+        // PR comparison
+        if (ex.pr) {
+          const prC = document.createElement("div");
+          prC.style.cssText = `font-size:11px;margin-bottom:8px;padding:6px 8px;`;
+          const cv = ex.sl?.currentValue || ex.sessionBest;
+          if (cv > ex.pr.prValue) {
+            prC.style.background = "rgba(122,154,125,0.15)";
+            prC.innerHTML = '<span style="color:#7a9a7d;font-weight:700;">\uD83C\uDF89 NEW PR!</span> <span style="color:' + THEME.colorMuted + ';">Previous: ' + ex.pr.prValue + ' \u2192 Now: ' + cv + '</span>';
+          } else if (cv === ex.pr.prValue) {
+            prC.style.background = "rgba(168,152,96,0.1)";
+            prC.innerHTML = '<span style="color:#a89860;">\uD83C\uDFC6 Matched PR:</span> <span style="color:' + THEME.colorMuted + ';">' + ex.pr.prValue + '</span>';
+          } else {
+            prC.style.background = "rgba(168,152,96,0.1)";
+            prC.innerHTML = '<span style="color:' + THEME.colorMuted + ';">\uD83C\uDFC6 PR: ' + ex.pr.prValue + '</span> <span style="color:#6a6a6a;">(today: ' + cv + ')</span>';
+          }
+          card.appendChild(prC);
+        }
+
+        // Progress bar to next strength level
+        if (ex.sl && ex.sl.nextTarget) {
+          const pb = document.createElement("div");
+          pb.className = "otw-strength-bar";
+          pb.style.marginTop = "8px";
+          card.appendChild(pb);
+          const fill = document.createElement("div");
+          fill.className = "otw-strength-fill";
+          fill.style.cssText = `width:${Math.min(100, ex.sl.progress)}%;background:${ex.sl.color};`;
+          pb.appendChild(fill);
+          const ti = document.createElement("div");
+          ti.style.cssText = `display:flex;justify-content:space-between;font-size:9px;color:${THEME.colorMuted};margin-top:4px;`;
+          ti.innerHTML = "<span>Current: " + ex.sl.currentValue + ex.sl.unit + "</span><span>Next: " + Math.round(ex.sl.nextTarget) + ex.sl.unit + "</span>";
+          card.appendChild(ti);
+        }
+      }
+    }
+
+    // "How did it feel?" section
     const feelTitle = document.createElement("h3");
     feelTitle.textContent = "How did it feel?";
-    feelTitle.style.cssText = `margin:12px 0;color:${THEME.color};font-size:13px;letter-spacing:3px;text-align:center;text-transform:uppercase;opacity:0.8;`;
-    content.appendChild(feelTitle);
+    feelTitle.style.cssText = `margin:8px 0 0 0;color:${THEME.color};font-size:13px;letter-spacing:3px;text-align:center;text-transform:uppercase;opacity:0.8;`;
+    scroll.appendChild(feelTitle);
+
+    const btns = document.createElement("div");
+    btns.style.cssText = "display:flex;flex-direction:column;gap:10px;";
+    scroll.appendChild(btns);
 
     // Discipline button
     const discBtn = document.createElement("div");
     discBtn.className = "otw-feel-btn";
     discBtn.style.borderLeft = `3px solid ${THEME.colorDiscipline}`;
-    discBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">&#x1F48E;</span><div style="flex:1;"><div style="color:${THEME.colorDiscipline};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Discipline</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Pushed through resistance</div></div><div style="color:#4a4030;font-size:18px;opacity:0.5;">\u2192</div>`;
+    discBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">\uD83D\uDC8E</span><div style="flex:1;"><div style="color:${THEME.colorDiscipline};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Discipline</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Pushed through resistance</div></div><div style="color:#4a4030;font-size:18px;opacity:0.5;">\u2192</div>`;
     discBtn.onclick = async () => { closeModal(); await finishWorkout("discipline"); };
-    content.appendChild(discBtn);
+    btns.appendChild(discBtn);
 
     // Flow button
     const flowBtn = document.createElement("div");
     flowBtn.className = "otw-feel-btn";
     flowBtn.style.borderLeft = `3px solid ${THEME.colorFlow}`;
-    flowBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">&#x1F30A;</span><div style="flex:1;"><div style="color:${THEME.colorFlow};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Flow</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Felt natural and effortless</div></div><div style="color:#304050;font-size:18px;opacity:0.5;">\u2192</div>`;
+    flowBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">\uD83C\uDF0A</span><div style="flex:1;"><div style="color:${THEME.colorFlow};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Flow</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Felt natural and effortless</div></div><div style="color:#304050;font-size:18px;opacity:0.5;">\u2192</div>`;
     flowBtn.onclick = async () => { closeModal(); await finishWorkout("flow"); };
-    content.appendChild(flowBtn);
+    btns.appendChild(flowBtn);
   });
 }
 

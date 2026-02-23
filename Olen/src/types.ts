@@ -43,6 +43,12 @@ export interface ActivityConfig {
   timeOverride?: TimeOverride;
   estimatedDuration: number; // minutes
 
+  // Post-completion navigation
+  // "dashboard" = return to Olen dashboard (default)
+  // "stay"      = stay on the note (show completion summary)
+  // any string  = vault file path to open (e.g. "Home.md")
+  completionReturnTo?: string;
+
   // Advanced Rules
   blocks?: string[];
   alternatesWith?: string;
