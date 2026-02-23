@@ -193,6 +193,19 @@ export interface CalendarSettings {
   quickTasks: QuickTask[];
 }
 
+// --- Workout Settings ---
+
+export interface MuscleGroupConfig {
+  subgroups: string[] | null;
+  icon: string;
+}
+
+export interface WorkoutSettings {
+  statsFile: string;
+  exerciseDbFolder: string;
+  muscleGroups: Record<string, MuscleGroupConfig>;
+}
+
 // --- Theme ---
 
 export interface ElysianTheme {
@@ -319,6 +332,9 @@ export interface OlenSettings {
 
   // Calendar
   calendar: CalendarSettings;
+
+  // Workout
+  workoutSettings: WorkoutSettings;
 
   // Quote
   quoteFolderPath: string;

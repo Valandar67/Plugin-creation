@@ -5,8 +5,8 @@
 
 import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActivityConfig, Category, TempleTask } from "../types";
-import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG } from "../constants";
+import type { ActivityConfig, Category, TempleTask, MuscleGroupConfig } from "../types";
+import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG, DEFAULT_WORKOUT_SETTINGS } from "../constants";
 
 export class OlenSettingTab extends PluginSettingTab {
   plugin: OlenPlugin;
@@ -37,6 +37,7 @@ export class OlenSettingTab extends PluginSettingTab {
     // Sections
     this.renderProfileSection(containerEl);
     this.renderActivitiesSection(containerEl);
+    this.renderWorkoutSection(containerEl);
     this.renderCategoriesSection(containerEl);
     this.renderTempleSection(containerEl);
     this.renderCalendarSection(containerEl);
@@ -434,6 +435,130 @@ export class OlenSettingTab extends PluginSettingTab {
             this.display();
           })
       );
+  }
+
+  // --- Workout ---
+
+  private renderWorkoutSection(container: HTMLElement): void {
+    const body = this.createCollapsibleSection(container, "Workout Settings", "\uD83C\uDFCB\uFE0F");
+
+    // Ensure workoutSettings exists (migration safety)
+    if (!this.plugin.settings.workoutSettings) {
+      this.plugin.settings.workoutSettings = { ...DEFAULT_WORKOUT_SETTINGS };
+    }
+    const ws = this.plugin.settings.workoutSettings;
+
+    new Setting(body)
+      .setName("Personal stats file")
+      .setDesc("Vault path to the Personal Stats note (stores weight, height, birthdate)")
+      .addText((t) =>
+        t
+          .setPlaceholder("Personal Life/Personal Stats.md")
+          .setValue(ws.statsFile)
+          .onChange(async (v) => {
+            this.plugin.settings.workoutSettings.statsFile = v;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
+      .setName("Exercise database folder")
+      .setDesc("Vault folder containing strength standard files (one .md per exercise)")
+      .addText((t) =>
+        t
+          .setPlaceholder("Home/Activities/Exercises database")
+          .setValue(ws.exerciseDbFolder)
+          .onChange(async (v) => {
+            this.plugin.settings.workoutSettings.exerciseDbFolder = v;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    // Muscle groups
+    body.createEl("div", {
+      text: "Muscle Groups",
+      attr: { style: "font-weight: 600; font-size: 0.95em; margin: 12px 0 4px;" },
+    });
+    body.createEl("div", {
+      text: "Define which muscle groups appear in the workout start screen.",
+      attr: { style: "font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;" },
+    });
+
+    const muscleGroupNames = Object.keys(ws.muscleGroups);
+    for (const name of muscleGroupNames) {
+      const mg = ws.muscleGroups[name];
+      const mgSetting = new Setting(body)
+        .setName(`${mg.icon} ${name}`)
+        .setDesc(mg.subgroups ? `Subgroups: ${mg.subgroups.join(", ")}` : "No subgroups");
+
+      mgSetting.addButton((btn) =>
+        btn
+          .setButtonText("Delete")
+          .setWarning()
+          .onClick(async () => {
+            delete this.plugin.settings.workoutSettings.muscleGroups[name];
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+    }
+
+    // Add muscle group
+    const addMgWrapper = body.createDiv({ attr: { style: "margin-top: 8px;" } });
+
+    const addMgDetails = addMgWrapper.createEl("details");
+    addMgDetails.createEl("summary", {
+      text: "+ Add muscle group",
+      attr: { style: "cursor: pointer; font-size: 0.85em; color: var(--text-accent); margin-bottom: 8px;" },
+    });
+
+    const addMgForm = addMgDetails.createDiv({ attr: { style: "padding: 8px 0;" } });
+
+    let newMgName = "";
+    let newMgIcon = "\uD83D\uDCAA";
+    let newMgSubs = "";
+
+    new Setting(addMgForm)
+      .setName("Name")
+      .addText((t) => t.setPlaceholder("e.g. Arms").onChange((v) => { newMgName = v; }));
+
+    new Setting(addMgForm)
+      .setName("Icon")
+      .addText((t) => t.setPlaceholder("\uD83D\uDCAA").setValue(newMgIcon).onChange((v) => { newMgIcon = v; }));
+
+    new Setting(addMgForm)
+      .setName("Subgroups (comma-separated, or empty)")
+      .addText((t) => t.setPlaceholder("Biceps, Triceps, Forearms").onChange((v) => { newMgSubs = v; }));
+
+    new Setting(addMgForm).addButton((btn) =>
+      btn.setButtonText("Add").onClick(async () => {
+        const name = newMgName.trim();
+        if (!name) { new Notice("Please enter a muscle group name"); return; }
+        const subs = newMgSubs.trim()
+          ? newMgSubs.split(",").map((s) => s.trim()).filter(Boolean)
+          : null;
+        this.plugin.settings.workoutSettings.muscleGroups[name] = {
+          subgroups: subs,
+          icon: newMgIcon || "\uD83D\uDCAA",
+        };
+        await this.plugin.saveSettings();
+        this.display();
+      })
+    );
+
+    // Reset button
+    new Setting(body).addButton((btn) =>
+      btn.setButtonText("Reset to defaults").onClick(async () => {
+        this.plugin.settings.workoutSettings = { ...DEFAULT_WORKOUT_SETTINGS };
+        // Deep copy muscle groups
+        this.plugin.settings.workoutSettings.muscleGroups = JSON.parse(
+          JSON.stringify(DEFAULT_WORKOUT_SETTINGS.muscleGroups)
+        );
+        await this.plugin.saveSettings();
+        this.display();
+        new Notice("Workout settings reset to defaults");
+      })
+    );
   }
 
   // --- Categories ---

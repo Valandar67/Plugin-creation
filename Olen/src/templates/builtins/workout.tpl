@@ -1,17 +1,28 @@
 // ============================================================
-// Olen Template — Workout Tracker
-// Renders inside any note with `activity: workout` in frontmatter.
-// All data is read/written via ctx.getData / ctx.setData — the
-// note body stays empty; the UI is generated entirely here.
+// Olen Template — Workout Tracker v4.0
+// Renders inside the Workspace view when the user enters
+// a workout session. All data is read/written via ctx API.
+// Settings-driven: no hardcoded paths.
 // ============================================================
 
-const { container, getData, setData, setMultipleData, app, moment, notice,
-        createEl, file, readFile, getFilesInFolder, getFileMetadata } = ctx;
+const { container, getData, setData, setMultipleData, app, plugin, moment,
+        notice, createEl, file, readFile, getFilesInFolder, getFileMetadata } = ctx;
 
-// ── Configuration ──
-const WORKOUT_FOLDER = "Personal Life/01 Workout";
-const STATS_FILE = "Personal Life/Personal Stats.md";
-const EXERCISE_DB_FOLDER = "Home/Activities/Exercises database";
+// ── Settings (all configurable via Olen Settings > Workout) ──
+const ws = plugin.settings.workoutSettings || {};
+const workoutActivity = plugin.settings.activities.find(a => a.id === "workout") || {};
+const WORKOUT_FOLDER = workoutActivity.folder || "Personal Life/01 Workout";
+const STATS_FILE = ws.statsFile || "Personal Life/Personal Stats.md";
+const EXERCISE_DB_FOLDER = ws.exerciseDbFolder || "Home/Activities/Exercises database";
+const MUSCLE_GROUPS = ws.muscleGroups || {
+  "Neck": { subgroups: null, icon: "\uD83E\uDDB4" },
+  "Back": { subgroups: ["Lats", "Traps", "Rhomboids", "Lower Back", "Rear Delts"], icon: "\uD83D\uDD19" },
+  "Chest": { subgroups: null, icon: "\uD83D\uDCAA" },
+  "Shoulders": { subgroups: ["Front Delts", "Side Delts", "Rear Delts"], icon: "\uD83C\uDFAF" },
+  "Core": { subgroups: null, icon: "\uD83C\uDFAF" },
+  "Legs": { subgroups: ["Quads", "Hamstrings", "Glutes", "Calves", "Adductors"], icon: "\uD83E\uDDB5" },
+  "Arms": { subgroups: ["Biceps", "Triceps", "Forearms"], icon: "\uD83D\uDCAA" },
+};
 
 const THEME = {
   color: "#9a8c7a",
@@ -26,28 +37,29 @@ const THEME = {
 };
 
 const STRENGTH_LEVELS = {
-  "Untrained": { color: "#6a6a6a", icon: "\u25CB" },
-  "Beginner":  { color: "#a89860", icon: "\u25D0" },
-  "Novice":    { color: "#7a9a7d", icon: "\u25D1" },
+  "Untrained":    { color: "#6a6a6a", icon: "\u25CB" },
+  "Beginner":     { color: "#a89860", icon: "\u25D0" },
+  "Novice":       { color: "#7a9a7d", icon: "\u25D1" },
   "Intermediate": { color: "#6a8a9a", icon: "\u25D5" },
-  "Advanced":  { color: "#8a7a9a", icon: "\u25CF" },
-  "Elite":     { color: "#9a6a7a", icon: "\u2605" }
+  "Advanced":     { color: "#8a7a9a", icon: "\u25CF" },
+  "Elite":        { color: "#9a6a7a", icon: "\u2605" }
 };
 
-// ── State (from frontmatter) ──
+// ── State (from frontmatter of the daily note) ──
 let exercises = getData("exercises") || [];
 let muscleGroups = getData("muscleGroups") || [];
 let currentMuscleIndex = getData("currentMuscleIndex") || 0;
 const isCompleted = getData("Workout") === true;
 
 // ── Inject styles once ──
-if (!document.getElementById("olen-tpl-workout-v1")) {
+if (!document.getElementById("olen-tpl-workout-v4")) {
   const style = document.createElement("style");
-  style.id = "olen-tpl-workout-v1";
+  style.id = "olen-tpl-workout-v4";
   style.textContent = `
     .otw-container * { box-sizing: border-box; }
     .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0; font-family: Georgia, serif; }
     @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 20px rgba(154,140,122,0.03); } 50% { box-shadow: inset 0 0 40px rgba(154,140,122,0.08); } }
+    @keyframes otw-float-up { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 0.4; } 90% { opacity: 0.4; } 100% { transform: translateY(-100px) translateX(20px); opacity: 0; } }
     .otw-card { background: #0a0a0a; border: 1px solid #3a342a; padding: 16px; position: relative; margin-bottom: 16px; }
     .otw-card-breathe { animation: otw-breathe 6s ease-in-out infinite; }
     .otw-header { text-align: center; padding: 20px; }
@@ -83,7 +95,12 @@ if (!document.getElementById("olen-tpl-workout-v1")) {
     .otw-summary-complete h2 { margin: 0; color: #7a9a7d; font-size: 16px; font-weight: 700; letter-spacing: 3px; }
     .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: #0c0c0c; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
     .otw-feel-btn:active { background: #101010; }
-    .otw-corners { position: absolute; pointer-events: none; }
+    .otw-muscle-toggle { padding: 12px 18px; background: #0f0f0f; border: 1px solid #3a342a; color: #9a8c7a; font-size: 13px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; }
+    .otw-muscle-toggle.active { background: rgba(154,140,122,0.3); border-color: #9a8c7a; }
+    .otw-subgroup-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; opacity: 0; padding: 0 12px; }
+    .otw-subgroup-container.expanded { max-height: 300px; opacity: 1; padding: 12px; }
+    .otw-subgroup-btn { padding: 8px 14px; background: #0f0f0f; border: 1px solid #3a342a; color: #6a5a4a; font-size: 12px; cursor: pointer; transition: all 0.3s ease; }
+    .otw-subgroup-btn.active { background: rgba(154,140,122,0.3); border-color: #9a8c7a; color: #9a8c7a; }
   `;
   document.head.appendChild(style);
 }
@@ -97,6 +114,14 @@ function addCorners(el, color, size = 14) {
     c.style.cssText = `position:absolute;${isTop?"top:0":"bottom:0"};${isLeft?"left:0":"right:0"};width:${size}px;height:${size}px;border-${isTop?"top":"bottom"}:1px solid ${color};border-${isLeft?"left":"right"}:1px solid ${color};z-index:10;pointer-events:none;`;
     el.appendChild(c);
   });
+}
+
+function addFloatingMotes(el, color, count = 3) {
+  for (let i = 0; i < count; i++) {
+    const mote = document.createElement("div");
+    mote.style.cssText = `position:absolute;bottom:10%;left:${10 + Math.random() * 80}%;width:${1 + Math.random() * 2}px;height:${1 + Math.random() * 2}px;background:${color};border-radius:50%;opacity:0;pointer-events:none;animation:otw-float-up ${8 + Math.random() * 6}s ${Math.random() * 10}s ease-out infinite;z-index:1;`;
+    el.appendChild(mote);
+  }
 }
 
 function calculate1RM(weight, reps) {
@@ -128,6 +153,11 @@ function calculateAge(bd) {
   let a = t.getFullYear() - b.getFullYear();
   if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
   return a;
+}
+
+function formatBirthdate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toISOString().split("T")[0];
 }
 
 function parseStandardValue(val) {
@@ -246,12 +276,37 @@ async function getExercisePR(name) {
   return best;
 }
 
+function getLastWorkoutForMuscleGroup(muscle) {
+  const files = getFilesInFolder(WORKOUT_FOLDER).sort((a, b) => b.basename.localeCompare(a.basename));
+  for (const f of files) {
+    if (f.path === file.path) continue; // Skip the current daily note
+    const fm = getFileMetadata(f.path);
+    if (fm?.exercises && Array.isArray(fm.exercises)) {
+      const relevant = fm.exercises.filter(ex => ex.muscle === muscle || ex.muscleGroup === muscle);
+      if (relevant.length > 0) return { date: f.basename.match(/^(\d{4}-\d{2}-\d{2})/)?.[1], exercises: relevant, file: f };
+    }
+  }
+  return null;
+}
+
 // ── Save current state to frontmatter ──
 async function saveState() {
   await setMultipleData({
     exercises: exercises,
     currentMuscleIndex: currentMuscleIndex,
   });
+}
+
+// ── Personal Stats ──
+async function updatePersonalStats(weight, height, birthdate) {
+  const content = `---\nWeight: ${weight}\nHeight: ${height}\nBirthdate: "${birthdate}"\n---\n\n# Personal Stats\n\nUpdated: ${moment().format("YYYY-MM-DD HH:mm")}\n`;
+  const statsFile = app.vault.getAbstractFileByPath(STATS_FILE);
+  if (statsFile) { await app.vault.modify(statsFile, content); }
+  else {
+    const folder = STATS_FILE.substring(0, STATS_FILE.lastIndexOf("/"));
+    if (!app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
+    await app.vault.create(STATS_FILE, content);
+  }
 }
 
 // ── Modal System ──
@@ -300,37 +355,205 @@ async function finishWorkout(type) {
     currentMuscleIndex: currentMuscleIndex,
   });
   notice("Workout logged as " + (type === "discipline" ? "Discipline Win" : "Flow State") + "!");
-  // Re-render to show completion state
   render();
 }
 
 function openFinishModal() {
-  createModal("Workout Complete", (content) => {
-    const summaryDiv = document.createElement("div");
-    summaryDiv.className = "otw-summary-complete";
-    summaryDiv.innerHTML = "<h2>WORKOUT COMPLETE</h2>";
-    content.appendChild(summaryDiv);
+  // Build summary data first
+  const buildSummary = async () => {
+    const summaryData = [];
+    for (const ex of exercises) {
+      const completed = ex.sets.filter(s => !s.isWarmup && s.completed);
+      if (completed.length > 0) {
+        const hasStd = await hasStrengthStandard(ex.name);
+        const pr = await getExercisePR(ex.name);
+        let bestW = 0, bestR = 0, maxR = 0, sessionBest = 0;
+        for (const s of completed) {
+          if (s.reps > maxR) maxR = s.reps;
+          if (s.weight > 0) {
+            const est = calculate1RM(s.weight, s.reps);
+            if (est > sessionBest) { sessionBest = est; bestW = s.weight; bestR = s.reps; }
+          } else if (s.reps > sessionBest) { sessionBest = s.reps; bestR = s.reps; }
+        }
+        const sl = await calculateStrengthLevel(ex.name, bestW, bestR, maxR);
+        summaryData.push({ name: ex.name, muscle: ex.muscle, bestW, bestR, maxR, sessionBest, sl, hasStd, pr });
+      }
+    }
+    return summaryData;
+  };
 
-    const feelTitle = document.createElement("h3");
-    feelTitle.textContent = "How did it feel?";
-    feelTitle.style.cssText = `margin:12px 0;color:${THEME.color};font-size:13px;letter-spacing:3px;text-align:center;text-transform:uppercase;opacity:0.8;`;
-    content.appendChild(feelTitle);
+  buildSummary().then(summaryData => {
+    createModal("Workout Complete", (content) => {
+      // Summary
+      const summaryDiv = document.createElement("div");
+      summaryDiv.className = "otw-summary-complete";
+      summaryDiv.innerHTML = "<h2>WORKOUT COMPLETE</h2>";
+      content.appendChild(summaryDiv);
 
-    // Discipline button
-    const discBtn = document.createElement("div");
-    discBtn.className = "otw-feel-btn";
-    discBtn.style.borderLeft = `3px solid ${THEME.colorDiscipline}`;
-    discBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">&#x1F48E;</span><div style="flex:1;"><div style="color:${THEME.colorDiscipline};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Discipline</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Pushed through resistance</div></div><div style="color:#4a4030;font-size:18px;opacity:0.5;">\u2192</div>`;
-    discBtn.onclick = async () => { closeModal(); await finishWorkout("discipline"); };
-    content.appendChild(discBtn);
+      // Exercise summaries
+      if (summaryData.length > 0) {
+        const sec = document.createElement("div");
+        sec.style.cssText = "display:flex;flex-direction:column;gap:12px;";
+        content.appendChild(sec);
 
-    // Flow button
-    const flowBtn = document.createElement("div");
-    flowBtn.className = "otw-feel-btn";
-    flowBtn.style.borderLeft = `3px solid ${THEME.colorFlow}`;
-    flowBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">&#x1F30A;</span><div style="flex:1;"><div style="color:${THEME.colorFlow};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Flow</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Felt natural and effortless</div></div><div style="color:#304050;font-size:18px;opacity:0.5;">\u2192</div>`;
-    flowBtn.onclick = async () => { closeModal(); await finishWorkout("flow"); };
-    content.appendChild(flowBtn);
+        const secTitle = document.createElement("div");
+        secTitle.textContent = "SESSION SUMMARY";
+        secTitle.style.cssText = `color:${THEME.colorMuted};font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:4px;`;
+        sec.appendChild(secTitle);
+
+        for (const ex of summaryData) {
+          const card = document.createElement("div");
+          card.style.cssText = `padding:14px;background:#0c0c0c;border:1px solid ${THEME.colorBorder};border-radius:6px;`;
+          sec.appendChild(card);
+
+          const hdr = document.createElement("div");
+          hdr.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;";
+          card.appendChild(hdr);
+
+          const nm = document.createElement("span");
+          nm.textContent = ex.name;
+          nm.style.cssText = `color:${THEME.color};font-weight:600;font-size:14px;`;
+          hdr.appendChild(nm);
+
+          if (ex.sl) {
+            const li = STRENGTH_LEVELS[ex.sl.level];
+            const badge = document.createElement("span");
+            badge.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:${ex.sl.color}20;border:1px solid ${ex.sl.color}50;border-radius:4px;color:${ex.sl.color};font-size:11px;font-weight:700;letter-spacing:1px;`;
+            badge.textContent = (li?.icon || "\u25CB") + " " + ex.sl.level.toUpperCase();
+            hdr.appendChild(badge);
+          }
+
+          const stats = document.createElement("div");
+          stats.style.cssText = "display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px;";
+          card.appendChild(stats);
+
+          const setI = document.createElement("span");
+          setI.textContent = ex.sl?.isBodyweight ? "Best: " + ex.maxR + " reps" : "Best: " + ex.bestW + "kg \u00D7 " + ex.bestR;
+          setI.style.cssText = `color:${THEME.colorMuted};`;
+          stats.appendChild(setI);
+
+          if (ex.sl) {
+            const rmI = document.createElement("span");
+            rmI.textContent = ex.sl.displayLabel + ": " + ex.sl.currentValue + ex.sl.unit;
+            rmI.style.cssText = `color:${THEME.color};font-weight:600;`;
+            stats.appendChild(rmI);
+          }
+
+          if (ex.pr) {
+            const prC = document.createElement("div");
+            prC.style.cssText = "font-size:11px;margin-bottom:8px;padding:6px 8px;background:rgba(168,152,96,0.1);border-radius:4px;";
+            const cv = ex.sl?.currentValue || ex.sessionBest;
+            if (cv > ex.pr.prValue) {
+              prC.style.background = "rgba(122,154,125,0.15)";
+              prC.innerHTML = `<span style="color:#7a9a7d;font-weight:700;">\uD83C\uDF89 NEW PR!</span> <span style="color:${THEME.colorMuted};">Previous: ${ex.pr.prValue} \u2192 Now: ${cv}</span>`;
+            } else if (cv === ex.pr.prValue) {
+              prC.innerHTML = `<span style="color:#a89860;">\uD83C\uDFC6 Matched PR:</span> <span style="color:${THEME.colorMuted};">${ex.pr.prValue}</span>`;
+            } else {
+              prC.innerHTML = `<span style="color:${THEME.colorMuted};">\uD83C\uDFC6 PR: ${ex.pr.prValue}</span> <span style="color:#6a6a6a;">(today: ${cv})</span>`;
+            }
+            card.appendChild(prC);
+          }
+
+          if (ex.sl && ex.sl.nextTarget) {
+            const pb = document.createElement("div");
+            pb.className = "otw-strength-bar";
+            pb.style.marginTop = "8px";
+            card.appendChild(pb);
+            const fill = document.createElement("div");
+            fill.className = "otw-strength-fill";
+            fill.style.cssText = `width:${Math.min(100, ex.sl.progress)}%;background:${ex.sl.color};`;
+            pb.appendChild(fill);
+            const ti = document.createElement("div");
+            ti.style.cssText = `display:flex;justify-content:space-between;font-size:9px;color:${THEME.colorMuted};margin-top:4px;`;
+            ti.innerHTML = `<span>Current: ${ex.sl.currentValue}${ex.sl.unit}</span><span>Next: ${Math.round(ex.sl.nextTarget)}${ex.sl.unit}</span>`;
+            card.appendChild(ti);
+          }
+        }
+      }
+
+      // Feel buttons
+      const feelTitle = document.createElement("h3");
+      feelTitle.textContent = "How did it feel?";
+      feelTitle.style.cssText = `margin:12px 0;color:${THEME.color};font-size:13px;letter-spacing:3px;text-align:center;text-transform:uppercase;opacity:0.8;`;
+      content.appendChild(feelTitle);
+
+      // Discipline button
+      const discBtn = document.createElement("div");
+      discBtn.className = "otw-feel-btn";
+      discBtn.style.borderLeft = `3px solid ${THEME.colorDiscipline}`;
+      discBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">&#x1F48E;</span><div style="flex:1;"><div style="color:${THEME.colorDiscipline};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Discipline</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Pushed through resistance</div></div><div style="color:#4a4030;font-size:18px;opacity:0.5;">\u2192</div>`;
+      discBtn.onclick = async () => { closeModal(); await finishWorkout("discipline"); };
+      content.appendChild(discBtn);
+
+      // Flow button
+      const flowBtn = document.createElement("div");
+      flowBtn.className = "otw-feel-btn";
+      flowBtn.style.borderLeft = `3px solid ${THEME.colorFlow}`;
+      flowBtn.innerHTML = `<span style="font-size:24px;width:40px;text-align:center;">&#x1F30A;</span><div style="flex:1;"><div style="color:${THEME.colorFlow};font-size:14px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;">Flow</div><div style="color:#5a5a5a;font-size:11px;font-style:italic;">Felt natural and effortless</div></div><div style="color:#304050;font-size:18px;opacity:0.5;">\u2192</div>`;
+      flowBtn.onclick = async () => { closeModal(); await finishWorkout("flow"); };
+      content.appendChild(flowBtn);
+    });
+  });
+}
+
+// ── Personal Stats Modal ──
+async function openPersonalStatsModal() {
+  const stats = await getPersonalStats();
+  createModal("Personal Stats", (content) => {
+    const form = document.createElement("div");
+    form.style.cssText = "display:flex;flex-direction:column;gap:16px;";
+    content.appendChild(form);
+
+    // Birthdate
+    const birthRow = document.createElement("div");
+    birthRow.style.cssText = `display:flex;flex-direction:column;gap:8px;padding:12px 16px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};`;
+    birthRow.innerHTML = `<span style="color:${THEME.colorMuted};font-size:12px;">Birthdate</span>`;
+    const birthInputRow = document.createElement("div");
+    birthInputRow.style.cssText = "display:flex;align-items:center;gap:12px;";
+    const birthInput = document.createElement("input");
+    birthInput.type = "date";
+    birthInput.value = formatBirthdate(stats.birthdate);
+    birthInput.style.cssText = `flex:1;padding:8px;background:#0a0a0a;border:1px solid ${THEME.colorBorder};color:${THEME.color};font-size:1em;`;
+    const ageDisplay = document.createElement("span");
+    ageDisplay.textContent = `Age: ${calculateAge(stats.birthdate)}`;
+    ageDisplay.style.cssText = `color:${THEME.color};font-size:1.1em;font-weight:600;min-width:80px;`;
+    birthInput.onchange = () => { ageDisplay.textContent = `Age: ${calculateAge(birthInput.value)}`; };
+    birthInputRow.appendChild(birthInput);
+    birthInputRow.appendChild(ageDisplay);
+    birthRow.appendChild(birthInputRow);
+    form.appendChild(birthRow);
+
+    // Weight
+    const weightRow = document.createElement("div");
+    weightRow.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};`;
+    weightRow.innerHTML = `<span style="color:${THEME.colorMuted};">Weight (kg)</span>`;
+    const weightInput = document.createElement("input");
+    weightInput.type = "number";
+    weightInput.value = stats.weight;
+    weightInput.style.cssText = `width:80px;padding:8px;background:#0a0a0a;border:1px solid ${THEME.colorBorder};color:${THEME.color};font-size:1.1em;text-align:center;`;
+    weightRow.appendChild(weightInput);
+    form.appendChild(weightRow);
+
+    // Height
+    const heightRow = document.createElement("div");
+    heightRow.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};`;
+    heightRow.innerHTML = `<span style="color:${THEME.colorMuted};">Height (cm)</span>`;
+    const heightInput = document.createElement("input");
+    heightInput.type = "number";
+    heightInput.value = stats.height;
+    heightInput.style.cssText = `width:80px;padding:8px;background:#0a0a0a;border:1px solid ${THEME.colorBorder};color:${THEME.color};font-size:1.1em;text-align:center;`;
+    heightRow.appendChild(heightInput);
+    form.appendChild(heightRow);
+
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "SAVE STATS";
+    saveBtn.className = "otw-btn otw-btn-primary";
+    saveBtn.onclick = async () => {
+      await updatePersonalStats(parseFloat(weightInput.value) || 61, parseFloat(heightInput.value) || 175, birthInput.value || "2005-11-29");
+      notice("Personal stats updated!");
+      closeModal();
+    };
+    form.appendChild(saveBtn);
   });
 }
 
@@ -361,8 +584,8 @@ function openAddExerciseModal(muscle) {
     noBtn.textContent = "No";
     noBtn.className = "otw-btn otw-btn-secondary";
     noBtn.style.flex = "1";
-    yesBtn.onclick = () => { incWarmup = true; yesBtn.style.background = "rgba(154,140,122,0.2)"; yesBtn.style.borderColor = THEME.color; noBtn.style.background = "#0f0f0f"; noBtn.style.borderColor = THEME.colorBorder; };
-    noBtn.onclick = () => { incWarmup = false; noBtn.style.background = "rgba(154,140,122,0.2)"; noBtn.style.borderColor = THEME.color; yesBtn.style.background = "#0f0f0f"; yesBtn.style.borderColor = THEME.colorBorder; };
+    yesBtn.onclick = () => { incWarmup = true; yesBtn.style.background = "rgba(154,140,122,0.2)"; yesBtn.style.borderColor = THEME.color; yesBtn.style.color = THEME.color; noBtn.style.background = "#0f0f0f"; noBtn.style.borderColor = THEME.colorBorder; noBtn.style.color = THEME.colorMuted; };
+    noBtn.onclick = () => { incWarmup = false; noBtn.style.background = "rgba(154,140,122,0.2)"; noBtn.style.borderColor = THEME.color; noBtn.style.color = THEME.color; yesBtn.style.background = "#0f0f0f"; yesBtn.style.borderColor = THEME.colorBorder; yesBtn.style.color = THEME.colorMuted; };
     warmupRow.appendChild(yesBtn);
     warmupRow.appendChild(noBtn);
 
@@ -413,6 +636,59 @@ function openAddExerciseModal(muscle) {
     btnRow.appendChild(addBtn);
 
     setTimeout(() => nameInput.focus(), 100);
+  });
+}
+
+// ── Add Strength Standard Modal ──
+async function openAddStrengthStandardModal() {
+  createModal("Add Strength Standard", (content) => {
+    const form = document.createElement("div");
+    form.style.cssText = "display:flex;flex-direction:column;gap:16px;";
+    content.appendChild(form);
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "Exercise name (e.g., Dumbbell Curl)";
+    nameInput.style.cssText = `padding:12px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};color:${THEME.color};font-size:1em;`;
+    form.appendChild(nameInput);
+
+    let exerciseType = "Weighted";
+    const typeContainer = document.createElement("div");
+    typeContainer.style.cssText = "display:flex;gap:12px;";
+    const weightedBtn = document.createElement("button");
+    weightedBtn.textContent = "\uD83C\uDFCB\uFE0F Weighted";
+    weightedBtn.style.cssText = `flex:1;padding:14px;background:rgba(154,140,122,0.2);border:1px solid ${THEME.color};color:${THEME.color};cursor:pointer;`;
+    const bodyweightBtn = document.createElement("button");
+    bodyweightBtn.textContent = "\uD83E\uDD38 Bodyweight";
+    bodyweightBtn.style.cssText = `flex:1;padding:14px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};color:${THEME.colorMuted};cursor:pointer;`;
+    weightedBtn.onclick = () => { exerciseType = "Weighted"; weightedBtn.style.background = "rgba(154,140,122,0.2)"; weightedBtn.style.borderColor = THEME.color; weightedBtn.style.color = THEME.color; bodyweightBtn.style.background = "#0f0f0f"; bodyweightBtn.style.borderColor = THEME.colorBorder; bodyweightBtn.style.color = THEME.colorMuted; };
+    bodyweightBtn.onclick = () => { exerciseType = "Bodyweight"; bodyweightBtn.style.background = "rgba(154,140,122,0.2)"; bodyweightBtn.style.borderColor = THEME.color; bodyweightBtn.style.color = THEME.color; weightedBtn.style.background = "#0f0f0f"; weightedBtn.style.borderColor = THEME.colorBorder; weightedBtn.style.color = THEME.colorMuted; };
+    typeContainer.appendChild(weightedBtn);
+    typeContainer.appendChild(bodyweightBtn);
+    form.appendChild(typeContainer);
+
+    const infoText = document.createElement("p");
+    infoText.innerHTML = `<strong>Weighted:</strong> Standards in kg (1RM)<br><strong>Bodyweight:</strong> Standards in reps`;
+    infoText.style.cssText = `color:${THEME.colorMuted};font-size:12px;line-height:1.6;`;
+    form.appendChild(infoText);
+
+    const createBtn = document.createElement("button");
+    createBtn.textContent = "CREATE";
+    createBtn.className = "otw-btn otw-btn-primary";
+    createBtn.onclick = async () => {
+      const exerciseName = nameInput.value.trim();
+      if (!exerciseName) { notice("Please enter an exercise name"); return; }
+      const filePath = `${EXERCISE_DB_FOLDER}/${exerciseName}.md`;
+      const unitLabel = exerciseType === "Bodyweight" ? "reps" : "kg (1RM)";
+      const fileContent = `---\nData: Strength Standard\nExercise: "${exerciseName}"\nType: ${exerciseType}\ncssclasses:\n  - hide-properties\n---\n\n# ${exerciseName} Strength Standards\n\n> Standards are in **${unitLabel}**\n\n## Bodyweight Table\n| BW  | Beg. | Nov. | Int. | Adv. | Elite |\n| --- | ---- | ---- | ---- | ---- | ----- |\n| 50  | 0    | 0    | 0    | 0    | 0     |\n| 60  | 0    | 0    | 0    | 0    | 0     |\n| 70  | 0    | 0    | 0    | 0    | 0     |\n| 80  | 0    | 0    | 0    | 0    | 0     |\n| 90  | 0    | 0    | 0    | 0    | 0     |\n\n## Age Table\n| Age | Beg. | Nov. | Int. | Adv. | Elite |\n| --- | ---- | ---- | ---- | ---- | ----- |\n| 15  | 0    | 0    | 0    | 0    | 0     |\n| 20  | 0    | 0    | 0    | 0    | 0     |\n| 30  | 0    | 0    | 0    | 0    | 0     |\n| 40  | 0    | 0    | 0    | 0    | 0     |\n| 50  | 0    | 0    | 0    | 0    | 0     |\n`;
+      try {
+        if (!app.vault.getAbstractFileByPath(EXERCISE_DB_FOLDER)) await app.vault.createFolder(EXERCISE_DB_FOLDER);
+        if (!app.vault.getAbstractFileByPath(filePath)) await app.vault.create(filePath, fileContent);
+        closeModal();
+        notice(`Strength standard created for ${exerciseName}. Open the file to fill in the values.`);
+      } catch (error) { notice(`Error: ${error.message}`); }
+    };
+    form.appendChild(createBtn);
   });
 }
 
@@ -610,7 +886,165 @@ async function renderExercise(exContainer, ex) {
   card.appendChild(addSetBtn);
 }
 
-// ── Main Render ──
+// ════════════════════════════════════════
+// MUSCLE GROUP SELECTION SCREEN
+// Shows when no muscleGroups in frontmatter
+// ════════════════════════════════════════
+async function renderMuscleSelection(root) {
+  const selectedMuscles = new Set();
+  const selectedSubgroups = new Map();
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "otw-card otw-card-breathe otw-header";
+  addCorners(header, THEME.color);
+  addFloatingMotes(header, THEME.color, 3);
+  const title = document.createElement("h2");
+  title.className = "otw-title";
+  title.textContent = "NEW WORKOUT";
+  header.appendChild(title);
+  const subtitle = document.createElement("div");
+  subtitle.className = "otw-progress-label";
+  subtitle.textContent = "Select muscle groups to train";
+  header.appendChild(subtitle);
+  root.appendChild(header);
+
+  // Personal stats bar
+  const stats = await getPersonalStats();
+  const statsBar = document.createElement("div");
+  statsBar.className = "otw-card";
+  statsBar.style.cssText += "display:flex;justify-content:space-between;align-items:center;padding:12px 16px;";
+  const age = calculateAge(stats.birthdate);
+  statsBar.innerHTML = `<div><span style="color:${THEME.colorMuted};font-size:12px;">Age: <strong style="color:${THEME.color}">${age}</strong></span><span style="margin:0 12px;color:${THEME.colorBorder};">|</span><span style="color:${THEME.colorMuted};font-size:12px;">Weight: <strong style="color:${THEME.color}">${stats.weight}kg</strong></span><span style="margin:0 12px;color:${THEME.colorBorder};">|</span><span style="color:${THEME.colorMuted};font-size:12px;">Height: <strong style="color:${THEME.color}">${stats.height}cm</strong></span></div>`;
+  const editStatsBtn = document.createElement("button");
+  editStatsBtn.textContent = "\u270F\uFE0F";
+  editStatsBtn.style.cssText = `padding:6px 10px;background:transparent;border:1px solid ${THEME.colorBorder};color:${THEME.colorMuted};cursor:pointer;font-size:12px;`;
+  editStatsBtn.onclick = () => openPersonalStatsModal();
+  statsBar.appendChild(editStatsBtn);
+  root.appendChild(statsBar);
+
+  // Muscle group selection grid
+  const muscleGrid = document.createElement("div");
+  muscleGrid.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0 8px;";
+  root.appendChild(muscleGrid);
+
+  const subgroupArea = document.createElement("div");
+  subgroupArea.style.cssText = "display:flex;flex-direction:column;gap:8px;width:100%;";
+  root.appendChild(subgroupArea);
+
+  Object.entries(MUSCLE_GROUPS).forEach(([name, config]) => {
+    const btn = document.createElement("button");
+    btn.className = "otw-muscle-toggle";
+    btn.textContent = `${config.icon} ${name}`;
+    muscleGrid.appendChild(btn);
+
+    let subgroupContainer = null;
+    if (config.subgroups) {
+      subgroupContainer = document.createElement("div");
+      subgroupContainer.className = "otw-subgroup-container";
+      subgroupContainer.style.cssText += `display:flex;flex-wrap:wrap;gap:8px;background:#0c0c0c;border:1px solid ${THEME.colorBorder};border-radius:4px;`;
+      subgroupContainer.innerHTML = `<div style="width:100%;color:${THEME.colorMuted};font-size:11px;margin-bottom:4px;">${name} subgroups:</div>`;
+      selectedSubgroups.set(name, new Set());
+      config.subgroups.forEach(sub => {
+        const subBtn = document.createElement("button");
+        subBtn.className = "otw-subgroup-btn";
+        subBtn.textContent = sub;
+        subBtn.onclick = (e) => {
+          e.stopPropagation();
+          const subs = selectedSubgroups.get(name);
+          if (subs.has(sub)) { subs.delete(sub); subBtn.classList.remove("active"); }
+          else { subs.add(sub); subBtn.classList.add("active"); }
+        };
+        subgroupContainer.appendChild(subBtn);
+      });
+      subgroupArea.appendChild(subgroupContainer);
+    }
+
+    btn.onclick = () => {
+      if (selectedMuscles.has(name)) {
+        selectedMuscles.delete(name); btn.classList.remove("active");
+        if (subgroupContainer) subgroupContainer.classList.remove("expanded");
+      } else {
+        selectedMuscles.add(name); btn.classList.add("active");
+        if (subgroupContainer) subgroupContainer.classList.add("expanded");
+      }
+    };
+  });
+
+  // Quote
+  const quote = document.createElement("div");
+  quote.style.cssText = `padding:16px;background:#0c0c0c;border-left:2px solid ${THEME.color};margin:16px 0;`;
+  quote.innerHTML = `<p style="color:${THEME.colorMuted};font-style:italic;font-size:12px;margin:0;">"There is a general principle here: <strong style="color:${THEME.color};">perform any amount of warming-up that you believe to be minimally required.</strong>"</p><p style="color:${THEME.colorMuted};font-size:11px;margin:8px 0 0 0;text-align:right;">\u2014 Mike Mentzer</p>`;
+  root.appendChild(quote);
+
+  // Secondary actions
+  const secondaryRow = document.createElement("div");
+  secondaryRow.style.cssText = "display:flex;gap:12px;margin-bottom:12px;";
+  root.appendChild(secondaryRow);
+
+  const addStandardBtn = document.createElement("button");
+  addStandardBtn.textContent = "\uD83D\uDCCA Add Strength Standard";
+  addStandardBtn.className = "otw-btn otw-btn-secondary";
+  addStandardBtn.style.flex = "1";
+  addStandardBtn.onclick = () => openAddStrengthStandardModal();
+  secondaryRow.appendChild(addStandardBtn);
+
+  // Start workout button
+  const startBtn = document.createElement("button");
+  startBtn.innerHTML = `<span style="font-size:20px;">\uD83C\uDFCB\uFE0F</span> START WORKOUT`;
+  startBtn.className = "otw-btn otw-btn-primary";
+  startBtn.style.cssText += "display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 24px;font-size:15px;font-weight:700;";
+  startBtn.onclick = async () => {
+    if (selectedMuscles.size === 0) { notice("Please select at least one muscle group"); return; }
+
+    // Build muscle groups array (with subgroups resolved)
+    const muscleGroupsArray = [];
+    selectedMuscles.forEach(muscle => {
+      const subs = selectedSubgroups.get(muscle);
+      if (subs && subs.size > 0) subs.forEach(sub => muscleGroupsArray.push(sub));
+      else muscleGroupsArray.push(muscle);
+    });
+
+    // Load previous exercises for each muscle group
+    const exercisesArray = [];
+    muscleGroupsArray.forEach(muscle => {
+      const lastWorkout = getLastWorkoutForMuscleGroup(muscle);
+      if (lastWorkout) {
+        lastWorkout.exercises.forEach(ex => {
+          exercisesArray.push({
+            name: ex.name, muscle, muscleGroup: muscle,
+            sets: ex.sets ? ex.sets.map(s => ({
+              weight: s.weight || 0, reps: s.reps || 10,
+              completed: false, isWarmup: s.isWarmup || false
+            })) : [{ weight: 0, reps: 10, completed: false, isWarmup: false }]
+          });
+        });
+      }
+    });
+
+    // Save to frontmatter and update local state
+    muscleGroups = muscleGroupsArray;
+    exercises = exercisesArray;
+    currentMuscleIndex = 0;
+
+    await setMultipleData({
+      muscleGroups: muscleGroups,
+      exercises: exercises,
+      currentMuscleIndex: 0,
+      Workout: false,
+      "Workout-Type": "",
+      Timestamp: moment().format(),
+    });
+
+    // Re-render to show exercise tracking UI
+    render();
+  };
+  root.appendChild(startBtn);
+}
+
+// ════════════════════════════════════════
+// MAIN RENDER
+// ════════════════════════════════════════
 async function render() {
   container.innerHTML = "";
   const root = document.createElement("div");
@@ -655,24 +1089,13 @@ async function render() {
     return;
   }
 
-  // ── Active Workout UI ──
+  // ── No muscle groups yet → Show muscle selection screen ──
   if (muscleGroups.length === 0) {
-    // No muscle groups selected — show empty state
-    const empty = document.createElement("div");
-    empty.className = "otw-card";
-    empty.style.textAlign = "center";
-    empty.style.padding = "40px 20px";
-    addCorners(empty, THEME.color);
-    empty.innerHTML = `
-      <div style="font-size:32px;margin-bottom:12px;">\uD83C\uDFCB\uFE0F</div>
-      <h2 style="margin:0;color:${THEME.color};font-size:16px;letter-spacing:3px;">WORKOUT</h2>
-      <p style="color:${THEME.colorMuted};font-size:13px;margin-top:12px;font-style:italic;">This note has activity: workout but no muscle groups defined.</p>
-      <p style="color:${THEME.colorMuted};font-size:12px;margin-top:8px;">Add <code>muscleGroups</code> to the frontmatter to begin tracking.</p>
-    `;
-    root.appendChild(empty);
+    await renderMuscleSelection(root);
     return;
   }
 
+  // ── Active Workout UI ──
   const currentMuscle = muscleGroups[currentMuscleIndex] || muscleGroups[0];
   const muscleExercises = exercises.filter((e) => e.muscle === currentMuscle || e.muscleGroup === currentMuscle);
 
@@ -680,10 +1103,10 @@ async function render() {
   const header = document.createElement("div");
   header.className = "otw-card otw-card-breathe otw-header";
   addCorners(header, THEME.color);
-  const title = document.createElement("h2");
-  title.className = "otw-title";
-  title.textContent = currentMuscle.toUpperCase();
-  header.appendChild(title);
+  const titleEl = document.createElement("h2");
+  titleEl.className = "otw-title";
+  titleEl.textContent = currentMuscle.toUpperCase();
+  header.appendChild(titleEl);
   const progressLabel = document.createElement("div");
   progressLabel.className = "otw-progress-label";
   progressLabel.textContent = (currentMuscleIndex + 1) + " / " + muscleGroups.length;

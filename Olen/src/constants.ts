@@ -10,6 +10,7 @@ import type {
   ElysianTheme,
   WorkspaceCompletionState,
   CalendarSettings,
+  WorkoutSettings,
 } from "./types";
 
 // --- View Type ---
@@ -185,6 +186,22 @@ export const DEFAULT_WORKSPACE_STATES: WorkspaceCompletionState[] = [
   { id: "skipped", name: "Skipped", icon: "\u25CB", color: "#8b2d35", enabled: true, quoteFolderPath: "", xpMultiplier: 0 },
 ];
 
+// --- Default Workout Settings ---
+
+export const DEFAULT_WORKOUT_SETTINGS: WorkoutSettings = {
+  statsFile: "Personal Life/Personal Stats.md",
+  exerciseDbFolder: "Home/Activities/Exercises database",
+  muscleGroups: {
+    "Neck":      { subgroups: null, icon: "\uD83E\uDDB4" },
+    "Back":      { subgroups: ["Lats", "Traps", "Rhomboids", "Lower Back", "Rear Delts"], icon: "\uD83D\uDD19" },
+    "Chest":     { subgroups: null, icon: "\uD83D\uDCAA" },
+    "Shoulders": { subgroups: ["Front Delts", "Side Delts", "Rear Delts"], icon: "\uD83C\uDFAF" },
+    "Core":      { subgroups: null, icon: "\uD83C\uDFAF" },
+    "Legs":      { subgroups: ["Quads", "Hamstrings", "Glutes", "Calves", "Adductors"], icon: "\uD83E\uDDB5" },
+    "Arms":      { subgroups: ["Biceps", "Triceps", "Forearms"], icon: "\uD83D\uDCAA" },
+  },
+};
+
 // --- Default Dev Config ---
 
 export const DEFAULT_DEV_CONFIG: DevConfig = {
@@ -300,6 +317,9 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
 
   // Calendar
   calendar: DEFAULT_CALENDAR_SETTINGS,
+
+  // Workout
+  workoutSettings: DEFAULT_WORKOUT_SETTINGS,
 
   // Quote
   quoteFolderPath: "",
