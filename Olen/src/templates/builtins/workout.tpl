@@ -410,12 +410,17 @@ function navigateAfterCompletion() {
     }
     return;
   }
-  // Custom file path — open it
-  const targetFile = app.vault.getAbstractFileByPath(dest);
-  if (targetFile) {
-    setTimeout(() => app.workspace.getLeaf(false).openFile(targetFile), 600);
-  } else {
-    notice("Return file not found: " + dest);
+  if (dest === "homepage") {
+    // Open the global homepage file defined in Profile settings
+    const homepagePath = ctx.plugin?.settings?.homepage;
+    if (!homepagePath) { notice("No homepage set — go to Olen Settings > Profile to define one."); return; }
+    const targetFile = app.vault.getAbstractFileByPath(homepagePath);
+    if (targetFile) {
+      setTimeout(() => app.workspace.getLeaf(false).openFile(targetFile), 600);
+    } else {
+      notice("Homepage file not found: " + homepagePath);
+    }
+    return;
   }
 }
 

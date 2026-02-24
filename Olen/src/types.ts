@@ -46,7 +46,7 @@ export interface ActivityConfig {
   // Post-completion navigation
   // "dashboard" = return to Olen dashboard (default)
   // "stay"      = stay on the note (show completion summary)
-  // any string  = vault file path to open (e.g. "Home.md")
+  // "homepage"  = open the global homepage file defined in Profile settings
   completionReturnTo?: string;
 
   // Advanced Rules
@@ -269,6 +269,7 @@ export interface OlenSettings {
   userName: string;
   myWhy: string;
   heroBackground: string;
+  homepage: string; // vault file path to open when "Open homepage" is selected (e.g. "Home.md")
 
   // Activities
   activities: ActivityConfig[];

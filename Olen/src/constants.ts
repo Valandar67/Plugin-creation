@@ -239,6 +239,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   userName: "Warrior",
   myWhy: "",
   heroBackground: "",
+  homepage: "",
 
   // Activities
   activities: DEFAULT_ACTIVITIES,
