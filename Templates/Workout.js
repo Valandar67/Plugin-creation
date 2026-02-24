@@ -1,5 +1,5 @@
 // ============================================================
-// Olen Template — Workout Tracker v4.0
+// Olen Template — Workout Tracker v5.0
 // Renders inside the Olen workspace for the "workout" activity.
 // All UI lives here — daily notes only store YAML frontmatter.
 // Data is read/written via ctx.getData / ctx.setData.
@@ -70,20 +70,42 @@ const isCompleted = getData("Workout") === true;
 // ============================================================
 // STYLES
 // ============================================================
-if (!document.getElementById("olen-tpl-workout-v4")) {
+if (!document.getElementById("olen-tpl-workout-v5")) {
   const style = document.createElement("style");
-  style.id = "olen-tpl-workout-v4";
+  style.id = "olen-tpl-workout-v5";
   style.textContent = `
     .otw-container * { box-sizing: border-box; }
     .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0; font-family: Georgia, serif; }
     .otw-container button, .otw-container input, .otw-modal-overlay button, .otw-modal-overlay input { border-radius: 0 !important; -webkit-appearance: none; appearance: none; }
     .otw-container input[type="number"] { -moz-appearance: textfield; }
     @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 20px rgba(154,140,122,0.03); } 50% { box-shadow: inset 0 0 40px rgba(154,140,122,0.08); } }
+    @keyframes otw-pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
     .otw-card { background: #0a0a0a; border: 1px solid #3a342a; padding: 16px; position: relative; margin-bottom: 16px; }
     .otw-card-breathe { animation: otw-breathe 6s ease-in-out infinite; }
     .otw-header { text-align: center; padding: 20px; }
     .otw-title { margin: 0; color: #9a8c7a; font-size: 24px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; }
     .otw-progress-label { color: #6a5a4a; font-size: 12px; margin-top: 8px; }
+    .otw-section-label { color: #6a5a4a; font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; text-align: center; margin: 20px 0 10px; }
+    .otw-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .otw-week-day { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; background: #0c0c0c; border: 1px solid #2a2520; }
+    .otw-week-day.today { border-color: #9a8c7a; }
+    .otw-week-day .otw-day-label { font-size: 9px; color: #6a5a4a; letter-spacing: 1px; text-transform: uppercase; }
+    .otw-week-day .otw-day-num { font-size: 13px; font-weight: 600; color: #6a5a4a; }
+    .otw-week-day .otw-day-icon { font-size: 14px; min-height: 18px; }
+    .otw-week-day.done .otw-day-num { color: #9a8c7a; }
+    .otw-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .otw-stat-box { display: flex; flex-direction: column; align-items: center; padding: 12px 8px; background: #0c0c0c; border: 1px solid #2a2520; }
+    .otw-stat-value { font-size: 22px; font-weight: 700; color: #9a8c7a; line-height: 1; }
+    .otw-stat-label { font-size: 9px; color: #6a5a4a; letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
+    .otw-recent-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #0c0c0c; border: 1px solid #2a2520; margin-bottom: 4px; }
+    .otw-recent-date { font-size: 12px; color: #6a5a4a; }
+    .otw-recent-muscles { font-size: 11px; color: #9a8c7a; flex: 1; margin: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .otw-recent-badge { font-size: 10px; padding: 3px 8px; font-weight: 700; letter-spacing: 1px; }
+    .otw-heatmap-wrap { display: flex; justify-content: center; gap: 16px; padding: 8px 0; }
+    .otw-heatmap-svg { width: 130px; height: auto; }
+    .otw-heatmap-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; margin-top: 8px; padding: 0 8px; }
+    .otw-heatmap-legend-item { display: flex; align-items: center; gap: 5px; font-size: 8px; color: #6a5a4a; letter-spacing: 1px; text-transform: uppercase; }
+    .otw-heatmap-legend-dot { width: 8px; height: 8px; }
     .otw-btn { padding: 14px 24px; border: none; border-radius: 0 !important; font-size: 13px; font-weight: 600; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; -webkit-appearance: none; appearance: none; }
     .otw-btn-primary { background: #9a8c7a; color: #0a0a0a; width: 100%; }
     .otw-btn-primary:active { transform: scale(0.98); }
@@ -879,10 +901,386 @@ async function renderExercise(exContainer, ex) {
 }
 
 // ============================================================
+// STATISTICS & HEATMAP DATA
+// ============================================================
+
+// Map muscle/subgroup names → body regions for the heatmap
+const MUSCLE_TO_REGION = {
+  Neck: ["neck"], Chest: ["chest"], Core: ["core"],
+  Back: ["lats", "traps", "lower_back"], Lats: ["lats"], Traps: ["traps"],
+  Rhomboids: ["traps"], "Lower Back": ["lower_back"], "Rear Delts": ["rear_delts"],
+  Shoulders: ["front_delts", "rear_delts"], "Front Delts": ["front_delts"],
+  "Side Delts": ["front_delts"],
+  Legs: ["quads", "hamstrings", "glutes", "calves"], Quads: ["quads"],
+  Hamstrings: ["hamstrings"], Glutes: ["glutes"], Calves: ["calves"],
+  Adductors: ["quads"],
+  Arms: ["biceps", "triceps", "forearms"], Biceps: ["biceps"],
+  Triceps: ["triceps"], Forearms: ["forearms"],
+};
+
+function getWeeklyCalendarData() {
+  const today = moment().startOf("day");
+  const weekStart = today.clone().startOf("isoWeek");
+  const allFiles = getFilesInFolder(SETTINGS.workoutFolder);
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const day = weekStart.clone().add(i, "days");
+    const dayStr = day.format("YYYY-MM-DD");
+    const isToday = day.isSame(today, "day");
+    const isPast = day.isBefore(today, "day");
+    let status = null, type = null;
+    for (const wFile of allFiles) {
+      if (wFile.basename === dayStr) {
+        const fm = getFileMetadata(wFile.path);
+        if (fm && fm.Workout === true) { status = "done"; type = fm["Workout-Type"] || "done"; }
+        break;
+      }
+    }
+    days.push({ label: day.format("dd")[0], num: day.format("D"), isToday, isPast, status, type });
+  }
+  return days;
+}
+
+function getMonthlyStats() {
+  const allFiles = getFilesInFolder(SETTINGS.workoutFolder);
+  const now = moment();
+  const weekStart = now.clone().startOf("isoWeek");
+  const monthStart = now.clone().startOf("month");
+  let thisWeek = 0, thisMonth = 0, total = 0, totalSets = 0, totalVolume = 0;
+  for (const wFile of allFiles) {
+    const fm = getFileMetadata(wFile.path);
+    if (!fm || fm.Workout !== true) continue;
+    total++;
+    const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (!dateMatch) continue;
+    const fileDate = moment(dateMatch[1], "YYYY-MM-DD");
+    if (fileDate.isSameOrAfter(weekStart)) thisWeek++;
+    if (fileDate.isSameOrAfter(monthStart)) thisMonth++;
+    if (Array.isArray(fm.exercises)) {
+      for (const ex of fm.exercises) {
+        if (!Array.isArray(ex.sets)) continue;
+        for (const s of ex.sets) {
+          if (s.completed && !s.isWarmup) { totalSets++; totalVolume += (s.weight || 0) * (s.reps || 0); }
+        }
+      }
+    }
+  }
+  return { thisWeek, thisMonth, total, totalSets, totalVolume };
+}
+
+function getRecentSessions(limit) {
+  limit = limit || 4;
+  const allFiles = getFilesInFolder(SETTINGS.workoutFolder);
+  const sorted = allFiles.sort(function(a, b) { return b.basename.localeCompare(a.basename); });
+  const sessions = [];
+  for (var i = 0; i < sorted.length; i++) {
+    if (sessions.length >= limit) break;
+    var wFile = sorted[i];
+    if (wFile.path === file.path) continue;
+    var fm = getFileMetadata(wFile.path);
+    if (!fm || fm.Workout !== true) continue;
+    var dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+    sessions.push({
+      date: dateMatch ? dateMatch[1] : wFile.basename,
+      type: fm["Workout-Type"] || "done",
+      muscles: fm.muscleGroups || [],
+    });
+  }
+  return sessions;
+}
+
+// Build strength level data per body region from ALL completed workouts
+async function getMuscleLevelData() {
+  const exerciseBest = {}; // exerciseName → { weight, reps, maxReps, muscle }
+  const allFiles = getFilesInFolder(SETTINGS.workoutFolder);
+  for (const wFile of allFiles) {
+    if (wFile.path === file.path) continue;
+    const fm = getFileMetadata(wFile.path);
+    if (!fm || fm.Workout !== true || !Array.isArray(fm.exercises)) continue;
+    for (const ex of fm.exercises) {
+      const done = (ex.sets || []).filter(function(s) { return s.completed && !s.isWarmup; });
+      if (done.length === 0) continue;
+      let bestW = 0, bestR = 0, maxR = 0;
+      for (const s of done) {
+        if (s.reps > maxR) maxR = s.reps;
+        if (s.weight > bestW || (s.weight === bestW && s.reps > bestR)) { bestW = s.weight; bestR = s.reps; }
+      }
+      const existing = exerciseBest[ex.name];
+      if (!existing) {
+        exerciseBest[ex.name] = { weight: bestW, reps: bestR, maxReps: maxR, muscle: ex.muscle || ex.muscleGroup };
+      } else {
+        const oldVal = existing.weight > 0 ? calculate1RM(existing.weight, existing.reps) : existing.maxReps;
+        const newVal = bestW > 0 ? calculate1RM(bestW, bestR) : maxR;
+        if (newVal > oldVal) exerciseBest[ex.name] = { weight: bestW, reps: bestR, maxReps: maxR, muscle: ex.muscle || ex.muscleGroup };
+      }
+    }
+  }
+  // Calculate strength level per exercise, map to body regions
+  const regionEntries = {};
+  for (const [exName, data] of Object.entries(exerciseBest)) {
+    const sl = await calculateStrengthLevel(exName, data.weight, data.reps, data.maxReps);
+    if (!sl) continue;
+    const regions = MUSCLE_TO_REGION[data.muscle] || [];
+    for (const region of regions) {
+      if (!regionEntries[region]) regionEntries[region] = [];
+      regionEntries[region].push({ level: sl.level, color: sl.color, progress: sl.progress });
+    }
+  }
+  // Pick the best strength level per region
+  const levelOrder = ["Untrained", "Beginner", "Novice", "Intermediate", "Advanced", "Elite"];
+  const result = {};
+  for (const [region, entries] of Object.entries(regionEntries)) {
+    let best = entries[0], bestIdx = levelOrder.indexOf(entries[0].level);
+    for (let i = 1; i < entries.length; i++) {
+      const idx = levelOrder.indexOf(entries[i].level);
+      if (idx > bestIdx) { bestIdx = idx; best = entries[i]; }
+    }
+    result[region] = best;
+  }
+  return result;
+}
+
+// ============================================================
+// BODY HEATMAP SVG
+// ============================================================
+
+function buildBodySvg(view, muscleLevels) {
+  // view: "front" or "back"
+  // muscleLevels: { region: { level, color, progress } }
+  const untrained = "#1a1816";
+  function fill(region) {
+    const d = muscleLevels[region];
+    return d ? d.color + "90" : untrained; // 90 = ~56% alpha hex
+  }
+  function stroke(region) {
+    const d = muscleLevels[region];
+    return d ? d.color + "40" : "#2a2520";
+  }
+
+  // SVG paths for each region — stylized anatomical figure
+  // ViewBox: 0 0 100 210
+  const head = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
+
+  // ── FRONT VIEW REGIONS ──
+  const frontPaths = {
+    neck:       '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
+    front_delts:'<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
+    chest:      '<path d="M31,37 L49,37 L49,55 C49,57 42,60 33,58 L31,56 Z"/><path d="M51,37 L69,37 L69,56 L67,58 C58,60 51,57 51,55 Z"/>',
+    biceps:     '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
+    forearms:   '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
+    core:       '<path d="M33,58 L67,58 L65,82 L35,82 Z"/>',
+    quads:      '<path d="M35,84 L49,84 L48,136 L34,136 Z"/><path d="M51,84 L65,84 L66,136 L52,136 Z"/>',
+    calves:     '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
+  };
+
+  // ── BACK VIEW REGIONS ──
+  const backPaths = {
+    neck:       '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
+    traps:      '<path d="M39,33 L50,27 L61,33 L59,43 L50,39 L41,43 Z"/>',
+    rear_delts: '<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
+    lats:       '<path d="M33,43 L41,43 L50,39 L59,43 L67,43 L65,66 L50,70 L35,66 Z"/>',
+    triceps:    '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
+    forearms:   '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
+    lower_back: '<path d="M35,66 L50,70 L65,66 L65,82 L35,82 Z"/>',
+    glutes:     '<path d="M35,82 L49,82 L49,94 C47,98 37,98 35,94 Z"/><path d="M51,82 L65,82 L65,94 C63,98 53,98 51,94 Z"/>',
+    hamstrings: '<path d="M35,96 L49,96 L48,136 L34,136 Z"/><path d="M51,96 L65,96 L66,136 L52,136 Z"/>',
+    calves:     '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
+  };
+
+  const regions = view === "front" ? frontPaths : backPaths;
+  let paths = "";
+  for (const [region, pathData] of Object.entries(regions)) {
+    paths += '<g fill="' + fill(region) + '" stroke="' + stroke(region) + '" stroke-width="0.6">' + pathData + '</g>';
+  }
+
+  const label = view === "front" ? "FRONT" : "BACK";
+  return '<svg class="otw-heatmap-svg" viewBox="0 0 100 210" xmlns="http://www.w3.org/2000/svg">'
+    + head + paths
+    + '<text x="50" y="207" text-anchor="middle" fill="#4a4030" font-size="8" font-family="Georgia,serif" letter-spacing="2">' + label + '</text>'
+    + '</svg>';
+}
+
+// ============================================================
+// RENDER: STATS DASHBOARD
+// ============================================================
+
+async function renderStatsSection(root) {
+  // Weekly calendar
+  const weekLabel = document.createElement("div");
+  weekLabel.className = "otw-section-label";
+  weekLabel.textContent = "THIS WEEK";
+  root.appendChild(weekLabel);
+
+  const weekData = getWeeklyCalendarData();
+  const weekGrid = document.createElement("div");
+  weekGrid.className = "otw-week-grid";
+  root.appendChild(weekGrid);
+
+  for (const day of weekData) {
+    const cell = document.createElement("div");
+    cell.className = "otw-week-day" + (day.isToday ? " today" : "") + (day.status ? " done" : "");
+    const lbl = document.createElement("div");
+    lbl.className = "otw-day-label";
+    lbl.textContent = day.label;
+    cell.appendChild(lbl);
+    const num = document.createElement("div");
+    num.className = "otw-day-num";
+    num.textContent = day.num;
+    cell.appendChild(num);
+    const icon = document.createElement("div");
+    icon.className = "otw-day-icon";
+    if (day.status === "done") {
+      if (day.type === "discipline") { icon.textContent = "\uD83D\uDC8E"; }
+      else if (day.type === "flow") { icon.textContent = "\uD83C\uDF0A"; }
+      else { icon.textContent = "\u2713"; icon.style.color = THEME.systemGreen; }
+    } else if (day.isToday) {
+      icon.textContent = "\u2022"; icon.style.color = THEME.color; icon.style.animation = "otw-pulse-glow 2s ease-in-out infinite";
+    } else if (day.isPast) {
+      icon.textContent = "\u2014"; icon.style.color = "#2a2520";
+    }
+    cell.appendChild(icon);
+    weekGrid.appendChild(cell);
+  }
+
+  // Stat counters
+  const stats = getMonthlyStats();
+  const statRow = document.createElement("div");
+  statRow.className = "otw-stat-row";
+  statRow.style.marginTop = "10px";
+  root.appendChild(statRow);
+
+  const statItems = [
+    { value: stats.thisWeek, label: "This week" },
+    { value: stats.thisMonth, label: "This month" },
+    { value: stats.total, label: "All time" },
+  ];
+  for (const item of statItems) {
+    const box = document.createElement("div");
+    box.className = "otw-stat-box";
+    const val = document.createElement("div");
+    val.className = "otw-stat-value";
+    val.textContent = item.value;
+    box.appendChild(val);
+    const lbl = document.createElement("div");
+    lbl.className = "otw-stat-label";
+    lbl.textContent = item.label;
+    box.appendChild(lbl);
+    statRow.appendChild(box);
+  }
+
+  // Volume row
+  if (stats.totalVolume > 0) {
+    const volRow = document.createElement("div");
+    volRow.className = "otw-stat-row";
+    volRow.style.cssText = "margin-top:6px;grid-template-columns:1fr 1fr;";
+    root.appendChild(volRow);
+    const volBox = document.createElement("div");
+    volBox.className = "otw-stat-box";
+    const volVal = document.createElement("div");
+    volVal.className = "otw-stat-value";
+    volVal.style.fontSize = "18px";
+    volVal.textContent = stats.totalVolume >= 1000 ? Math.round(stats.totalVolume / 1000) + "k" : stats.totalVolume;
+    volBox.appendChild(volVal);
+    const volLbl = document.createElement("div");
+    volLbl.className = "otw-stat-label";
+    volLbl.textContent = "Total kg lifted";
+    volBox.appendChild(volLbl);
+    volRow.appendChild(volBox);
+
+    const setsBox = document.createElement("div");
+    setsBox.className = "otw-stat-box";
+    const setsVal = document.createElement("div");
+    setsVal.className = "otw-stat-value";
+    setsVal.style.fontSize = "18px";
+    setsVal.textContent = stats.totalSets;
+    setsBox.appendChild(setsVal);
+    const setsLbl = document.createElement("div");
+    setsLbl.className = "otw-stat-label";
+    setsLbl.textContent = "Total sets";
+    setsBox.appendChild(setsLbl);
+    volRow.appendChild(setsBox);
+  }
+
+  // Body Strength Heatmap
+  const hmLabel = document.createElement("div");
+  hmLabel.className = "otw-section-label";
+  hmLabel.style.marginTop = "24px";
+  hmLabel.textContent = "BODY STRENGTH MAP";
+  root.appendChild(hmLabel);
+
+  const muscleLevels = await getMuscleLevelData();
+  const hmWrap = document.createElement("div");
+  hmWrap.className = "otw-heatmap-wrap";
+  hmWrap.innerHTML = buildBodySvg("front", muscleLevels) + buildBodySvg("back", muscleLevels);
+  root.appendChild(hmWrap);
+
+  // Legend
+  const legend = document.createElement("div");
+  legend.className = "otw-heatmap-legend";
+  const legendItems = [
+    { label: "Untrained", color: "#6a6a6a" },
+    { label: "Beginner", color: "#a89860" },
+    { label: "Novice", color: "#7a9a7d" },
+    { label: "Intermediate", color: "#6a8a9a" },
+    { label: "Advanced", color: "#8a7a9a" },
+    { label: "Elite", color: "#9a6a7a" },
+  ];
+  for (const item of legendItems) {
+    const li = document.createElement("div");
+    li.className = "otw-heatmap-legend-item";
+    const dot = document.createElement("div");
+    dot.className = "otw-heatmap-legend-dot";
+    dot.style.background = item.color;
+    li.appendChild(dot);
+    const txt = document.createElement("span");
+    txt.textContent = item.label;
+    li.appendChild(txt);
+    legend.appendChild(li);
+  }
+  root.appendChild(legend);
+
+  // Recent sessions
+  const recent = getRecentSessions(4);
+  if (recent.length > 0) {
+    const recLabel = document.createElement("div");
+    recLabel.className = "otw-section-label";
+    recLabel.style.marginTop = "24px";
+    recLabel.textContent = "RECENT SESSIONS";
+    root.appendChild(recLabel);
+    for (const s of recent) {
+      const row = document.createElement("div");
+      row.className = "otw-recent-row";
+      const dateEl = document.createElement("span");
+      dateEl.className = "otw-recent-date";
+      dateEl.textContent = moment(s.date, "YYYY-MM-DD").format("MMM D");
+      row.appendChild(dateEl);
+      const musclesEl = document.createElement("span");
+      musclesEl.className = "otw-recent-muscles";
+      musclesEl.textContent = s.muscles.join(", ") || "\u2014";
+      row.appendChild(musclesEl);
+      const badge = document.createElement("span");
+      badge.className = "otw-recent-badge";
+      if (s.type === "discipline") {
+        badge.textContent = "\uD83D\uDC8E";
+        badge.style.cssText += "background:rgba(168,152,96,0.15);color:" + THEME.colorDiscipline + ";";
+      } else if (s.type === "flow") {
+        badge.textContent = "\uD83C\uDF0A";
+        badge.style.cssText += "background:rgba(106,138,154,0.15);color:" + THEME.colorFlow + ";";
+      } else {
+        badge.textContent = "\u2713";
+        badge.style.cssText += "background:rgba(122,154,125,0.15);color:" + THEME.systemGreen + ";";
+      }
+      row.appendChild(badge);
+      root.appendChild(row);
+    }
+  }
+}
+
+// ============================================================
 // RENDER: MUSCLE GROUP SELECTION (first-time entry)
 // ============================================================
 
-function renderMuscleSelection(root) {
+async function renderMuscleSelection(root) {
   const selectedMuscles = new Set();
   const selectedSubgroups = new Map();
 
@@ -896,6 +1294,16 @@ function renderMuscleSelection(root) {
     <div class="otw-progress-label">Select muscle groups to train</div>
   `;
   root.appendChild(header);
+
+  // Stats dashboard
+  await renderStatsSection(root);
+
+  // Divider before muscle selection
+  const selLabel = document.createElement("div");
+  selLabel.className = "otw-section-label";
+  selLabel.style.marginTop = "28px";
+  selLabel.textContent = "SELECT MUSCLE GROUPS";
+  root.appendChild(selLabel);
 
   // Muscle group grid
   const muscleGrid = document.createElement("div");
@@ -1050,7 +1458,7 @@ async function render() {
 
   // No muscle groups selected yet — show selection screen
   if (muscleGroups.length === 0) {
-    renderMuscleSelection(root);
+    await renderMuscleSelection(root);
     return;
   }
 
