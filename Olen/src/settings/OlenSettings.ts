@@ -5,7 +5,7 @@
 
 import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActivityConfig, Category, TempleTask } from "../types";
+import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency } from "../types";
 import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG } from "../constants";
 
 export class OlenSettingTab extends PluginSettingTab {
@@ -36,6 +36,7 @@ export class OlenSettingTab extends PluginSettingTab {
 
     // Sections
     this.renderProfileSection(containerEl);
+    this.renderPersonalStatsSection(containerEl);
     this.renderActivitiesSection(containerEl);
     this.renderCategoriesSection(containerEl);
     this.renderTempleSection(containerEl);
@@ -199,6 +200,178 @@ export class OlenSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
+
+  // --- Personal Stats ---
+
+  private renderPersonalStatsSection(container: HTMLElement): void {
+    const body = this.createCollapsibleSection(container, "Personal Stats", "\u{1F4CA}");
+    const stats = this.plugin.settings.personalStats;
+
+    new Setting(body)
+      .setName("Gender")
+      .setDesc("Used to show the correct muscle figure on the heatmap")
+      .addDropdown((d) =>
+        d.addOptions({ male: "Male", female: "Female" })
+          .setValue(stats.gender)
+          .onChange(async (v) => {
+            this.plugin.settings.personalStats.gender = v as Gender;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
+      .setName("Height (cm)")
+      .addText((t) =>
+        t.setValue(stats.height ? String(stats.height) : "")
+          .setPlaceholder("e.g. 175")
+          .onChange(async (v) => {
+            const n = parseInt(v);
+            if (!isNaN(n) && n > 0) {
+              this.plugin.settings.personalStats.height = n;
+              await this.plugin.saveSettings();
+            }
+          })
+      );
+
+    new Setting(body)
+      .setName("Birthdate")
+      .setDesc("Used to calculate your age for the strength calculator")
+      .addText((t) =>
+        t.setValue(stats.birthdate)
+          .setPlaceholder("YYYY-MM-DD")
+          .onChange(async (v) => {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(v) || v === "") {
+              this.plugin.settings.personalStats.birthdate = v;
+              await this.plugin.saveSettings();
+            }
+          })
+      );
+
+    // Age display
+    if (stats.birthdate) {
+      const age = this.calculateAge(stats.birthdate);
+      body.createEl("div", {
+        text: `Age: ${age} years`,
+        attr: { style: "font-size: 0.85em; color: var(--text-muted); margin-bottom: 12px; padding-left: 4px;" },
+      });
+    }
+
+    // Weight section
+    new Setting(body)
+      .setName("Current weight (kg)")
+      .addText((t) =>
+        t.setValue(stats.currentWeight ? String(stats.currentWeight) : "")
+          .setPlaceholder("e.g. 61")
+          .onChange(async (v) => {
+            const n = parseFloat(v);
+            if (!isNaN(n) && n > 0) {
+              this.plugin.settings.personalStats.currentWeight = n;
+              await this.plugin.saveSettings();
+            }
+          })
+      );
+
+    new Setting(body)
+      .setName("Weight logging frequency")
+      .setDesc("How often you want to be reminded to log your weight")
+      .addDropdown((d) =>
+        d.addOptions({
+          "twice-a-week": "Twice a week",
+          "every-week": "Every week",
+          "every-2-weeks": "Every 2 weeks",
+          "every-3-days": "Every 3 days",
+          "every-5-days": "Every 5 days",
+          "custom": "Custom interval",
+        })
+          .setValue(stats.weightLogFrequency)
+          .onChange(async (v) => {
+            this.plugin.settings.personalStats.weightLogFrequency = v as WeightLogFrequency;
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    if (stats.weightLogFrequency === "custom") {
+      new Setting(body)
+        .setName("Custom interval (days)")
+        .addText((t) =>
+          t.setValue(String(stats.weightLogCustomDays))
+            .onChange(async (v) => {
+              const n = parseInt(v);
+              if (!isNaN(n) && n > 0) {
+                this.plugin.settings.personalStats.weightLogCustomDays = n;
+                await this.plugin.saveSettings();
+              }
+            })
+        );
+    }
+
+    // Log weight button
+    new Setting(body)
+      .setName("Log current weight")
+      .setDesc("Save today's weight to your progress history")
+      .addButton((btn) =>
+        btn.setButtonText("Log Weight").onClick(async () => {
+          const w = this.plugin.settings.personalStats.currentWeight;
+          if (!w || w <= 0) {
+            new Notice("Enter your current weight first");
+            return;
+          }
+          const today = new Date().toISOString().slice(0, 10);
+          // Avoid duplicate for today
+          const existing = this.plugin.settings.personalStats.weightLog.find((e) => e.date === today);
+          if (existing) {
+            existing.weight = w;
+          } else {
+            this.plugin.settings.personalStats.weightLog.push({ date: today, weight: w });
+          }
+          this.plugin.settings.personalStats.lastWeightLogDate = today;
+          await this.plugin.saveSettings();
+          new Notice(`Weight logged: ${w} kg`);
+          this.display();
+        })
+      );
+
+    // Weight history (last 10 entries)
+    const log = stats.weightLog;
+    if (log.length > 0) {
+      const historyEl = body.createDiv({
+        attr: { style: "margin: 8px 0; padding: 8px; border: 1px solid var(--background-modifier-border); border-radius: 6px;" },
+      });
+      historyEl.createEl("div", {
+        text: "Weight History",
+        attr: { style: "font-weight: 600; font-size: 0.9em; margin-bottom: 6px;" },
+      });
+
+      const sorted = [...log].sort((a, b) => b.date.localeCompare(a.date));
+      const recent = sorted.slice(0, 10);
+
+      for (const entry of recent) {
+        historyEl.createEl("div", {
+          text: `${entry.date}: ${entry.weight} kg`,
+          attr: { style: "font-size: 0.8em; color: var(--text-muted); padding: 2px 0;" },
+        });
+      }
+
+      if (sorted.length > 10) {
+        historyEl.createEl("div", {
+          text: `... and ${sorted.length - 10} more entries`,
+          attr: { style: "font-size: 0.75em; color: var(--text-muted); font-style: italic;" },
+        });
+      }
+    }
+  }
+
+  private calculateAge(birthdate: string): number {
+    const birth = new Date(birthdate);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const monthDiff = now.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   // --- Activities ---

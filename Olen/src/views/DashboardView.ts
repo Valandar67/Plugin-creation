@@ -18,6 +18,9 @@ import { renderActivityGrid } from "../components/ActivityGrid";
 import { renderTempleChips } from "../components/TempleChips";
 import { renderQuoteFooter } from "../components/QuoteFooter";
 import { renderDayTimeline } from "../components/DayTimeline";
+import { renderStrengthHeatmap, showMuscleProgressPopup, showOverallProgressPopup, showMuscleSelector } from "../components/StrengthHeatmap";
+import { renderWeightNotification } from "../components/WeightProgress";
+import type { MuscleGroupId } from "../constants";
 
 export class DashboardView extends ItemView {
   plugin: OlenPlugin;
@@ -94,6 +97,27 @@ export class DashboardView extends ItemView {
       switch (section) {
         case "hero":
           renderHeroCard(root, settings, engine, staggerIdx++);
+          break;
+
+        case "heatmap":
+          renderStrengthHeatmap(root, settings, engine, completionData, staggerIdx++, {
+            onMuscleClick: (muscleId: MuscleGroupId) => {
+              showMuscleProgressPopup(muscleId, settings, completionData);
+            },
+            onProgressClick: () => {
+              showOverallProgressPopup(settings, completionData);
+            },
+            onStartWorkout: () => {
+              showMuscleSelector((selected) => {
+                // Start workout with selected muscles — enter workout workspace
+                this.handleEnterWorkspace("workout");
+              });
+            },
+          });
+          // Weight notification (shows only when due)
+          renderWeightNotification(root, settings, staggerIdx, () => {
+            this.handleLogWeight();
+          });
           break;
 
         case "eudaimonia":
@@ -387,6 +411,59 @@ export class DashboardView extends ItemView {
       this.plugin.settings.bossCurrentHP - activity.damagePerCompletion
     );
     await this.plugin.saveSettings();
+  }
+
+  private async handleLogWeight(): Promise<void> {
+    const modal = document.createElement("div");
+    modal.className = "olen-quick-task-modal";
+    modal.innerHTML = `
+      <div class="olen-quick-task-backdrop"></div>
+      <div class="olen-quick-task-sheet">
+        <div class="olen-quick-task-title">Log Weight</div>
+        <input type="number" class="olen-quick-task-input" placeholder="Weight (kg)" step="0.1" min="20" max="300" />
+        <div class="olen-quick-task-actions">
+          <button class="olen-quick-task-cancel">Cancel</button>
+          <button class="olen-quick-task-add">Save</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const backdrop = modal.querySelector(".olen-quick-task-backdrop") as HTMLElement;
+    const cancelBtn = modal.querySelector(".olen-quick-task-cancel") as HTMLElement;
+    const addBtn = modal.querySelector(".olen-quick-task-add") as HTMLElement;
+    const input = modal.querySelector(".olen-quick-task-input") as HTMLInputElement;
+
+    input.value = String(this.plugin.settings.personalStats.currentWeight || "");
+    const close = () => modal.remove();
+
+    backdrop.addEventListener("click", close);
+    cancelBtn.addEventListener("click", close);
+
+    addBtn.addEventListener("click", async () => {
+      const w = parseFloat(input.value);
+      if (isNaN(w) || w <= 0) {
+        new Notice("Enter a valid weight");
+        return;
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      const existing = this.plugin.settings.personalStats.weightLog.find((e) => e.date === today);
+      if (existing) {
+        existing.weight = w;
+      } else {
+        this.plugin.settings.personalStats.weightLog.push({ date: today, weight: w });
+      }
+      this.plugin.settings.personalStats.currentWeight = w;
+      this.plugin.settings.personalStats.lastWeightLogDate = today;
+      await this.plugin.saveSettings();
+      new Notice(`Weight logged: ${w} kg`);
+      close();
+      await this.render();
+    });
+
+    setTimeout(() => input.focus(), 50);
   }
 
   private async handleTempleUpdate(taskId: string): Promise<void> {

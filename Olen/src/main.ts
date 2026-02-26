@@ -5,7 +5,7 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS } from "./constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
 import { OlenSettingTab } from "./settings/OlenSettings";
@@ -48,6 +48,11 @@ export default class OlenPlugin extends Plugin {
       {},
       DEFAULT_CALENDAR_SETTINGS,
       this.settings.calendar
+    );
+    this.settings.personalStats = Object.assign(
+      {},
+      DEFAULT_PERSONAL_STATS,
+      this.settings.personalStats
     );
 
     // Migrate legacy field names from session → workspace

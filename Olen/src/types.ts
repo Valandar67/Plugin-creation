@@ -199,6 +199,34 @@ export interface CalendarSettings {
   quickTasks: QuickTask[];
 }
 
+// --- Personal Stats ---
+
+export type Gender = "male" | "female";
+
+export type WeightLogFrequency =
+  | "twice-a-week"
+  | "every-week"
+  | "every-2-weeks"
+  | "every-3-days"
+  | "every-5-days"
+  | "custom";
+
+export interface WeightEntry {
+  date: string;      // YYYY-MM-DD
+  weight: number;    // kg
+}
+
+export interface PersonalStats {
+  gender: Gender;
+  height: number;            // cm
+  birthdate: string;         // YYYY-MM-DD
+  currentWeight: number;     // kg
+  weightLog: WeightEntry[];
+  weightLogFrequency: WeightLogFrequency;
+  weightLogCustomDays: number;   // used when frequency is "custom"
+  lastWeightLogDate: string | null; // YYYY-MM-DD
+}
+
 // --- Theme ---
 
 export interface ElysianTheme {
@@ -326,6 +354,9 @@ export interface OlenSettings {
 
   // Calendar
   calendar: CalendarSettings;
+
+  // Personal Stats
+  personalStats: PersonalStats;
 
   // Quote
   quoteFolderPath: string;

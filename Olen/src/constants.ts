@@ -10,6 +10,7 @@ import type {
   ElysianTheme,
   WorkspaceCompletionState,
   CalendarSettings,
+  PersonalStats,
 } from "./types";
 
 // --- View Type ---
@@ -214,11 +215,52 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   animationStaggerMs: 80,
   heroHeight: 350,
   sectionOrder: [
-    "hero", "eudaimonia", "daymap", "directive", "boss",
+    "hero", "heatmap", "eudaimonia", "daymap", "directive", "boss",
     "weekly", "activities", "temple", "quote",
   ],
   hiddenSections: [],
   activityGridColumns: 2,
+};
+
+// --- Default Personal Stats ---
+
+export const DEFAULT_PERSONAL_STATS: PersonalStats = {
+  gender: "male",
+  height: 175,
+  birthdate: "",
+  currentWeight: 0,
+  weightLog: [],
+  weightLogFrequency: "every-week",
+  weightLogCustomDays: 7,
+  lastWeightLogDate: null,
+};
+
+// --- Muscle Group Definitions ---
+
+export const MUSCLE_GROUPS = [
+  "chest", "back", "shoulders", "biceps", "triceps", "forearms",
+  "abs", "obliques", "quads", "hamstrings", "glutes", "calves",
+  "traps", "lats", "neck",
+] as const;
+
+export type MuscleGroupId = typeof MUSCLE_GROUPS[number];
+
+export const MUSCLE_GROUP_LABELS: Record<MuscleGroupId, string> = {
+  chest: "Chest",
+  back: "Back",
+  shoulders: "Shoulders",
+  biceps: "Biceps",
+  triceps: "Triceps",
+  forearms: "Forearms",
+  abs: "Abs",
+  obliques: "Obliques",
+  quads: "Quads",
+  hamstrings: "Hamstrings",
+  glutes: "Glutes",
+  calves: "Calves",
+  traps: "Traps",
+  lats: "Lats",
+  neck: "Neck",
 };
 
 // --- Default Calendar Settings ---
@@ -301,6 +343,9 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
 
   // Calendar
   calendar: DEFAULT_CALENDAR_SETTINGS,
+
+  // Personal Stats
+  personalStats: DEFAULT_PERSONAL_STATS,
 
   // Quote
   quoteFolderPath: "",

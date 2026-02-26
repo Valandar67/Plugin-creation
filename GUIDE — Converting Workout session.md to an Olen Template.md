@@ -655,3 +655,59 @@ The conversion boils down to three mental shifts:
 3. **Integration**: The template talks to Olen via `ctx.plugin` for settings, navigation, and completion — it's not a standalone island anymore.
 
 Everything else — the exercise tracking UI, strength standards, PR lookups, modal system — is the same logic, just rewired to use `ctx` instead of direct Obsidian/Dataview APIs.
+
+---
+
+## Update Log — New Features
+
+### Personal Stats System
+
+A new **Personal Stats** section has been added to the plugin settings under Profile. It stores:
+
+- **Gender** (male/female) — determines which muscle figure is shown on the Strength Heatmap
+- **Height** (cm) — stored for user reference and future BMI calculations
+- **Birthdate** (YYYY-MM-DD) — used to calculate the user's exact age, which feeds into the workout strength calculator
+- **Weight** (kg) — current weight with a logging system
+- **Weight Log** — historical weight entries with dates
+- **Weight Log Frequency** — configurable reminder interval (twice a week, every week, every 2 weeks, every 3 days, every 5 days, or custom)
+
+**Types**: `PersonalStats`, `WeightEntry`, `Gender`, `WeightLogFrequency` (in `types.ts`)
+**Defaults**: `DEFAULT_PERSONAL_STATS` (in `constants.ts`)
+**Settings UI**: `renderPersonalStatsSection()` (in `OlenSettings.ts`)
+
+The weight logging system tracks when the user last logged their weight and compares it to their chosen frequency. When it's time to log, a notification card appears on the dashboard prompting them to record their weight. Weight history is displayed as a simple list in settings and can be used for trend graphs on the dashboard.
+
+### Strength Heatmap
+
+A new dashboard section (`heatmap` in the section order) shows two interactive muscle figures (front and back views). The figures are programmatic SVGs with clickable muscle group regions.
+
+**Component**: `StrengthHeatmap.ts`
+**Section key**: `"heatmap"` (add to `devConfig.sectionOrder`)
+
+Features:
+- **Gender-aware figures**: The silhouette adapts based on the user's gender setting (wider hips for female, wider shoulders for male)
+- **Intensity coloring**: Muscle regions are colored based on recent workout activity (green → gold gradient)
+- **Click any muscle** → popup appears showing monthly progress for that muscle group, with a toggle for yearly view
+- **"Progress" button** → popup with two charts:
+  1. Overall body strength trend (all body activities combined)
+  2. Per-activity breakdown as multi-line chart
+- **"Start New Workout" button** → opens a muscle selector popup where the user taps muscles to select them, then begins a workout
+
+### Muscle Selector
+
+The muscle selector (`showMuscleSelector()`) provides an interactive figure where users tap muscle regions to highlight them. Selected muscles appear as gold chips below the figure. Tapping "Begin Workout" starts the workout workspace.
+
+### Mobile Scroll Fix
+
+All dashboard screens now have `padding-bottom: 120px` to prevent content from being cut off by Obsidian's mobile navigation bar. This applies to:
+- `.olen-dashboard` — the main dashboard view
+- `.olen-template-root` — template-rendered views (workout, etc.)
+
+### Aesthetic Refinements
+
+The visual design has been refined for a more minimal feel:
+- Section headings are smaller (10px) with wider letter-spacing
+- Card borders are more subtle (6% opacity instead of 12%)
+- Dividers are softer (40% opacity)
+- Stat card backgrounds are slightly more transparent
+- The overall feel is darker with less visual clutter, keeping the glass morphism effect but reducing unnecessary prominence of decorative elements
