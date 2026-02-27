@@ -703,6 +703,44 @@ All dashboard screens now have `padding-bottom: 120px` to prevent content from b
 - `.olen-dashboard` — the main dashboard view
 - `.olen-template-root` — template-rendered views (workout, etc.)
 
+### Workout Template v6.0 Changes
+
+The workout template (`workout.tpl` / `Workout.js`) has been updated from v5.0 to v6.0 with major changes:
+
+**Personal Stats from Plugin Settings**
+- The template no longer reads from a separate `Personal Stats.md` file
+- Instead, it reads from `ctx.plugin.settings.personalStats` (the Olen plugin settings)
+- The `PERSONAL` object provides `weight`, `height`, `birthdate`, and `gender`
+- `getPersonalStats()` now returns data from plugin settings directly
+- This means the user only needs to configure their stats once in Olen Settings, not maintain a separate file
+
+**Interactive Body Heatmap**
+- `buildBodySvg()` (static innerHTML) has been replaced by `buildInteractiveBodySvg()` (DOM-based SVGs)
+- Each muscle region is now a clickable `<g>` element with hover effects
+- Clicking a muscle opens a progress popup (`showMuscleProgressPopup()`) showing:
+  - Current strength level badge
+  - Monthly workout frequency as a 4-week bar chart
+  - Toggle button to switch to yearly view (12-month bar chart)
+- A "PROGRESS" button below the heatmap opens `showOverallProgressPopup()` with:
+  - Average overall strength level (computed across all muscle regions)
+  - Workouts-per-week bar chart (last 4 weeks)
+  - Per-muscle-group breakdown with strength level bars
+
+**SVG Muscle Selector for New Workouts**
+- The muscle selection screen now has a "START NEW WORKOUT" button at the very top of the page
+- Below the stats, an interactive SVG figure lets users tap muscles to select them
+- Selected muscles light up in gold on the figure
+- The toggle buttons below still work as a secondary selection method
+- Tapping a region on the SVG toggles the corresponding parent muscle group and vice versa
+- The `REGION_TO_MUSCLE` mapping connects SVG regions to muscle group names
+
+**Mobile Scroll Fix**
+- `.otw-container` now has `padding-bottom: 120px` to prevent Obsidian's mobile nav bar from cutting off content
+
+**Mini Bar Chart Helper**
+- New `renderMiniBarChart(parent, labels, values)` function draws simple bar charts inside popups
+- Used by both the muscle progress popup and the overall progress popup
+
 ### Aesthetic Refinements
 
 The visual design has been refined for a more minimal feel:

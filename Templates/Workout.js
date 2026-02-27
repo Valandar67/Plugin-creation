@@ -1,8 +1,9 @@
 // ============================================================
-// Olen Template — Workout Tracker v5.0
+// Olen Template — Workout Tracker v6.0
 // Renders inside the Olen workspace for the "workout" activity.
 // All UI lives here — daily notes only store YAML frontmatter.
 // Data is read/written via ctx.getData / ctx.setData.
+// Personal stats now read from plugin settings (personalStats).
 // ============================================================
 
 const { container, getData, setData, setMultipleData, app, moment, notice,
@@ -14,14 +15,17 @@ const { container, getData, setData, setMultipleData, app, moment, notice,
 const SETTINGS = {
   // Where daily workout notes are stored
   workoutFolder: "Personal Life/01 Workout",
-  // File containing Weight, Height, Birthdate in frontmatter
-  personalStatsFile: "Personal Life/Personal Stats.md",
   // Folder containing exercise standard .md files (e.g. "Bench Press.md")
   exerciseDbFolder: "Home/Activities/Exercises database",
-  // Default personal stats (used when stats file is missing)
-  defaultWeight: 61,
-  defaultHeight: 175,
-  defaultBirthdate: "2005-11-29",
+};
+
+// Read personal stats from plugin settings (set in Olen Settings > Personal Stats)
+const _pluginStats = ctx.plugin?.settings?.personalStats || {};
+const PERSONAL = {
+  weight: _pluginStats.currentWeight || 61,
+  height: _pluginStats.height || 175,
+  birthdate: _pluginStats.birthdate || "2005-11-29",
+  gender: _pluginStats.gender || "male",
 };
 
 // Muscle groups available for selection, with optional subgroups
@@ -75,7 +79,7 @@ if (!document.getElementById("olen-tpl-workout-v5")) {
   style.id = "olen-tpl-workout-v5";
   style.textContent = `
     .otw-container * { box-sizing: border-box; }
-    .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0; font-family: Georgia, serif; }
+    .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0 120px 0; font-family: Georgia, serif; }
     .otw-container button, .otw-container input, .otw-modal-overlay button, .otw-modal-overlay input { border-radius: 0 !important; -webkit-appearance: none; appearance: none; }
     .otw-container input[type="number"] { -moz-appearance: textfield; }
     @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 20px rgba(154,140,122,0.03); } 50% { box-shadow: inset 0 0 40px rgba(154,140,122,0.08); } }
@@ -182,12 +186,11 @@ function updateWarmupWeights(ex, newW) {
 // ============================================================
 
 async function getPersonalStats() {
-  const fm = getFileMetadata(SETTINGS.personalStatsFile);
-  if (!fm) return { weight: SETTINGS.defaultWeight, height: SETTINGS.defaultHeight, birthdate: SETTINGS.defaultBirthdate };
+  // Read from plugin settings (Personal Stats section)
   return {
-    weight: fm.Weight || SETTINGS.defaultWeight,
-    height: fm.Height || SETTINGS.defaultHeight,
-    birthdate: fm.Birthdate || SETTINGS.defaultBirthdate
+    weight: PERSONAL.weight,
+    height: PERSONAL.height,
+    birthdate: PERSONAL.birthdate,
   };
 }
 
@@ -1041,27 +1044,29 @@ async function getMuscleLevelData() {
 }
 
 // ============================================================
-// BODY HEATMAP SVG
+// BODY HEATMAP SVG — Interactive with click-to-show-progress
 // ============================================================
 
-function buildBodySvg(view, muscleLevels) {
-  // view: "front" or "back"
-  // muscleLevels: { region: { level, color, progress } }
+const REGION_LABELS = {
+  neck: "Neck", chest: "Chest", front_delts: "Front Delts", rear_delts: "Rear Delts",
+  biceps: "Biceps", triceps: "Triceps", forearms: "Forearms", core: "Core",
+  quads: "Quads", calves: "Calves", traps: "Traps", lats: "Lats",
+  lower_back: "Lower Back", glutes: "Glutes", hamstrings: "Hamstrings",
+};
+
+function buildInteractiveBodySvg(view, muscleLevels, onRegionClick) {
   const untrained = "#1a1816";
   function fill(region) {
     const d = muscleLevels[region];
-    return d ? d.color + "90" : untrained; // 90 = ~56% alpha hex
+    return d ? d.color + "90" : untrained;
   }
   function stroke(region) {
     const d = muscleLevels[region];
     return d ? d.color + "40" : "#2a2520";
   }
 
-  // SVG paths for each region — stylized anatomical figure
-  // ViewBox: 0 0 100 210
   const head = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
 
-  // ── FRONT VIEW REGIONS ──
   const frontPaths = {
     neck:       '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
     front_delts:'<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
@@ -1073,7 +1078,6 @@ function buildBodySvg(view, muscleLevels) {
     calves:     '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
   };
 
-  // ── BACK VIEW REGIONS ──
   const backPaths = {
     neck:       '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
     traps:      '<path d="M39,33 L50,27 L61,33 L59,43 L50,39 L41,43 Z"/>',
@@ -1088,16 +1092,280 @@ function buildBodySvg(view, muscleLevels) {
   };
 
   const regions = view === "front" ? frontPaths : backPaths;
-  let paths = "";
+
+  // Build DOM SVG (not innerHTML) for click events
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 100 210");
+  svg.setAttribute("class", "otw-heatmap-svg");
+
+  // Head
+  const headG = document.createElementNS(ns, "g");
+  headG.innerHTML = head;
+  svg.appendChild(headG);
+
+  // Muscle regions with click handlers
   for (const [region, pathData] of Object.entries(regions)) {
-    paths += '<g fill="' + fill(region) + '" stroke="' + stroke(region) + '" stroke-width="0.6">' + pathData + '</g>';
+    const g = document.createElementNS(ns, "g");
+    g.setAttribute("fill", fill(region));
+    g.setAttribute("stroke", stroke(region));
+    g.setAttribute("stroke-width", "0.6");
+    g.style.cursor = "pointer";
+    g.style.transition = "opacity 0.15s";
+    g.innerHTML = pathData;
+
+    // Hover effect
+    g.addEventListener("mouseenter", () => { g.style.opacity = "0.7"; });
+    g.addEventListener("mouseleave", () => { g.style.opacity = "1"; });
+
+    // Click → show progress popup for this muscle
+    g.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (onRegionClick) onRegionClick(region);
+    });
+
+    svg.appendChild(g);
   }
 
+  // Label
   const label = view === "front" ? "FRONT" : "BACK";
-  return '<svg class="otw-heatmap-svg" viewBox="0 0 100 210" xmlns="http://www.w3.org/2000/svg">'
-    + head + paths
-    + '<text x="50" y="207" text-anchor="middle" fill="#4a4030" font-size="8" font-family="Georgia,serif" letter-spacing="2">' + label + '</text>'
-    + '</svg>';
+  const txt = document.createElementNS(ns, "text");
+  txt.setAttribute("x", "50");
+  txt.setAttribute("y", "207");
+  txt.setAttribute("text-anchor", "middle");
+  txt.setAttribute("fill", "#4a4030");
+  txt.setAttribute("font-size", "8");
+  txt.setAttribute("font-family", "Georgia,serif");
+  txt.setAttribute("letter-spacing", "2");
+  txt.textContent = label;
+  svg.appendChild(txt);
+
+  return svg;
+}
+
+// ── Muscle Progress Popup (when clicking a muscle on the heatmap) ──
+
+function showMuscleProgressPopup(regionId, muscleLevels) {
+  const label = REGION_LABELS[regionId] || regionId;
+  const levelData = muscleLevels[regionId];
+
+  createModal(label.toUpperCase(), (content) => {
+    // Current strength level
+    if (levelData) {
+      const li = STRENGTH_LEVELS[levelData.level];
+      const badge = document.createElement("div");
+      badge.className = "otw-strength-badge";
+      badge.style.cssText = `background:${levelData.color}25;border:1px solid ${levelData.color}60;color:${levelData.color};margin:8px auto;display:inline-flex;`;
+      badge.textContent = (li?.icon || "\u25CB") + " " + levelData.level.toUpperCase();
+      content.appendChild(badge);
+
+      if (levelData.progress !== undefined) {
+        const pb = document.createElement("div");
+        pb.className = "otw-strength-bar";
+        pb.style.marginTop = "12px";
+        content.appendChild(pb);
+        const fill = document.createElement("div");
+        fill.className = "otw-strength-fill";
+        fill.style.cssText = `width:${Math.min(100, levelData.progress)}%;background:${levelData.color};`;
+        pb.appendChild(fill);
+      }
+    } else {
+      const noData = document.createElement("div");
+      noData.style.cssText = `color:${THEME.colorMuted};text-align:center;font-style:italic;padding:16px;font-size:12px;`;
+      noData.textContent = "No workout data for this muscle yet";
+      content.appendChild(noData);
+    }
+
+    // Monthly workout frequency chart
+    const chartLabel = document.createElement("div");
+    chartLabel.style.cssText = `color:${THEME.colorMuted};font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:20px;`;
+    chartLabel.textContent = "MONTHLY FREQUENCY";
+    content.appendChild(chartLabel);
+
+    // Find workouts that targeted this region in the last 30 days
+    const allFiles = getFilesInFolder(SETTINGS.workoutFolder);
+    const reverseMap = {};
+    for (const [muscle, regions] of Object.entries(MUSCLE_TO_REGION)) {
+      for (const r of regions) {
+        if (!reverseMap[r]) reverseMap[r] = [];
+        reverseMap[r].push(muscle);
+      }
+    }
+    const targetMuscles = reverseMap[regionId] || [];
+
+    // Count workouts per week (last 4 weeks)
+    const now = moment();
+    const weekCounts = [0, 0, 0, 0];
+    for (const wFile of allFiles) {
+      const fm = getFileMetadata(wFile.path);
+      if (!fm || fm.Workout !== true || !Array.isArray(fm.exercises)) continue;
+      const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (!dateMatch) continue;
+      const fileDate = moment(dateMatch[1], "YYYY-MM-DD");
+      const daysAgo = now.diff(fileDate, "days");
+      if (daysAgo < 0 || daysAgo > 28) continue;
+      const hasMuscle = fm.exercises.some(ex => targetMuscles.includes(ex.muscle || ex.muscleGroup));
+      if (hasMuscle) {
+        const weekIdx = Math.floor(daysAgo / 7);
+        if (weekIdx < 4) weekCounts[3 - weekIdx]++;
+      }
+    }
+
+    renderMiniBarChart(content, ["W1", "W2", "W3", "W4"], weekCounts);
+
+    // Toggle: yearly view
+    const yearBtn = document.createElement("button");
+    yearBtn.textContent = "SHOW YEARLY";
+    yearBtn.className = "otw-btn otw-btn-secondary";
+    yearBtn.style.cssText += "margin-top:12px;font-size:10px;padding:8px 16px;width:100%;";
+    let showingYearly = false;
+    const yearContainer = document.createElement("div");
+    content.appendChild(yearBtn);
+    content.appendChild(yearContainer);
+
+    yearBtn.onclick = () => {
+      showingYearly = !showingYearly;
+      yearBtn.textContent = showingYearly ? "SHOW MONTHLY" : "SHOW YEARLY";
+      yearContainer.innerHTML = "";
+      if (showingYearly) {
+        const monthCounts = new Array(12).fill(0);
+        const monthLabels = ["J","F","M","A","M","J","J","A","S","O","N","D"];
+        for (const wFile of allFiles) {
+          const fm = getFileMetadata(wFile.path);
+          if (!fm || fm.Workout !== true || !Array.isArray(fm.exercises)) continue;
+          const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (!dateMatch) continue;
+          const fileDate = moment(dateMatch[1], "YYYY-MM-DD");
+          if (now.diff(fileDate, "months") > 11) continue;
+          const hasMuscle = fm.exercises.some(ex => targetMuscles.includes(ex.muscle || ex.muscleGroup));
+          if (hasMuscle) monthCounts[fileDate.month()]++;
+        }
+        renderMiniBarChart(yearContainer, monthLabels, monthCounts);
+      }
+    };
+  });
+}
+
+// ── Overall Progress Popup (both overall + per-muscle) ──
+
+async function showOverallProgressPopup(muscleLevels) {
+  createModal("STRENGTH PROGRESS", (content) => {
+    // 1) Overall strength trend — average strength level across all regions
+    const overLabel = document.createElement("div");
+    overLabel.style.cssText = `color:${THEME.colorMuted};font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:8px;`;
+    overLabel.textContent = "OVERALL STRENGTH";
+    content.appendChild(overLabel);
+
+    // Summarize current strength levels
+    const levelOrder = ["Untrained", "Beginner", "Novice", "Intermediate", "Advanced", "Elite"];
+    const regionLevels = Object.entries(muscleLevels);
+    if (regionLevels.length === 0) {
+      const noData = document.createElement("div");
+      noData.style.cssText = `color:${THEME.colorMuted};text-align:center;font-size:12px;font-style:italic;padding:12px;`;
+      noData.textContent = "Complete some workouts to see your strength progress";
+      content.appendChild(noData);
+    } else {
+      // Average progress value
+      let totalProgress = 0;
+      for (const [, data] of regionLevels) {
+        const idx = levelOrder.indexOf(data.level);
+        totalProgress += (idx / 5) * 100 + (data.progress || 0) * (1/5);
+      }
+      const avgProgress = totalProgress / regionLevels.length;
+      const avgLevelIdx = Math.min(5, Math.floor(avgProgress / 20));
+      const avgLevel = levelOrder[avgLevelIdx];
+      const avgColor = STRENGTH_LEVELS[avgLevel]?.color || "#6a6a6a";
+
+      const badge = document.createElement("div");
+      badge.className = "otw-strength-badge";
+      badge.style.cssText = `background:${avgColor}25;border:1px solid ${avgColor}60;color:${avgColor};margin:0 auto 12px;display:inline-flex;`;
+      badge.textContent = avgLevel.toUpperCase() + " (avg)";
+      content.appendChild(badge);
+
+      const pb = document.createElement("div");
+      pb.className = "otw-strength-bar";
+      content.appendChild(pb);
+      const fill = document.createElement("div");
+      fill.className = "otw-strength-fill";
+      fill.style.cssText = `width:${Math.min(100, avgProgress)}%;background:${avgColor};`;
+      pb.appendChild(fill);
+    }
+
+    // Monthly completions chart (all workouts)
+    const allFiles = getFilesInFolder(SETTINGS.workoutFolder);
+    const now = moment();
+    const weekCounts = [0, 0, 0, 0];
+    for (const wFile of allFiles) {
+      const fm = getFileMetadata(wFile.path);
+      if (!fm || fm.Workout !== true) continue;
+      const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (!dateMatch) continue;
+      const daysAgo = now.diff(moment(dateMatch[1], "YYYY-MM-DD"), "days");
+      if (daysAgo < 0 || daysAgo > 28) continue;
+      const weekIdx = Math.floor(daysAgo / 7);
+      if (weekIdx < 4) weekCounts[3 - weekIdx]++;
+    }
+
+    const c1Label = document.createElement("div");
+    c1Label.style.cssText = `color:${THEME.colorMuted};font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:16px;`;
+    c1Label.textContent = "WORKOUTS PER WEEK";
+    content.appendChild(c1Label);
+    renderMiniBarChart(content, ["W1", "W2", "W3", "W4"], weekCounts);
+
+    // 2) Per-muscle breakdown
+    const musLabel = document.createElement("div");
+    musLabel.style.cssText = `color:${THEME.colorMuted};font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:20px;`;
+    musLabel.textContent = "BY MUSCLE GROUP";
+    content.appendChild(musLabel);
+
+    for (const [region, data] of regionLevels) {
+      const row = document.createElement("div");
+      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1816;`;
+      content.appendChild(row);
+
+      const nameEl = document.createElement("span");
+      nameEl.style.cssText = `color:${THEME.colorMuted};font-size:11px;min-width:80px;`;
+      nameEl.textContent = REGION_LABELS[region] || region;
+      row.appendChild(nameEl);
+
+      const bar = document.createElement("div");
+      bar.style.cssText = "flex:1;height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden;";
+      row.appendChild(bar);
+      const barFill = document.createElement("div");
+      barFill.style.cssText = `height:100%;width:${Math.min(100, (levelOrder.indexOf(data.level) / 5) * 100 + (data.progress || 0) / 5)}%;background:${data.color};border-radius:3px;`;
+      bar.appendChild(barFill);
+
+      const levelEl = document.createElement("span");
+      levelEl.style.cssText = `color:${data.color};font-size:10px;font-weight:600;min-width:60px;text-align:right;`;
+      levelEl.textContent = data.level;
+      row.appendChild(levelEl);
+    }
+  });
+}
+
+// ── Mini bar chart helper (used in popups) ──
+
+function renderMiniBarChart(parent, labels, values) {
+  const maxVal = Math.max(...values, 1);
+  const chart = document.createElement("div");
+  chart.style.cssText = "display:flex;gap:6px;align-items:flex-end;justify-content:center;height:60px;margin:8px 0;";
+  parent.appendChild(chart);
+
+  for (let i = 0; i < labels.length; i++) {
+    const col = document.createElement("div");
+    col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;";
+    chart.appendChild(col);
+
+    const barH = Math.max(4, (values[i] / maxVal) * 48);
+    const bar = document.createElement("div");
+    bar.style.cssText = `width:100%;max-width:24px;height:${barH}px;background:${values[i] > 0 ? THEME.color : "#1a1816"};border-radius:2px;transition:height 0.3s;`;
+    col.appendChild(bar);
+
+    const lbl = document.createElement("div");
+    lbl.style.cssText = `font-size:8px;color:${THEME.colorMuted};letter-spacing:1px;`;
+    lbl.textContent = labels[i];
+    col.appendChild(lbl);
+  }
 }
 
 // ============================================================
@@ -1201,7 +1469,7 @@ async function renderStatsSection(root) {
     volRow.appendChild(setsBox);
   }
 
-  // Body Strength Heatmap
+  // Body Strength Heatmap — Interactive
   const hmLabel = document.createElement("div");
   hmLabel.className = "otw-section-label";
   hmLabel.style.marginTop = "24px";
@@ -1209,10 +1477,21 @@ async function renderStatsSection(root) {
   root.appendChild(hmLabel);
 
   const muscleLevels = await getMuscleLevelData();
+
   const hmWrap = document.createElement("div");
   hmWrap.className = "otw-heatmap-wrap";
-  hmWrap.innerHTML = buildBodySvg("front", muscleLevels) + buildBodySvg("back", muscleLevels);
   root.appendChild(hmWrap);
+
+  // Build interactive SVGs with click-to-show-progress
+  const frontSvg = buildInteractiveBodySvg("front", muscleLevels, (region) => {
+    showMuscleProgressPopup(region, muscleLevels);
+  });
+  hmWrap.appendChild(frontSvg);
+
+  const backSvg = buildInteractiveBodySvg("back", muscleLevels, (region) => {
+    showMuscleProgressPopup(region, muscleLevels);
+  });
+  hmWrap.appendChild(backSvg);
 
   // Legend
   const legend = document.createElement("div");
@@ -1238,6 +1517,14 @@ async function renderStatsSection(root) {
     legend.appendChild(li);
   }
   root.appendChild(legend);
+
+  // "Progress" button below the heatmap
+  const progressBtn = document.createElement("button");
+  progressBtn.textContent = "PROGRESS";
+  progressBtn.className = "otw-btn otw-btn-secondary";
+  progressBtn.style.cssText += "width:100%;margin-top:12px;font-size:11px;padding:10px;";
+  progressBtn.onclick = () => showOverallProgressPopup(muscleLevels);
+  root.appendChild(progressBtn);
 
   // Recent sessions
   const recent = getRecentSessions(4);
@@ -1284,42 +1571,159 @@ async function renderMuscleSelection(root) {
   const selectedMuscles = new Set();
   const selectedSubgroups = new Map();
 
-  // Header
-  const header = document.createElement("div");
-  header.className = "otw-card otw-card-breathe otw-header";
-  addCorners(header, THEME.color);
-  header.innerHTML = `
-    <div style="font-size:32px;margin-bottom:12px;">\uD83C\uDFCB\uFE0F</div>
-    <h2 class="otw-title">NEW WORKOUT</h2>
-    <div class="otw-progress-label">Select muscle groups to train</div>
-  `;
-  root.appendChild(header);
+  // ── "Start New Workout" button HIGH at the top ──
+  const startBtnTop = document.createElement("button");
+  startBtnTop.textContent = "\uD83C\uDFCB\uFE0F START NEW WORKOUT";
+  startBtnTop.className = "otw-btn otw-btn-primary";
+  startBtnTop.style.cssText += "padding:14px 24px;font-size:14px;font-weight:700;width:100%;margin-bottom:16px;";
+  startBtnTop.onclick = () => scrollToMuscleSelect();
+  root.appendChild(startBtnTop);
 
   // Stats dashboard
   await renderStatsSection(root);
 
-  // Divider before muscle selection
+  // ── Muscle Selection Section ──
+  const selAnchor = document.createElement("div");
+  selAnchor.id = "otw-muscle-select";
+  root.appendChild(selAnchor);
+
+  function scrollToMuscleSelect() {
+    selAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const selLabel = document.createElement("div");
   selLabel.className = "otw-section-label";
   selLabel.style.marginTop = "28px";
   selLabel.textContent = "SELECT MUSCLE GROUPS";
   root.appendChild(selLabel);
 
-  // Muscle group grid
+  const selDesc = document.createElement("div");
+  selDesc.style.cssText = `color:${THEME.colorMuted};font-size:11px;text-align:center;margin-bottom:12px;`;
+  selDesc.textContent = "Tap muscles on the figure or use the buttons below";
+  root.appendChild(selDesc);
+
+  // Interactive SVG muscle selector figure
+  const selectorWrap = document.createElement("div");
+  selectorWrap.className = "otw-heatmap-wrap";
+  selectorWrap.style.marginBottom = "12px";
+  root.appendChild(selectorWrap);
+
+  // Region → parent muscle group mapping for the selector
+  const REGION_TO_MUSCLE = {
+    neck: "Neck", chest: "Chest", front_delts: "Shoulders", rear_delts: "Shoulders",
+    biceps: "Arms", triceps: "Arms", forearms: "Arms", core: "Core",
+    quads: "Legs", calves: "Legs", hamstrings: "Legs", glutes: "Legs",
+    traps: "Back", lats: "Back", lower_back: "Back",
+  };
+
+  // Track selected regions visually
+  const selectedRegionEls = new Map(); // region → [g elements]
+
+  function buildSelectorSvg(view) {
+    const regions = view === "front" ? {
+      neck: '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
+      front_delts: '<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
+      chest: '<path d="M31,37 L49,37 L49,55 C49,57 42,60 33,58 L31,56 Z"/><path d="M51,37 L69,37 L69,56 L67,58 C58,60 51,57 51,55 Z"/>',
+      biceps: '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
+      forearms: '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
+      core: '<path d="M33,58 L67,58 L65,82 L35,82 Z"/>',
+      quads: '<path d="M35,84 L49,84 L48,136 L34,136 Z"/><path d="M51,84 L65,84 L66,136 L52,136 Z"/>',
+      calves: '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
+    } : {
+      neck: '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
+      traps: '<path d="M39,33 L50,27 L61,33 L59,43 L50,39 L41,43 Z"/>',
+      rear_delts: '<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
+      lats: '<path d="M33,43 L41,43 L50,39 L59,43 L67,43 L65,66 L50,70 L35,66 Z"/>',
+      triceps: '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
+      forearms: '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
+      lower_back: '<path d="M35,66 L50,70 L65,66 L65,82 L35,82 Z"/>',
+      glutes: '<path d="M35,82 L49,82 L49,94 C47,98 37,98 35,94 Z"/><path d="M51,82 L65,82 L65,94 C63,98 53,98 51,94 Z"/>',
+      hamstrings: '<path d="M35,96 L49,96 L48,136 L34,136 Z"/><path d="M51,96 L65,96 L66,136 L52,136 Z"/>',
+      calves: '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
+    };
+
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 100 210");
+    svg.setAttribute("class", "otw-heatmap-svg");
+
+    // Head
+    const headG = document.createElementNS(ns, "g");
+    headG.innerHTML = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
+    svg.appendChild(headG);
+
+    for (const [region, pathData] of Object.entries(regions)) {
+      const g = document.createElementNS(ns, "g");
+      g.setAttribute("fill", "#1a1816");
+      g.setAttribute("stroke", "#2a2520");
+      g.setAttribute("stroke-width", "0.6");
+      g.style.cursor = "pointer";
+      g.style.transition = "fill 0.15s";
+      g.innerHTML = pathData;
+
+      // Track for visual updates
+      if (!selectedRegionEls.has(region)) selectedRegionEls.set(region, []);
+      selectedRegionEls.get(region).push(g);
+
+      g.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const parentMuscle = REGION_TO_MUSCLE[region];
+        if (!parentMuscle) return;
+        if (selectedMuscles.has(parentMuscle)) {
+          selectedMuscles.delete(parentMuscle);
+        } else {
+          selectedMuscles.add(parentMuscle);
+        }
+        updateSelectorVisuals();
+        updateToggleButtons();
+      });
+
+      svg.appendChild(g);
+    }
+
+    const label = view === "front" ? "FRONT" : "BACK";
+    const txt = document.createElementNS(ns, "text");
+    txt.setAttribute("x", "50"); txt.setAttribute("y", "207");
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("fill", "#4a4030"); txt.setAttribute("font-size", "8");
+    txt.setAttribute("font-family", "Georgia,serif"); txt.setAttribute("letter-spacing", "2");
+    txt.textContent = label;
+    svg.appendChild(txt);
+
+    return svg;
+  }
+
+  selectorWrap.appendChild(buildSelectorSvg("front"));
+  selectorWrap.appendChild(buildSelectorSvg("back"));
+
+  function updateSelectorVisuals() {
+    for (const [region, gList] of selectedRegionEls) {
+      const parentMuscle = REGION_TO_MUSCLE[region];
+      const isSelected = parentMuscle && selectedMuscles.has(parentMuscle);
+      for (const g of gList) {
+        g.setAttribute("fill", isSelected ? THEME.color + "80" : "#1a1816");
+        g.setAttribute("stroke", isSelected ? THEME.color + "60" : "#2a2520");
+      }
+    }
+  }
+
+  // Muscle group toggle buttons (still available as secondary selection method)
   const muscleGrid = document.createElement("div");
   muscleGrid.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:8px;";
   root.appendChild(muscleGrid);
 
-  // Subgroup area (below the grid)
   const subgroupArea = document.createElement("div");
   subgroupArea.style.cssText = "display:flex;flex-direction:column;gap:8px;width:100%;";
   root.appendChild(subgroupArea);
+
+  const toggleButtons = new Map();
 
   Object.entries(MUSCLE_GROUPS).forEach(([name, config]) => {
     const btn = document.createElement("button");
     btn.className = "otw-muscle-toggle";
     btn.textContent = `${config.icon} ${name}`;
     muscleGrid.appendChild(btn);
+    toggleButtons.set(name, btn);
 
     let subgroupContainer = null;
     if (config.subgroups) {
@@ -1357,20 +1761,25 @@ async function renderMuscleSelection(root) {
         btn.classList.add("active");
         if (subgroupContainer) subgroupContainer.classList.add("expanded");
       }
+      updateSelectorVisuals();
     };
   });
 
-  // Quote
-  const quote = document.createElement("div");
-  quote.style.cssText = `padding:16px;background:#0c0c0c;border-left:2px solid ${THEME.color};margin:16px 0;`;
-  quote.innerHTML = `<p style="color:${THEME.colorMuted};font-style:italic;font-size:12px;margin:0;">"There is a general principle here: <strong style="color:${THEME.color};">perform any amount of warming-up that you believe to be minimally required.</strong>"</p><p style="color:${THEME.colorMuted};font-size:11px;margin:8px 0 0 0;text-align:right;">\u2014 Mike Mentzer</p>`;
-  root.appendChild(quote);
+  function updateToggleButtons() {
+    for (const [name, btn] of toggleButtons) {
+      if (selectedMuscles.has(name)) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    }
+  }
 
-  // Start button
+  // Start button (bottom)
   const startBtn = document.createElement("button");
   startBtn.textContent = "\uD83C\uDFCB\uFE0F START WORKOUT";
   startBtn.className = "otw-btn otw-btn-primary";
-  startBtn.style.cssText += "padding:16px 24px;font-size:15px;font-weight:700;";
+  startBtn.style.cssText += "padding:16px 24px;font-size:15px;font-weight:700;margin-top:16px;";
   startBtn.onclick = async () => {
     if (selectedMuscles.size === 0) { notice("Please select at least one muscle group"); return; }
 
