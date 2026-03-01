@@ -4,6 +4,7 @@
 // Clickable muscles open progress graphs
 // ============================================================
 
+import type { App } from "obsidian";
 import type { OlenSettings, CompletionMap, Gender } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
 import type { MuscleGroupId } from "../constants";
@@ -53,23 +54,33 @@ export function renderStrengthHeatmap(
   engine: OlenEngine,
   completionData: CompletionMap,
   staggerIndex: number,
-  callbacks: HeatmapCallbacks
+  callbacks: HeatmapCallbacks,
+  app?: App
 ): void {
   const section = container.createDiv({ cls: "olen-heatmap-section" });
   section.style.setProperty("--i", String(staggerIndex));
 
-  // Figure container — front and back views side by side
+  // Figure container
   const gender = settings.personalStats.gender;
   const figureWrap = section.createDiv({ cls: "olen-heatmap-figures" });
 
   // Gather muscle intensity data from workout completions
   const muscleData = gatherMuscleIntensity(engine, completionData, settings);
 
-  // Front view
-  renderMuscleFigure(figureWrap, "front", gender, muscleData, callbacks.onMuscleClick);
-
-  // Back view
-  renderMuscleFigure(figureWrap, "back", gender, muscleData, callbacks.onMuscleClick);
+  // Try to load actual SVG file, then render figure
+  const svgFileName = gender === "female" ? "Muscle Woman.svg" : "Muscle Man.svg";
+  if (app) {
+    loadSvgFromVault(app, svgFileName).then((svgContent) => {
+      if (svgContent) {
+        renderSvgFigureWithOverlay(figureWrap, svgContent, muscleData, callbacks.onMuscleClick);
+      } else {
+        // Fallback to programmatic
+        renderMuscleFigure(figureWrap, "front", gender, muscleData, callbacks.onMuscleClick);
+      }
+    });
+  } else {
+    renderMuscleFigure(figureWrap, "front", gender, muscleData, callbacks.onMuscleClick);
+  }
 
   // Buttons below the figure
   const actions = section.createDiv({ cls: "olen-heatmap-actions" });
@@ -85,6 +96,77 @@ export function renderStrengthHeatmap(
     text: "Start New Workout",
   });
   workoutBtn.addEventListener("click", () => callbacks.onStartWorkout());
+}
+
+// --- Load actual SVG from vault ---
+
+async function loadSvgFromVault(app: App, fileName: string): Promise<string | null> {
+  try {
+    const content = await app.vault.adapter.read(fileName);
+    return content || null;
+  } catch {
+    return null;
+  }
+}
+
+// --- Render actual SVG with overlay hotspots ---
+
+function renderSvgFigureWithOverlay(
+  parent: HTMLElement,
+  svgContent: string,
+  muscleData: Map<MuscleGroupId, number>,
+  onMuscleClick: (id: MuscleGroupId) => void
+): void {
+  const figure = parent.createDiv({ cls: "olen-heatmap-figure" });
+  figure.style.maxWidth = "240px";
+  figure.style.position = "relative";
+  figure.style.margin = "0 auto";
+
+  // Insert actual SVG (dimmed, desaturated)
+  const svgHolder = figure.createDiv();
+  svgHolder.style.cssText = "width:100%;opacity:0.8;filter:saturate(0.2) brightness(0.45);";
+  svgHolder.innerHTML = svgContent;
+  const svgEl = svgHolder.querySelector("svg");
+  if (svgEl) {
+    svgEl.style.width = "100%";
+    svgEl.style.height = "auto";
+    svgEl.style.display = "block";
+  }
+
+  // Overlay for hotspots
+  const overlay = figure.createDiv();
+  overlay.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;";
+
+  // Create hotspots based on muscle regions
+  for (const region of MUSCLE_REGIONS) {
+    const bounds = region.front;
+    if (!bounds) continue;
+
+    const intensity = muscleData.get(region.id) ?? 0;
+    const color = getIntensityColor(intensity);
+
+    const hs = overlay.createDiv();
+    hs.style.cssText = `position:absolute;top:${bounds.y}%;left:${bounds.x}%;width:${bounds.w}%;height:${bounds.h}%;cursor:pointer;border-radius:4px;transition:background 0.15s;background:${intensity > 0 ? color + "30" : "transparent"};border:1px solid ${intensity > 0 ? color + "20" : "transparent"};`;
+    hs.title = MUSCLE_GROUP_LABELS[region.id] + (intensity > 0 ? ` — ${Math.round(intensity * 100)}%` : "");
+
+    hs.addEventListener("mouseenter", () => { hs.style.background = (intensity > 0 ? color : "#9a8c7a") + "50"; });
+    hs.addEventListener("mouseleave", () => { hs.style.background = intensity > 0 ? color + "30" : "transparent"; });
+    hs.addEventListener("click", (e) => { e.stopPropagation(); onMuscleClick(region.id); });
+
+    overlay.appendChild(hs);
+
+    // Mirror for symmetric muscles
+    if (isSymmetricMuscle(region.id) && bounds.x < 50) {
+      const mirrorLeft = 100 - bounds.x - bounds.w;
+      const mirror = overlay.createDiv();
+      mirror.style.cssText = `position:absolute;top:${bounds.y}%;left:${mirrorLeft}%;width:${bounds.w}%;height:${bounds.h}%;cursor:pointer;border-radius:4px;transition:background 0.15s;background:${intensity > 0 ? color + "30" : "transparent"};border:1px solid ${intensity > 0 ? color + "20" : "transparent"};`;
+      mirror.title = hs.title;
+      mirror.addEventListener("mouseenter", () => { mirror.style.background = (intensity > 0 ? color : "#9a8c7a") + "50"; });
+      mirror.addEventListener("mouseleave", () => { mirror.style.background = intensity > 0 ? color + "30" : "transparent"; });
+      mirror.addEventListener("click", (e) => { e.stopPropagation(); onMuscleClick(region.id); });
+      overlay.appendChild(mirror);
+    }
+  }
 }
 
 // --- Figure Rendering ---
@@ -480,7 +562,7 @@ function renderSimpleBarChart(
     }
   }
 
-  drawBarChart(container, labels, values, "#d4a843");
+  drawLineChart(container, labels, values, "#d4a843");
 }
 
 function renderOverallStrengthChart(
@@ -534,7 +616,7 @@ function renderOverallStrengthChart(
     }
   }
 
-  drawBarChart(container, labels, values, "#d4a843");
+  drawLineChart(container, labels, values, "#d4a843");
 }
 
 function renderMuscleBreakdownChart(
@@ -654,7 +736,7 @@ function renderMuscleBreakdownChart(
   }
 }
 
-function drawBarChart(
+function drawLineChart(
   container: HTMLElement,
   labels: string[],
   values: number[],
@@ -663,34 +745,82 @@ function drawBarChart(
   const svgNS = "http://www.w3.org/2000/svg";
   const width = 280;
   const height = 100;
-  const padding = { top: 8, right: 8, bottom: 18, left: 8 };
+  const padding = { top: 10, right: 10, bottom: 18, left: 10 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
   const maxVal = Math.max(...values, 1);
-  const barGap = 4;
-  const barWidth = (chartW - barGap * (labels.length - 1)) / labels.length;
 
   const svg = document.createElementNS(svgNS, "svg");
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
   svg.setAttribute("class", "olen-progress-svg");
 
+  // Grid lines
+  for (let g = 0; g <= 2; g++) {
+    const gy = padding.top + (g / 2) * chartH;
+    const line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", String(padding.left));
+    line.setAttribute("x2", String(width - padding.right));
+    line.setAttribute("y1", String(gy));
+    line.setAttribute("y2", String(gy));
+    line.setAttribute("stroke", "rgba(242, 236, 224, 0.06)");
+    line.setAttribute("stroke-width", "0.5");
+    svg.appendChild(line);
+  }
+
+  // Build points
+  const points = values.map((v, i) => ({
+    x: padding.left + (i / Math.max(1, values.length - 1)) * chartW,
+    y: padding.top + chartH - (v / maxVal) * chartH,
+  }));
+
+  // Smooth curve (Catmull-Rom → cubic bezier)
+  if (points.length > 1) {
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+
+    // Area fill
+    const area = document.createElementNS(svgNS, "path");
+    const areaD = d + ` L ${points[points.length - 1].x} ${padding.top + chartH} L ${points[0].x} ${padding.top + chartH} Z`;
+    area.setAttribute("d", areaD);
+    area.setAttribute("fill", color);
+    area.setAttribute("opacity", "0.08");
+    svg.appendChild(area);
+
+    // Curve line
+    const path = document.createElementNS(svgNS, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", color);
+    path.setAttribute("stroke-width", "1.5");
+    path.setAttribute("stroke-linecap", "round");
+    svg.appendChild(path);
+  }
+
+  // Data dots
+  for (const pt of points) {
+    const dot = document.createElementNS(svgNS, "circle");
+    dot.setAttribute("cx", String(pt.x));
+    dot.setAttribute("cy", String(pt.y));
+    dot.setAttribute("r", "2.5");
+    dot.setAttribute("fill", color);
+    svg.appendChild(dot);
+  }
+
+  // X-axis labels
   for (let i = 0; i < labels.length; i++) {
-    const x = padding.left + i * (barWidth + barGap);
-    const barH = Math.max(2, (values[i] / maxVal) * chartH);
-    const y = padding.top + chartH - barH;
-
-    const rect = document.createElementNS(svgNS, "rect");
-    rect.setAttribute("x", String(x));
-    rect.setAttribute("y", String(y));
-    rect.setAttribute("width", String(barWidth));
-    rect.setAttribute("height", String(barH));
-    rect.setAttribute("rx", "3");
-    rect.setAttribute("fill", values[i] > 0 ? color : "rgba(255,255,255,0.06)");
-    svg.appendChild(rect);
-
-    // Label
+    const x = padding.left + (i / Math.max(1, labels.length - 1)) * chartW;
     const text = document.createElementNS(svgNS, "text");
-    text.setAttribute("x", String(x + barWidth / 2));
+    text.setAttribute("x", String(x));
     text.setAttribute("y", String(height - 4));
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("fill", "rgba(242, 236, 224, 0.4)");

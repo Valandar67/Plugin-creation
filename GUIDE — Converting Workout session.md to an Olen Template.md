@@ -714,38 +714,65 @@ The workout template (`workout.tpl` / `Workout.js`) has been updated from v5.0 t
 - `getPersonalStats()` now returns data from plugin settings directly
 - This means the user only needs to configure their stats once in Olen Settings, not maintain a separate file
 
-**Interactive Body Heatmap**
-- `buildBodySvg()` (static innerHTML) has been replaced by `buildInteractiveBodySvg()` (DOM-based SVGs)
-- Each muscle region is now a clickable `<g>` element with hover effects
-- Clicking a muscle opens a progress popup (`showMuscleProgressPopup()`) showing:
-  - Current strength level badge
-  - Monthly workout frequency as a 4-week bar chart
-  - Toggle button to switch to yearly view (12-month bar chart)
-- A "PROGRESS" button below the heatmap opens `showOverallProgressPopup()` with:
-  - Average overall strength level (computed across all muscle regions)
-  - Workouts-per-week bar chart (last 4 weeks)
-  - Per-muscle-group breakdown with strength level bars
+### Workout Template v7.0 Changes (Actual SVG Integration & Glassmorphism)
 
-**SVG Muscle Selector for New Workouts**
-- The muscle selection screen now has a "START NEW WORKOUT" button at the very top of the page
-- Below the stats, an interactive SVG figure lets users tap muscles to select them
-- Selected muscles light up in gold on the figure
-- The toggle buttons below still work as a secondary selection method
-- Tapping a region on the SVG toggles the corresponding parent muscle group and vice versa
-- The `REGION_TO_MUSCLE` mapping connects SVG regions to muscle group names
+**Actual SVG File Integration**
+- The template now loads the actual `Muscle Man.svg` or `Muscle Woman.svg` files from the vault using `readFile()`
+- Gender from `personalStats.gender` determines which SVG file is loaded ("male" → Muscle Man.svg, "female" → Muscle Woman.svg)
+- SVG content is cached after first load (`_cachedSvgContent`, `_cachedSvgGender`) for performance
+- `buildSvgWithOverlay()` creates a container with the actual SVG (dimmed, desaturated) as background, with transparent clickable hotspot divs positioned over each muscle region
+- `SVG_HOTSPOTS` defines percentage-based positions for front, back, and mirrored right-side regions
+- Falls back to `buildFallbackBodySvg()` (simple programmatic SVG paths) if the SVG files are not found in the vault
+- The same approach is used for both the stats section heatmap and the muscle selection screen
+
+**Dashboard SVG Integration**
+- `StrengthHeatmap.ts` now accepts an optional `app: App` parameter
+- It attempts to load SVG files from the vault using `app.vault.adapter.read()`
+- `renderSvgFigureWithOverlay()` creates a figure with the actual SVG and hotspot overlays
+- `DashboardView.ts` passes `this.app` to `renderStrengthHeatmap()`
+
+**Line/Curve Charts Replace Bar Charts**
+- All progress charts now use smooth Catmull-Rom spline curves instead of bar charts
+- `renderLineChart(parent, labels, values, color)` draws a single smooth curve with area fill, data dots, and x-axis labels
+- `renderMultiLineChart(parent, labels, series)` draws multiple smooth curves on the same chart with a color legend
+- The per-muscle breakdown in `showOverallProgressPopup()` now shows each muscle as a separate colored line rather than static bars
+- The `StrengthHeatmap.ts` dashboard component also uses `drawLineChart()` (same Catmull-Rom algorithm) replacing the old `drawBarChart()`
+
+**Muscle Click → Progress Popup (Improved)**
+- Clicking a muscle in the heatmap shows a popup with monthly progress as a smooth curve
+- Monthly ↔ Yearly toggle with two side-by-side buttons (instead of a single toggle)
+- Yearly view shows 12-month data points as labeled curve (J, F, M, A, M, J, J, A, S, O, N, D)
+
+**Overall Progress Popup (Improved)**
+- "PROGRESS" button shows two charts:
+  1. Overall Strength — smooth curve of combined workout frequency
+  2. By Muscle Group — multi-line chart where each muscle group is a differently colored line with legend
+
+**Stats Section Cleanup (Minimal)**
+- Removed stat counter row (this week / this month / all time)
+- Removed volume row (total kg / total sets)
+- Removed "RECENT SESSIONS" list
+- Reduced legend from 6 items to 4 (Untrained, Beginner, Intermediate, Elite)
+- The view is now: weekly calendar → muscle figure → compact legend → Progress button
+
+**SVG Muscle Selector (Actual SVG)**
+- The muscle selection screen loads the actual SVG (gender-based) with overlay hotspots
+- Selected muscles highlight with a semi-transparent gold overlay on the actual anatomical figure
+- Falls back to programmatic SVG if files not found
+- `updateSelectorVisuals()` handles both DOM div hotspots and SVG group elements depending on which mode is active
+
+**Glassmorphism Aesthetic Overhaul**
+- All `.otw-card` elements now use `backdrop-filter: blur(40px) saturate(150%)` with translucent backgrounds
+- Buttons have `border-radius: 10px` with subtle gradients and box-shadows
+- Primary buttons: linear gradient (#9a8c7a → #7a6c5a) with glow shadow
+- Secondary buttons: translucent background (rgba 3%) with thin borders
+- Modals use glass background: `rgba(12,10,16,0.95)` with `backdrop-filter: blur(40px)`
+- Modal overlay: `backdrop-filter: blur(12px)` (up from 4px)
+- Week grid cells: rounded (8px), softer borders (6% opacity)
+- Set rows: rounded (10px), transparent backgrounds
+- Inputs and controls: rounded (8px), subtle borders
+- Overall color palette is darker with reduced contrast (muted colors like `#4d473e` instead of `#6a5a4a`)
+- CSS style block ID changed from `olen-tpl-workout-v5` to `olen-tpl-workout-v6`
 
 **Mobile Scroll Fix**
-- `.otw-container` now has `padding-bottom: 120px` to prevent Obsidian's mobile nav bar from cutting off content
-
-**Mini Bar Chart Helper**
-- New `renderMiniBarChart(parent, labels, values)` function draws simple bar charts inside popups
-- Used by both the muscle progress popup and the overall progress popup
-
-### Aesthetic Refinements
-
-The visual design has been refined for a more minimal feel:
-- Section headings are smaller (10px) with wider letter-spacing
-- Card borders are more subtle (6% opacity instead of 12%)
-- Dividers are softer (40% opacity)
-- Stat card backgrounds are slightly more transparent
-- The overall feel is darker with less visual clutter, keeping the glass morphism effect but reducing unnecessary prominence of decorative elements
+- `.otw-container` has `padding-bottom: 120px` to prevent Obsidian's mobile nav bar from cutting off content

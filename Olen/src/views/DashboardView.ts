@@ -113,7 +113,7 @@ export class DashboardView extends ItemView {
                 this.handleEnterWorkspace("workout");
               });
             },
-          });
+          }, this.app);
           // Weight notification (shows only when due)
           renderWeightNotification(root, settings, staggerIdx, () => {
             this.handleLogWeight();

@@ -74,79 +74,69 @@ const isCompleted = getData("Workout") === true;
 // ============================================================
 // STYLES
 // ============================================================
-if (!document.getElementById("olen-tpl-workout-v5")) {
+if (!document.getElementById("olen-tpl-workout-v6")) {
   const style = document.createElement("style");
-  style.id = "olen-tpl-workout-v5";
+  style.id = "olen-tpl-workout-v6";
   style.textContent = `
     .otw-container * { box-sizing: border-box; }
-    .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0 120px 0; font-family: Georgia, serif; }
-    .otw-container button, .otw-container input, .otw-modal-overlay button, .otw-modal-overlay input { border-radius: 0 !important; -webkit-appearance: none; appearance: none; }
+    .otw-container { max-width: 500px; margin: 0 auto; padding: 10px 0 120px 0; font-family: Georgia, serif; color: #c8c0b2; }
+    .otw-container button, .otw-container input, .otw-modal-overlay button, .otw-modal-overlay input { border-radius: 10px !important; -webkit-appearance: none; appearance: none; }
     .otw-container input[type="number"] { -moz-appearance: textfield; }
-    @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 20px rgba(154,140,122,0.03); } 50% { box-shadow: inset 0 0 40px rgba(154,140,122,0.08); } }
+    @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 16px rgba(154,140,122,0.02); } 50% { box-shadow: inset 0 0 24px rgba(154,140,122,0.04); } }
     @keyframes otw-pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-    .otw-card { background: #0a0a0a; border: 1px solid #3a342a; padding: 16px; position: relative; margin-bottom: 16px; }
+    .otw-card { background: rgba(12,10,16,0.6); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); border: 1px solid rgba(154,140,122,0.08); padding: 16px; position: relative; margin-bottom: 12px; border-radius: 16px; }
     .otw-card-breathe { animation: otw-breathe 6s ease-in-out infinite; }
-    .otw-header { text-align: center; padding: 20px; }
-    .otw-title { margin: 0; color: #9a8c7a; font-size: 24px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; }
-    .otw-progress-label { color: #6a5a4a; font-size: 12px; margin-top: 8px; }
-    .otw-section-label { color: #6a5a4a; font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; text-align: center; margin: 20px 0 10px; }
-    .otw-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .otw-week-day { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; background: #0c0c0c; border: 1px solid #2a2520; }
-    .otw-week-day.today { border-color: #9a8c7a; }
-    .otw-week-day .otw-day-label { font-size: 9px; color: #6a5a4a; letter-spacing: 1px; text-transform: uppercase; }
-    .otw-week-day .otw-day-num { font-size: 13px; font-weight: 600; color: #6a5a4a; }
-    .otw-week-day .otw-day-icon { font-size: 14px; min-height: 18px; }
+    .otw-header { text-align: center; padding: 16px; }
+    .otw-title { margin: 0; color: #9a8c7a; font-size: 18px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; }
+    .otw-progress-label { color: #4d473e; font-size: 11px; margin-top: 6px; }
+    .otw-section-label { color: #4d473e; font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; text-align: center; margin: 16px 0 8px; }
+    .otw-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .otw-week-day { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 3px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.06); border-radius: 8px; }
+    .otw-week-day.today { border-color: rgba(154,140,122,0.2); }
+    .otw-week-day .otw-day-label { font-size: 8px; color: #4d473e; letter-spacing: 1px; text-transform: uppercase; }
+    .otw-week-day .otw-day-num { font-size: 12px; font-weight: 600; color: #4d473e; }
+    .otw-week-day .otw-day-icon { font-size: 13px; min-height: 16px; }
     .otw-week-day.done .otw-day-num { color: #9a8c7a; }
-    .otw-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .otw-stat-box { display: flex; flex-direction: column; align-items: center; padding: 12px 8px; background: #0c0c0c; border: 1px solid #2a2520; }
-    .otw-stat-value { font-size: 22px; font-weight: 700; color: #9a8c7a; line-height: 1; }
-    .otw-stat-label { font-size: 9px; color: #6a5a4a; letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
-    .otw-recent-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #0c0c0c; border: 1px solid #2a2520; margin-bottom: 4px; }
-    .otw-recent-date { font-size: 12px; color: #6a5a4a; }
-    .otw-recent-muscles { font-size: 11px; color: #9a8c7a; flex: 1; margin: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .otw-recent-badge { font-size: 10px; padding: 3px 8px; font-weight: 700; letter-spacing: 1px; }
     .otw-heatmap-wrap { display: flex; justify-content: center; gap: 16px; padding: 8px 0; }
     .otw-heatmap-svg { width: 130px; height: auto; }
-    .otw-heatmap-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; margin-top: 8px; padding: 0 8px; }
-    .otw-heatmap-legend-item { display: flex; align-items: center; gap: 5px; font-size: 8px; color: #6a5a4a; letter-spacing: 1px; text-transform: uppercase; }
-    .otw-heatmap-legend-dot { width: 8px; height: 8px; }
-    .otw-btn { padding: 14px 24px; border: none; border-radius: 0 !important; font-size: 13px; font-weight: 600; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; -webkit-appearance: none; appearance: none; }
-    .otw-btn-primary { background: #9a8c7a; color: #0a0a0a; width: 100%; }
-    .otw-btn-primary:active { transform: scale(0.98); }
-    .otw-btn-secondary { background: #0f0f0f; border: 1px solid #3a342a; color: #6a5a4a; }
-    .otw-btn-secondary:active { border-color: #9a8c7a; color: #9a8c7a; }
-    .otw-btn-finish { background: #7a9a7d; color: #0a0a0a; }
-    .otw-btn-dashed { width: 100%; background: transparent; border: 1px dashed #3a342a; color: #6a5a4a; }
-    .otw-btn-dashed:active { border-color: #9a8c7a; color: #9a8c7a; }
-    .otw-nav-row { display: flex; gap: 12px; margin-top: 24px; }
+    .otw-heatmap-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; margin-top: 6px; padding: 0 8px; }
+    .otw-heatmap-legend-item { display: flex; align-items: center; gap: 4px; font-size: 7px; color: #4d473e; letter-spacing: 1px; text-transform: uppercase; }
+    .otw-heatmap-legend-dot { width: 6px; height: 6px; border-radius: 2px; }
+    .otw-btn { padding: 12px 20px; border: none; border-radius: 10px !important; font-size: 12px; font-weight: 600; letter-spacing: 2px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; -webkit-appearance: none; appearance: none; }
+    .otw-btn-primary { background: linear-gradient(180deg, #9a8c7a, #7a6c5a); color: #0a0a0a; width: 100%; box-shadow: 0 2px 12px rgba(154,140,122,0.15); }
+    .otw-btn-primary:active { transform: scale(0.98); box-shadow: 0 0 20px rgba(154,140,122,0.2); }
+    .otw-btn-secondary { background: rgba(255,255,255,0.03); border: 1px solid rgba(154,140,122,0.1); color: #6a5a4a; }
+    .otw-btn-secondary:active { border-color: rgba(154,140,122,0.3); color: #9a8c7a; }
+    .otw-btn-finish { background: linear-gradient(180deg, #7a9a7d, #5a7a5d); color: #0a0a0a; box-shadow: 0 2px 12px rgba(122,154,125,0.15); }
+    .otw-btn-dashed { width: 100%; background: transparent; border: 1px dashed rgba(154,140,122,0.1); color: #4d473e; border-radius: 10px !important; }
+    .otw-btn-dashed:active { border-color: rgba(154,140,122,0.3); color: #9a8c7a; }
+    .otw-nav-row { display: flex; gap: 10px; margin-top: 20px; }
     .otw-nav-row .otw-btn { flex: 1; text-align: center; }
-    .otw-set-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 12px; padding: 12px; background: #0f0f0f; border: 1px solid #3a342a; margin-bottom: 6px; }
-    .otw-set-row.completed { opacity: 0.6; }
-    .otw-checkbox { width: 24px; height: 24px; border: 2px solid #3a342a; border-radius: 0 !important; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0a0a0a; font-weight: bold; transition: all 0.2s; flex-shrink: 0; }
+    .otw-set-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.06); margin-bottom: 4px; border-radius: 10px; }
+    .otw-set-row.completed { opacity: 0.5; }
+    .otw-checkbox { width: 24px; height: 24px; border: 1px solid rgba(154,140,122,0.15); border-radius: 8px !important; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0a0a0a; font-weight: bold; transition: all 0.2s; flex-shrink: 0; }
     .otw-checkbox.checked { background: #7a9a7d; border-color: #7a9a7d; }
-    .otw-input { padding: 6px; background: #0a0a0a; border: 1px solid #3a342a; border-radius: 0 !important; color: #9a8c7a; text-align: center; font-size: 14px; font-weight: 600; width: 50px; -webkit-appearance: none; appearance: none; }
-    .otw-ctrl-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #0f0f0f; border: 1px solid #3a342a; border-radius: 0 !important; color: #9a8c7a; cursor: pointer; font-size: 16px; flex-shrink: 0; -webkit-appearance: none; appearance: none; }
-    .otw-ctrl-btn:active { background: #9a8c7a; color: #0a0a0a; }
-    .otw-warmup-badge { font-size: 9px; color: #6a8a9a; padding: 2px 6px; background: rgba(106,138,154,0.15); border-radius: 3px; }
-    .otw-strength-bar { height: 6px; background: #1a1a1a; border-radius: 3px; overflow: hidden; margin-top: 6px; }
-    .otw-strength-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-    .otw-strength-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-    .otw-pr-box { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: rgba(168,152,96,0.1); border: 1px solid rgba(168,152,96,0.3); border-radius: 4px; margin-top: 8px; }
-    .otw-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(0px); transition: background 0.5s ease, backdrop-filter 0.5s ease; }
-    .otw-modal-overlay.visible { background: rgba(0,0,0,0.95); backdrop-filter: blur(4px); }
-    .otw-modal-content { background: #0a0a0a; padding: 28px 20px; border: 1px solid #3a342a; max-width: 550px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; gap: 16px; position: relative; opacity: 0; transform: translateY(30px); transition: opacity 0.5s ease, transform 0.5s ease; overflow-y: auto; }
+    .otw-input { padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid rgba(154,140,122,0.1); border-radius: 8px !important; color: #9a8c7a; text-align: center; font-size: 14px; font-weight: 600; width: 50px; -webkit-appearance: none; appearance: none; }
+    .otw-ctrl-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 8px !important; color: #9a8c7a; cursor: pointer; font-size: 15px; flex-shrink: 0; -webkit-appearance: none; appearance: none; }
+    .otw-ctrl-btn:active { background: rgba(154,140,122,0.2); }
+    .otw-warmup-badge { font-size: 9px; color: #6a8a9a; padding: 2px 6px; background: rgba(106,138,154,0.1); border-radius: 6px; }
+    .otw-strength-bar { height: 4px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+    .otw-strength-fill { height: 100%; border-radius: 2px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .otw-strength-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .otw-pr-box { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: rgba(168,152,96,0.06); border: 1px solid rgba(168,152,96,0.15); border-radius: 8px; margin-top: 8px; }
+    .otw-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(0px); transition: background 0.4s ease, backdrop-filter 0.4s ease; }
+    .otw-modal-overlay.visible { background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); }
+    .otw-modal-content { background: rgba(12,10,16,0.95); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); padding: 24px 18px; border: 1px solid rgba(154,140,122,0.1); border-radius: 18px; max-width: 500px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; gap: 14px; position: relative; opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; overflow-y: auto; }
     .otw-modal-overlay.visible .otw-modal-content { opacity: 1; transform: translateY(0); }
-    .otw-summary-complete { text-align: center; padding: 24px 0; }
-    .otw-summary-complete h2 { margin: 0; color: #7a9a7d; font-size: 16px; font-weight: 700; letter-spacing: 3px; }
-    .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: #0c0c0c; cursor: pointer; margin-bottom: 10px; transition: all 0.2s; }
-    .otw-feel-btn:active { background: #101010; }
-    .otw-muscle-toggle { padding: 12px 18px; background: #0f0f0f; border: 1px solid #3a342a; border-radius: 0 !important; color: #9a8c7a; font-size: 13px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
-    .otw-muscle-toggle.active { background: rgba(154,140,122,0.3) !important; border-color: #9a8c7a !important; }
+    .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: rgba(12,10,16,0.4); border-radius: 12px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; border: 1px solid rgba(154,140,122,0.06); }
+    .otw-feel-btn:active { background: rgba(154,140,122,0.08); }
+    .otw-muscle-toggle { padding: 10px 16px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 10px !important; color: #9a8c7a; font-size: 12px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
+    .otw-muscle-toggle.active { background: rgba(154,140,122,0.2) !important; border-color: rgba(154,140,122,0.3) !important; }
     .otw-muscle-toggle:active { transform: translateY(-1px); }
     .otw-subgroup-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; opacity: 0; padding: 0 12px; }
     .otw-subgroup-container.expanded { max-height: 200px; opacity: 1; padding: 12px; }
-    .otw-sub-toggle { padding: 8px 14px; background: #0f0f0f; border: 1px solid #3a342a; border-radius: 0 !important; color: #6a5a4a; font-size: 12px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
-    .otw-sub-toggle.active { background: rgba(154,140,122,0.2); border-color: #9a8c7a; color: #9a8c7a; }
+    .otw-sub-toggle { padding: 7px 12px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 8px !important; color: #6a5a4a; font-size: 11px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
+    .otw-sub-toggle.active { background: rgba(154,140,122,0.15); border-color: rgba(154,140,122,0.25); color: #9a8c7a; }
   `;
   document.head.appendChild(style);
 }
@@ -180,6 +170,65 @@ function updateWarmupWeights(ex, newW) {
     if (warmups[i]) warmups[i].weight = Math.round(newW * p);
   });
 }
+
+// ============================================================
+// SVG BODY FIGURE — Load actual Muscle Man/Woman SVG files
+// ============================================================
+
+let _cachedSvgContent = null;
+let _cachedSvgGender = null;
+
+async function loadBodySvg() {
+  const gender = PERSONAL.gender || "male";
+  if (_cachedSvgContent && _cachedSvgGender === gender) return _cachedSvgContent;
+  const fileName = gender === "female" ? "Muscle Woman.svg" : "Muscle Man.svg";
+  try {
+    const content = await readFile(fileName);
+    if (content) {
+      _cachedSvgContent = content;
+      _cachedSvgGender = gender;
+      return content;
+    }
+  } catch (e) { /* file not found — fall back to programmatic */ }
+  return null;
+}
+
+// Hotspot regions for muscle overlay on the actual SVG (percentage-based)
+// Positioned relative to the SVG container (front view anatomical figure)
+const SVG_HOTSPOTS = {
+  front: {
+    neck:       { top: 9,  left: 42, width: 16, height: 4  },
+    front_delts:{ top: 15, left: 20, width: 12, height: 7  },
+    chest:      { top: 19, left: 33, width: 34, height: 10 },
+    biceps:     { top: 23, left: 14, width: 10, height: 12 },
+    forearms:   { top: 37, left: 10, width: 10, height: 12 },
+    core:       { top: 30, left: 38, width: 24, height: 14 },
+    quads:      { top: 49, left: 32, width: 16, height: 18 },
+    calves:     { top: 72, left: 34, width: 12, height: 14 },
+  },
+  // Mirror right side automatically
+  rightMirror: {
+    front_delts: { top: 15, left: 68, width: 12, height: 7  },
+    biceps:      { top: 23, left: 76, width: 10, height: 12 },
+    forearms:    { top: 37, left: 80, width: 10, height: 12 },
+    quads:       { top: 49, left: 52, width: 16, height: 18 },
+    calves:      { top: 72, left: 54, width: 12, height: 14 },
+  },
+  back: {
+    traps:      { top: 13, left: 34, width: 32, height: 6  },
+    rear_delts: { top: 15, left: 20, width: 12, height: 7  },
+    lats:       { top: 20, left: 26, width: 48, height: 12 },
+    triceps:    { top: 23, left: 14, width: 10, height: 12 },
+    lower_back: { top: 33, left: 36, width: 28, height: 10 },
+    glutes:     { top: 44, left: 34, width: 32, height: 8  },
+    hamstrings: { top: 53, left: 32, width: 16, height: 16 },
+  },
+  backMirror: {
+    rear_delts: { top: 15, left: 68, width: 12, height: 7  },
+    triceps:    { top: 23, left: 76, width: 10, height: 12 },
+    hamstrings: { top: 53, left: 52, width: 16, height: 16 },
+  },
+};
 
 // ============================================================
 // PERSONAL STATS & STRENGTH STANDARDS
@@ -1054,7 +1103,69 @@ const REGION_LABELS = {
   lower_back: "Lower Back", glutes: "Glutes", hamstrings: "Hamstrings",
 };
 
-function buildInteractiveBodySvg(view, muscleLevels, onRegionClick) {
+function buildSvgWithOverlay(svgContent, muscleLevels, onRegionClick) {
+  // Container with actual SVG as background + clickable overlay hotspots
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "position:relative;width:100%;max-width:240px;margin:0 auto;";
+
+  // Insert actual SVG
+  const svgHolder = document.createElement("div");
+  svgHolder.style.cssText = "width:100%;opacity:0.85;filter:saturate(0.3) brightness(0.5);";
+  svgHolder.innerHTML = svgContent;
+  // Make embedded SVG responsive
+  const svgEl = svgHolder.querySelector("svg");
+  if (svgEl) {
+    svgEl.style.width = "100%";
+    svgEl.style.height = "auto";
+    svgEl.style.display = "block";
+  }
+  wrap.appendChild(svgHolder);
+
+  // Overlay container for hotspots (sits on top of SVG)
+  const overlay = document.createElement("div");
+  overlay.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;";
+  wrap.appendChild(overlay);
+
+  // Create clickable hotspots for front view
+  const hotspots = SVG_HOTSPOTS.front;
+  const mirrors = SVG_HOTSPOTS.rightMirror;
+
+  function createHotspot(region, bounds) {
+    const hs = document.createElement("div");
+    hs.style.cssText = `position:absolute;top:${bounds.top}%;left:${bounds.left}%;width:${bounds.width}%;height:${bounds.height}%;cursor:pointer;border-radius:4px;transition:background 0.15s;`;
+    const levelData = muscleLevels[region];
+    if (levelData) {
+      hs.style.background = levelData.color + "30";
+      hs.style.border = "1px solid " + levelData.color + "20";
+    }
+    hs.addEventListener("mouseenter", () => {
+      hs.style.background = (levelData ? levelData.color : "#9a8c7a") + "50";
+    });
+    hs.addEventListener("mouseleave", () => {
+      hs.style.background = levelData ? levelData.color + "30" : "transparent";
+    });
+    hs.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (onRegionClick) onRegionClick(region);
+    });
+    // Tooltip
+    const label = REGION_LABELS[region] || region;
+    hs.title = label + (levelData ? " — " + levelData.level : "");
+    overlay.appendChild(hs);
+  }
+
+  for (const [region, bounds] of Object.entries(hotspots)) {
+    createHotspot(region, bounds);
+  }
+  for (const [region, bounds] of Object.entries(mirrors)) {
+    createHotspot(region, bounds);
+  }
+
+  return wrap;
+}
+
+// Fallback: simple programmatic SVG (if actual SVG files not found in vault)
+function buildFallbackBodySvg(muscleLevels, onRegionClick) {
   const untrained = "#1a1816";
   function fill(region) {
     const d = muscleLevels[region];
@@ -1064,48 +1175,24 @@ function buildInteractiveBodySvg(view, muscleLevels, onRegionClick) {
     const d = muscleLevels[region];
     return d ? d.color + "40" : "#2a2520";
   }
-
-  const head = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
-
   const frontPaths = {
-    neck:       '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
+    neck:'<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
     front_delts:'<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
-    chest:      '<path d="M31,37 L49,37 L49,55 C49,57 42,60 33,58 L31,56 Z"/><path d="M51,37 L69,37 L69,56 L67,58 C58,60 51,57 51,55 Z"/>',
-    biceps:     '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
-    forearms:   '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
-    core:       '<path d="M33,58 L67,58 L65,82 L35,82 Z"/>',
-    quads:      '<path d="M35,84 L49,84 L48,136 L34,136 Z"/><path d="M51,84 L65,84 L66,136 L52,136 Z"/>',
-    calves:     '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
+    chest:'<path d="M31,37 L49,37 L49,55 C49,57 42,60 33,58 L31,56 Z"/><path d="M51,37 L69,37 L69,56 L67,58 C58,60 51,57 51,55 Z"/>',
+    biceps:'<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
+    forearms:'<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
+    core:'<path d="M33,58 L67,58 L65,82 L35,82 Z"/>',
+    quads:'<path d="M35,84 L49,84 L48,136 L34,136 Z"/><path d="M51,84 L65,84 L66,136 L52,136 Z"/>',
+    calves:'<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
   };
-
-  const backPaths = {
-    neck:       '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
-    traps:      '<path d="M39,33 L50,27 L61,33 L59,43 L50,39 L41,43 Z"/>',
-    rear_delts: '<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
-    lats:       '<path d="M33,43 L41,43 L50,39 L59,43 L67,43 L65,66 L50,70 L35,66 Z"/>',
-    triceps:    '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
-    forearms:   '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
-    lower_back: '<path d="M35,66 L50,70 L65,66 L65,82 L35,82 Z"/>',
-    glutes:     '<path d="M35,82 L49,82 L49,94 C47,98 37,98 35,94 Z"/><path d="M51,82 L65,82 L65,94 C63,98 53,98 51,94 Z"/>',
-    hamstrings: '<path d="M35,96 L49,96 L48,136 L34,136 Z"/><path d="M51,96 L65,96 L66,136 L52,136 Z"/>',
-    calves:     '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
-  };
-
-  const regions = view === "front" ? frontPaths : backPaths;
-
-  // Build DOM SVG (not innerHTML) for click events
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 100 210");
   svg.setAttribute("class", "otw-heatmap-svg");
-
-  // Head
   const headG = document.createElementNS(ns, "g");
-  headG.innerHTML = head;
+  headG.innerHTML = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
   svg.appendChild(headG);
-
-  // Muscle regions with click handlers
-  for (const [region, pathData] of Object.entries(regions)) {
+  for (const [region, pathData] of Object.entries(frontPaths)) {
     const g = document.createElementNS(ns, "g");
     g.setAttribute("fill", fill(region));
     g.setAttribute("stroke", stroke(region));
@@ -1113,33 +1200,11 @@ function buildInteractiveBodySvg(view, muscleLevels, onRegionClick) {
     g.style.cursor = "pointer";
     g.style.transition = "opacity 0.15s";
     g.innerHTML = pathData;
-
-    // Hover effect
     g.addEventListener("mouseenter", () => { g.style.opacity = "0.7"; });
     g.addEventListener("mouseleave", () => { g.style.opacity = "1"; });
-
-    // Click → show progress popup for this muscle
-    g.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (onRegionClick) onRegionClick(region);
-    });
-
+    g.addEventListener("click", (e) => { e.stopPropagation(); if (onRegionClick) onRegionClick(region); });
     svg.appendChild(g);
   }
-
-  // Label
-  const label = view === "front" ? "FRONT" : "BACK";
-  const txt = document.createElementNS(ns, "text");
-  txt.setAttribute("x", "50");
-  txt.setAttribute("y", "207");
-  txt.setAttribute("text-anchor", "middle");
-  txt.setAttribute("fill", "#4a4030");
-  txt.setAttribute("font-size", "8");
-  txt.setAttribute("font-family", "Georgia,serif");
-  txt.setAttribute("letter-spacing", "2");
-  txt.textContent = label;
-  svg.appendChild(txt);
-
   return svg;
 }
 
@@ -1211,38 +1276,61 @@ function showMuscleProgressPopup(regionId, muscleLevels) {
       }
     }
 
-    renderMiniBarChart(content, ["W1", "W2", "W3", "W4"], weekCounts);
+    renderLineChart(content, ["W1", "W2", "W3", "W4"], weekCounts);
 
-    // Toggle: yearly view
+    // Toggle: monthly ↔ yearly view
+    const toggleRow = document.createElement("div");
+    toggleRow.style.cssText = "display:flex;gap:6px;justify-content:center;margin-top:12px;";
+    content.appendChild(toggleRow);
+
+    const monthBtn = document.createElement("button");
+    monthBtn.textContent = "MONTHLY";
+    monthBtn.className = "otw-btn otw-btn-primary";
+    monthBtn.style.cssText += "font-size:10px;padding:8px 16px;flex:1;";
+
     const yearBtn = document.createElement("button");
-    yearBtn.textContent = "SHOW YEARLY";
+    yearBtn.textContent = "YEARLY";
     yearBtn.className = "otw-btn otw-btn-secondary";
-    yearBtn.style.cssText += "margin-top:12px;font-size:10px;padding:8px 16px;width:100%;";
-    let showingYearly = false;
-    const yearContainer = document.createElement("div");
-    content.appendChild(yearBtn);
-    content.appendChild(yearContainer);
+    yearBtn.style.cssText += "font-size:10px;padding:8px 16px;flex:1;";
 
-    yearBtn.onclick = () => {
-      showingYearly = !showingYearly;
-      yearBtn.textContent = showingYearly ? "SHOW MONTHLY" : "SHOW YEARLY";
-      yearContainer.innerHTML = "";
-      if (showingYearly) {
-        const monthCounts = new Array(12).fill(0);
-        const monthLabels = ["J","F","M","A","M","J","J","A","S","O","N","D"];
-        for (const wFile of allFiles) {
-          const fm = getFileMetadata(wFile.path);
-          if (!fm || fm.Workout !== true || !Array.isArray(fm.exercises)) continue;
-          const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
-          if (!dateMatch) continue;
-          const fileDate = moment(dateMatch[1], "YYYY-MM-DD");
-          if (now.diff(fileDate, "months") > 11) continue;
-          const hasMuscle = fm.exercises.some(ex => targetMuscles.includes(ex.muscle || ex.muscleGroup));
-          if (hasMuscle) monthCounts[fileDate.month()]++;
-        }
-        renderMiniBarChart(yearContainer, monthLabels, monthCounts);
+    toggleRow.appendChild(monthBtn);
+    toggleRow.appendChild(yearBtn);
+
+    const chartContainer = document.createElement("div");
+    content.appendChild(chartContainer);
+
+    function showMonthly() {
+      chartContainer.innerHTML = "";
+      renderLineChart(chartContainer, ["W1", "W2", "W3", "W4"], weekCounts);
+      monthBtn.className = "otw-btn otw-btn-primary";
+      monthBtn.style.cssText += "font-size:10px;padding:8px 16px;flex:1;";
+      yearBtn.className = "otw-btn otw-btn-secondary";
+      yearBtn.style.cssText += "font-size:10px;padding:8px 16px;flex:1;";
+    }
+
+    function showYearly() {
+      chartContainer.innerHTML = "";
+      const monthCounts = new Array(12).fill(0);
+      const monthLabels = ["J","F","M","A","M","J","J","A","S","O","N","D"];
+      for (const wFile of allFiles) {
+        const fm = getFileMetadata(wFile.path);
+        if (!fm || fm.Workout !== true || !Array.isArray(fm.exercises)) continue;
+        const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (!dateMatch) continue;
+        const fileDate = moment(dateMatch[1], "YYYY-MM-DD");
+        if (now.diff(fileDate, "months") > 11) continue;
+        const hasMuscle = fm.exercises.some(ex => targetMuscles.includes(ex.muscle || ex.muscleGroup));
+        if (hasMuscle) monthCounts[fileDate.month()]++;
       }
-    };
+      renderLineChart(chartContainer, monthLabels, monthCounts);
+      yearBtn.className = "otw-btn otw-btn-primary";
+      yearBtn.style.cssText += "font-size:10px;padding:8px 16px;flex:1;";
+      monthBtn.className = "otw-btn otw-btn-secondary";
+      monthBtn.style.cssText += "font-size:10px;padding:8px 16px;flex:1;";
+    }
+
+    monthBtn.onclick = showMonthly;
+    yearBtn.onclick = showYearly;
   });
 }
 
@@ -1306,66 +1394,215 @@ async function showOverallProgressPopup(muscleLevels) {
       if (weekIdx < 4) weekCounts[3 - weekIdx]++;
     }
 
+    // Chart 1: Overall strength curve (workouts per week as a trend)
     const c1Label = document.createElement("div");
     c1Label.style.cssText = `color:${THEME.colorMuted};font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:16px;`;
-    c1Label.textContent = "WORKOUTS PER WEEK";
+    c1Label.textContent = "OVERALL STRENGTH";
     content.appendChild(c1Label);
-    renderMiniBarChart(content, ["W1", "W2", "W3", "W4"], weekCounts);
+    renderLineChart(content, ["W1", "W2", "W3", "W4"], weekCounts, THEME.color);
 
-    // 2) Per-muscle breakdown
+    // Chart 2: Per-muscle multi-line breakdown
     const musLabel = document.createElement("div");
     musLabel.style.cssText = `color:${THEME.colorMuted};font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:20px;`;
     musLabel.textContent = "BY MUSCLE GROUP";
     content.appendChild(musLabel);
 
+    // Build per-muscle workout frequency data (last 4 weeks)
+    const muscleColors = ["#9a8c7a", "#a89860", "#7a9a7d", "#6a8a9a", "#8a7a9a", "#9a6a7a", "#6a5a4a"];
+    const muscleSeriesData = [];
+    let colorIdx = 0;
+    const reverseMapAll = {};
+    for (const [muscle, regions] of Object.entries(MUSCLE_TO_REGION)) {
+      for (const r of regions) {
+        if (!reverseMapAll[r]) reverseMapAll[r] = [];
+        reverseMapAll[r].push(muscle);
+      }
+    }
+
     for (const [region, data] of regionLevels) {
-      const row = document.createElement("div");
-      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1816;`;
-      content.appendChild(row);
+      const targetMuscles = reverseMapAll[region] || [];
+      const wkCounts = [0, 0, 0, 0];
+      for (const wFile of allFiles) {
+        const fm = getFileMetadata(wFile.path);
+        if (!fm || fm.Workout !== true || !Array.isArray(fm.exercises)) continue;
+        const dateMatch = wFile.basename.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (!dateMatch) continue;
+        const daysAgo = now.diff(moment(dateMatch[1], "YYYY-MM-DD"), "days");
+        if (daysAgo < 0 || daysAgo > 28) continue;
+        const hasMuscle = fm.exercises.some(ex => targetMuscles.includes(ex.muscle || ex.muscleGroup));
+        if (hasMuscle) {
+          const weekIdx = Math.floor(daysAgo / 7);
+          if (weekIdx < 4) wkCounts[3 - weekIdx]++;
+        }
+      }
+      muscleSeriesData.push({
+        name: REGION_LABELS[region] || region,
+        values: wkCounts,
+        color: muscleColors[colorIdx % muscleColors.length],
+      });
+      colorIdx++;
+    }
 
-      const nameEl = document.createElement("span");
-      nameEl.style.cssText = `color:${THEME.colorMuted};font-size:11px;min-width:80px;`;
-      nameEl.textContent = REGION_LABELS[region] || region;
-      row.appendChild(nameEl);
-
-      const bar = document.createElement("div");
-      bar.style.cssText = "flex:1;height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden;";
-      row.appendChild(bar);
-      const barFill = document.createElement("div");
-      barFill.style.cssText = `height:100%;width:${Math.min(100, (levelOrder.indexOf(data.level) / 5) * 100 + (data.progress || 0) / 5)}%;background:${data.color};border-radius:3px;`;
-      bar.appendChild(barFill);
-
-      const levelEl = document.createElement("span");
-      levelEl.style.cssText = `color:${data.color};font-size:10px;font-weight:600;min-width:60px;text-align:right;`;
-      levelEl.textContent = data.level;
-      row.appendChild(levelEl);
+    if (muscleSeriesData.length > 0) {
+      renderMultiLineChart(content, ["W1", "W2", "W3", "W4"], muscleSeriesData);
+    } else {
+      const noData = document.createElement("div");
+      noData.style.cssText = `color:${THEME.colorMuted};text-align:center;font-size:12px;font-style:italic;padding:12px;`;
+      noData.textContent = "Complete some workouts to see per-muscle trends";
+      content.appendChild(noData);
     }
   });
 }
 
-// ── Mini bar chart helper (used in popups) ──
+// ── Line chart helper (used in progress popups — smooth curve) ──
 
-function renderMiniBarChart(parent, labels, values) {
+function renderLineChart(parent, labels, values, color) {
+  color = color || THEME.color;
   const maxVal = Math.max(...values, 1);
-  const chart = document.createElement("div");
-  chart.style.cssText = "display:flex;gap:6px;align-items:flex-end;justify-content:center;height:60px;margin:8px 0;";
-  parent.appendChild(chart);
+  const ns = "http://www.w3.org/2000/svg";
+  const w = 260, h = 80;
+  const padL = 4, padR = 4, padT = 8, padB = 16;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
 
-  for (let i = 0; i < labels.length; i++) {
-    const col = document.createElement("div");
-    col.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;";
-    chart.appendChild(col);
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.style.cssText = "width:100%;height:auto;display:block;margin:8px 0;";
 
-    const barH = Math.max(4, (values[i] / maxVal) * 48);
-    const bar = document.createElement("div");
-    bar.style.cssText = `width:100%;max-width:24px;height:${barH}px;background:${values[i] > 0 ? THEME.color : "#1a1816"};border-radius:2px;transition:height 0.3s;`;
-    col.appendChild(bar);
-
-    const lbl = document.createElement("div");
-    lbl.style.cssText = `font-size:8px;color:${THEME.colorMuted};letter-spacing:1px;`;
-    lbl.textContent = labels[i];
-    col.appendChild(lbl);
+  // Grid lines
+  for (let g = 0; g <= 2; g++) {
+    const gy = padT + (g / 2) * chartH;
+    const line = document.createElementNS(ns, "line");
+    line.setAttribute("x1", String(padL)); line.setAttribute("x2", String(w - padR));
+    line.setAttribute("y1", String(gy)); line.setAttribute("y2", String(gy));
+    line.setAttribute("stroke", "rgba(154,140,122,0.08)"); line.setAttribute("stroke-width", "0.5");
+    svg.appendChild(line);
   }
+
+  // Build points
+  const points = values.map((v, i) => {
+    const x = padL + (i / Math.max(1, values.length - 1)) * chartW;
+    const y = padT + chartH - (v / maxVal) * chartH;
+    return { x, y };
+  });
+
+  // Smooth curve (Catmull-Rom → cubic bezier)
+  if (points.length > 1) {
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+
+    // Area fill
+    const area = document.createElementNS(ns, "path");
+    const areaD = d + ` L ${points[points.length-1].x} ${padT + chartH} L ${points[0].x} ${padT + chartH} Z`;
+    area.setAttribute("d", areaD);
+    area.setAttribute("fill", color); area.setAttribute("opacity", "0.08");
+    svg.appendChild(area);
+
+    // Curve line
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", color); path.setAttribute("stroke-width", "1.5");
+    path.setAttribute("stroke-linecap", "round");
+    svg.appendChild(path);
+  }
+
+  // Data dots
+  for (const pt of points) {
+    const dot = document.createElementNS(ns, "circle");
+    dot.setAttribute("cx", String(pt.x)); dot.setAttribute("cy", String(pt.y));
+    dot.setAttribute("r", "2.5"); dot.setAttribute("fill", color);
+    svg.appendChild(dot);
+  }
+
+  // X-axis labels
+  for (let i = 0; i < labels.length; i++) {
+    const x = padL + (i / Math.max(1, labels.length - 1)) * chartW;
+    const txt = document.createElementNS(ns, "text");
+    txt.setAttribute("x", String(x)); txt.setAttribute("y", String(h - 2));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("fill", "rgba(154,140,122,0.4)"); txt.setAttribute("font-size", "7");
+    txt.textContent = labels[i];
+    svg.appendChild(txt);
+  }
+
+  parent.appendChild(svg);
+}
+
+// ── Multi-line chart helper (for per-muscle breakdown) ──
+
+function renderMultiLineChart(parent, labels, series) {
+  const allVals = series.flatMap(s => s.values);
+  const maxVal = Math.max(...allVals, 1);
+  const ns = "http://www.w3.org/2000/svg";
+  const w = 260, h = 90;
+  const padL = 4, padR = 4, padT = 8, padB = 16;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
+
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.style.cssText = "width:100%;height:auto;display:block;margin:8px 0;";
+
+  for (const s of series) {
+    const points = s.values.map((v, i) => ({
+      x: padL + (i / Math.max(1, s.values.length - 1)) * chartW,
+      y: padT + chartH - (v / maxVal) * chartH,
+    }));
+    if (points.length > 1) {
+      let d = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[Math.max(0, i - 1)];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[Math.min(points.length - 1, i + 2)];
+        d += ` C ${p1.x+(p2.x-p0.x)/6} ${p1.y+(p2.y-p0.y)/6}, ${p2.x-(p3.x-p1.x)/6} ${p2.y-(p3.y-p1.y)/6}, ${p2.x} ${p2.y}`;
+      }
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", d); path.setAttribute("fill", "none");
+      path.setAttribute("stroke", s.color); path.setAttribute("stroke-width", "1.2");
+      path.setAttribute("stroke-linecap", "round"); path.setAttribute("opacity", "0.8");
+      svg.appendChild(path);
+    }
+  }
+
+  // X-axis labels
+  for (let i = 0; i < labels.length; i++) {
+    const x = padL + (i / Math.max(1, labels.length - 1)) * chartW;
+    const txt = document.createElementNS(ns, "text");
+    txt.setAttribute("x", String(x)); txt.setAttribute("y", String(h - 2));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("fill", "rgba(154,140,122,0.4)"); txt.setAttribute("font-size", "7");
+    txt.textContent = labels[i];
+    svg.appendChild(txt);
+  }
+  parent.appendChild(svg);
+
+  // Legend
+  const legend = document.createElement("div");
+  legend.style.cssText = "display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:center;margin-top:4px;";
+  for (const s of series) {
+    const item = document.createElement("div");
+    item.style.cssText = "display:flex;align-items:center;gap:4px;font-size:9px;color:#6a5a4a;";
+    const dot = document.createElement("div");
+    dot.style.cssText = `width:6px;height:6px;border-radius:50%;background:${s.color};`;
+    item.appendChild(dot);
+    const nm = document.createElement("span");
+    nm.textContent = s.name;
+    item.appendChild(nm);
+    legend.appendChild(item);
+  }
+  parent.appendChild(legend);
 }
 
 // ============================================================
@@ -1373,12 +1610,7 @@ function renderMiniBarChart(parent, labels, values) {
 // ============================================================
 
 async function renderStatsSection(root) {
-  // Weekly calendar
-  const weekLabel = document.createElement("div");
-  weekLabel.className = "otw-section-label";
-  weekLabel.textContent = "THIS WEEK";
-  root.appendChild(weekLabel);
-
+  // Minimal weekly calendar
   const weekData = getWeeklyCalendarData();
   const weekGrid = document.createElement("div");
   weekGrid.className = "otw-week-grid";
@@ -1410,98 +1642,35 @@ async function renderStatsSection(root) {
     weekGrid.appendChild(cell);
   }
 
-  // Stat counters
-  const stats = getMonthlyStats();
-  const statRow = document.createElement("div");
-  statRow.className = "otw-stat-row";
-  statRow.style.marginTop = "10px";
-  root.appendChild(statRow);
-
-  const statItems = [
-    { value: stats.thisWeek, label: "This week" },
-    { value: stats.thisMonth, label: "This month" },
-    { value: stats.total, label: "All time" },
-  ];
-  for (const item of statItems) {
-    const box = document.createElement("div");
-    box.className = "otw-stat-box";
-    const val = document.createElement("div");
-    val.className = "otw-stat-value";
-    val.textContent = item.value;
-    box.appendChild(val);
-    const lbl = document.createElement("div");
-    lbl.className = "otw-stat-label";
-    lbl.textContent = item.label;
-    box.appendChild(lbl);
-    statRow.appendChild(box);
-  }
-
-  // Volume row
-  if (stats.totalVolume > 0) {
-    const volRow = document.createElement("div");
-    volRow.className = "otw-stat-row";
-    volRow.style.cssText = "margin-top:6px;grid-template-columns:1fr 1fr;";
-    root.appendChild(volRow);
-    const volBox = document.createElement("div");
-    volBox.className = "otw-stat-box";
-    const volVal = document.createElement("div");
-    volVal.className = "otw-stat-value";
-    volVal.style.fontSize = "18px";
-    volVal.textContent = stats.totalVolume >= 1000 ? Math.round(stats.totalVolume / 1000) + "k" : stats.totalVolume;
-    volBox.appendChild(volVal);
-    const volLbl = document.createElement("div");
-    volLbl.className = "otw-stat-label";
-    volLbl.textContent = "Total kg lifted";
-    volBox.appendChild(volLbl);
-    volRow.appendChild(volBox);
-
-    const setsBox = document.createElement("div");
-    setsBox.className = "otw-stat-box";
-    const setsVal = document.createElement("div");
-    setsVal.className = "otw-stat-value";
-    setsVal.style.fontSize = "18px";
-    setsVal.textContent = stats.totalSets;
-    setsBox.appendChild(setsVal);
-    const setsLbl = document.createElement("div");
-    setsLbl.className = "otw-stat-label";
-    setsLbl.textContent = "Total sets";
-    setsBox.appendChild(setsLbl);
-    volRow.appendChild(setsBox);
-  }
-
-  // Body Strength Heatmap — Interactive
-  const hmLabel = document.createElement("div");
-  hmLabel.className = "otw-section-label";
-  hmLabel.style.marginTop = "24px";
-  hmLabel.textContent = "BODY STRENGTH MAP";
-  root.appendChild(hmLabel);
-
+  // Body Strength Heatmap — using actual SVG file
   const muscleLevels = await getMuscleLevelData();
+  const svgContent = await loadBodySvg();
 
-  const hmWrap = document.createElement("div");
-  hmWrap.className = "otw-heatmap-wrap";
-  root.appendChild(hmWrap);
+  if (svgContent) {
+    // Use actual Muscle Man/Woman SVG with overlay hotspots
+    const svgFigure = buildSvgWithOverlay(svgContent, muscleLevels, (region) => {
+      showMuscleProgressPopup(region, muscleLevels);
+    });
+    svgFigure.style.margin = "16px auto 8px";
+    root.appendChild(svgFigure);
+  } else {
+    // Fallback to programmatic SVG
+    const hmWrap = document.createElement("div");
+    hmWrap.className = "otw-heatmap-wrap";
+    root.appendChild(hmWrap);
+    const fallbackSvg = buildFallbackBodySvg(muscleLevels, (region) => {
+      showMuscleProgressPopup(region, muscleLevels);
+    });
+    hmWrap.appendChild(fallbackSvg);
+  }
 
-  // Build interactive SVGs with click-to-show-progress
-  const frontSvg = buildInteractiveBodySvg("front", muscleLevels, (region) => {
-    showMuscleProgressPopup(region, muscleLevels);
-  });
-  hmWrap.appendChild(frontSvg);
-
-  const backSvg = buildInteractiveBodySvg("back", muscleLevels, (region) => {
-    showMuscleProgressPopup(region, muscleLevels);
-  });
-  hmWrap.appendChild(backSvg);
-
-  // Legend
+  // Compact legend
   const legend = document.createElement("div");
   legend.className = "otw-heatmap-legend";
   const legendItems = [
     { label: "Untrained", color: "#6a6a6a" },
     { label: "Beginner", color: "#a89860" },
-    { label: "Novice", color: "#7a9a7d" },
     { label: "Intermediate", color: "#6a8a9a" },
-    { label: "Advanced", color: "#8a7a9a" },
     { label: "Elite", color: "#9a6a7a" },
   ];
   for (const item of legendItems) {
@@ -1518,49 +1687,13 @@ async function renderStatsSection(root) {
   }
   root.appendChild(legend);
 
-  // "Progress" button below the heatmap
+  // "Progress" button
   const progressBtn = document.createElement("button");
   progressBtn.textContent = "PROGRESS";
   progressBtn.className = "otw-btn otw-btn-secondary";
-  progressBtn.style.cssText += "width:100%;margin-top:12px;font-size:11px;padding:10px;";
+  progressBtn.style.cssText += "width:100%;margin-top:8px;font-size:11px;padding:10px;";
   progressBtn.onclick = () => showOverallProgressPopup(muscleLevels);
   root.appendChild(progressBtn);
-
-  // Recent sessions
-  const recent = getRecentSessions(4);
-  if (recent.length > 0) {
-    const recLabel = document.createElement("div");
-    recLabel.className = "otw-section-label";
-    recLabel.style.marginTop = "24px";
-    recLabel.textContent = "RECENT SESSIONS";
-    root.appendChild(recLabel);
-    for (const s of recent) {
-      const row = document.createElement("div");
-      row.className = "otw-recent-row";
-      const dateEl = document.createElement("span");
-      dateEl.className = "otw-recent-date";
-      dateEl.textContent = moment(s.date, "YYYY-MM-DD").format("MMM D");
-      row.appendChild(dateEl);
-      const musclesEl = document.createElement("span");
-      musclesEl.className = "otw-recent-muscles";
-      musclesEl.textContent = s.muscles.join(", ") || "\u2014";
-      row.appendChild(musclesEl);
-      const badge = document.createElement("span");
-      badge.className = "otw-recent-badge";
-      if (s.type === "discipline") {
-        badge.textContent = "\uD83D\uDC8E";
-        badge.style.cssText += "background:rgba(168,152,96,0.15);color:" + THEME.colorDiscipline + ";";
-      } else if (s.type === "flow") {
-        badge.textContent = "\uD83C\uDF0A";
-        badge.style.cssText += "background:rgba(106,138,154,0.15);color:" + THEME.colorFlow + ";";
-      } else {
-        badge.textContent = "\u2713";
-        badge.style.cssText += "background:rgba(122,154,125,0.15);color:" + THEME.systemGreen + ";";
-      }
-      row.appendChild(badge);
-      root.appendChild(row);
-    }
-  }
 }
 
 // ============================================================
@@ -1602,12 +1735,6 @@ async function renderMuscleSelection(root) {
   selDesc.textContent = "Tap muscles on the figure or use the buttons below";
   root.appendChild(selDesc);
 
-  // Interactive SVG muscle selector figure
-  const selectorWrap = document.createElement("div");
-  selectorWrap.className = "otw-heatmap-wrap";
-  selectorWrap.style.marginBottom = "12px";
-  root.appendChild(selectorWrap);
-
   // Region → parent muscle group mapping for the selector
   const REGION_TO_MUSCLE = {
     neck: "Neck", chest: "Chest", front_delts: "Shoulders", rear_delts: "Shoulders",
@@ -1616,56 +1743,35 @@ async function renderMuscleSelection(root) {
     traps: "Back", lats: "Back", lower_back: "Back",
   };
 
-  // Track selected regions visually
-  const selectedRegionEls = new Map(); // region → [g elements]
+  // Build interactive muscle selector with actual SVG
+  const svgContent = await loadBodySvg();
+  const selectorOverlayEls = []; // for visual updates
 
-  function buildSelectorSvg(view) {
-    const regions = view === "front" ? {
-      neck: '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
-      front_delts: '<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
-      chest: '<path d="M31,37 L49,37 L49,55 C49,57 42,60 33,58 L31,56 Z"/><path d="M51,37 L69,37 L69,56 L67,58 C58,60 51,57 51,55 Z"/>',
-      biceps: '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
-      forearms: '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
-      core: '<path d="M33,58 L67,58 L65,82 L35,82 Z"/>',
-      quads: '<path d="M35,84 L49,84 L48,136 L34,136 Z"/><path d="M51,84 L65,84 L66,136 L52,136 Z"/>',
-      calves: '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
-    } : {
-      neck: '<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
-      traps: '<path d="M39,33 L50,27 L61,33 L59,43 L50,39 L41,43 Z"/>',
-      rear_delts: '<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
-      lats: '<path d="M33,43 L41,43 L50,39 L59,43 L67,43 L65,66 L50,70 L35,66 Z"/>',
-      triceps: '<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
-      forearms: '<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
-      lower_back: '<path d="M35,66 L50,70 L65,66 L65,82 L35,82 Z"/>',
-      glutes: '<path d="M35,82 L49,82 L49,94 C47,98 37,98 35,94 Z"/><path d="M51,82 L65,82 L65,94 C63,98 53,98 51,94 Z"/>',
-      hamstrings: '<path d="M35,96 L49,96 L48,136 L34,136 Z"/><path d="M51,96 L65,96 L66,136 L52,136 Z"/>',
-      calves: '<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
-    };
+  if (svgContent) {
+    // Use actual SVG with overlay hotspots for selection
+    const selectorWrap = document.createElement("div");
+    selectorWrap.style.cssText = "position:relative;width:100%;max-width:220px;margin:0 auto 12px;";
 
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 100 210");
-    svg.setAttribute("class", "otw-heatmap-svg");
+    const svgHolder = document.createElement("div");
+    svgHolder.style.cssText = "width:100%;filter:saturate(0.15) brightness(0.4);transition:filter 0.3s;";
+    svgHolder.innerHTML = svgContent;
+    const svgEl = svgHolder.querySelector("svg");
+    if (svgEl) { svgEl.style.width = "100%"; svgEl.style.height = "auto"; svgEl.style.display = "block"; }
+    selectorWrap.appendChild(svgHolder);
 
-    // Head
-    const headG = document.createElementNS(ns, "g");
-    headG.innerHTML = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
-    svg.appendChild(headG);
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;";
+    selectorWrap.appendChild(overlay);
 
-    for (const [region, pathData] of Object.entries(regions)) {
-      const g = document.createElementNS(ns, "g");
-      g.setAttribute("fill", "#1a1816");
-      g.setAttribute("stroke", "#2a2520");
-      g.setAttribute("stroke-width", "0.6");
-      g.style.cursor = "pointer";
-      g.style.transition = "fill 0.15s";
-      g.innerHTML = pathData;
+    // Create hotspots for selection
+    const allHotspots = { ...SVG_HOTSPOTS.front, ...SVG_HOTSPOTS.rightMirror };
+    for (const [region, bounds] of Object.entries(allHotspots)) {
+      const hs = document.createElement("div");
+      hs.style.cssText = `position:absolute;top:${bounds.top}%;left:${bounds.left}%;width:${bounds.width}%;height:${bounds.height}%;cursor:pointer;border-radius:4px;transition:background 0.15s, border-color 0.15s;border:1px solid transparent;`;
+      hs.dataset.region = region;
+      selectorOverlayEls.push(hs);
 
-      // Track for visual updates
-      if (!selectedRegionEls.has(region)) selectedRegionEls.set(region, []);
-      selectedRegionEls.get(region).push(g);
-
-      g.addEventListener("click", (e) => {
+      hs.addEventListener("click", (e) => {
         e.stopPropagation();
         const parentMuscle = REGION_TO_MUSCLE[region];
         if (!parentMuscle) return;
@@ -1677,32 +1783,67 @@ async function renderMuscleSelection(root) {
         updateSelectorVisuals();
         updateToggleButtons();
       });
-
-      svg.appendChild(g);
+      overlay.appendChild(hs);
     }
 
-    const label = view === "front" ? "FRONT" : "BACK";
-    const txt = document.createElementNS(ns, "text");
-    txt.setAttribute("x", "50"); txt.setAttribute("y", "207");
-    txt.setAttribute("text-anchor", "middle");
-    txt.setAttribute("fill", "#4a4030"); txt.setAttribute("font-size", "8");
-    txt.setAttribute("font-family", "Georgia,serif"); txt.setAttribute("letter-spacing", "2");
-    txt.textContent = label;
-    svg.appendChild(txt);
+    root.appendChild(selectorWrap);
+  } else {
+    // Fallback: programmatic SVG selector
+    const selectorWrap = document.createElement("div");
+    selectorWrap.className = "otw-heatmap-wrap";
+    selectorWrap.style.marginBottom = "12px";
+    root.appendChild(selectorWrap);
 
-    return svg;
+    const ns = "http://www.w3.org/2000/svg";
+    const frontPaths = {
+      neck:'<path d="M44,24 L56,24 L55,31 L45,31 Z"/>',
+      front_delts:'<path d="M31,33 C25,33 19,36 18,43 L26,43 L31,37 Z"/><path d="M69,33 C75,33 81,36 82,43 L74,43 L69,37 Z"/>',
+      chest:'<path d="M31,37 L49,37 L49,55 C49,57 42,60 33,58 L31,56 Z"/><path d="M51,37 L69,37 L69,56 L67,58 C58,60 51,57 51,55 Z"/>',
+      biceps:'<path d="M18,43 L26,43 L26,65 C25,67 19,67 18,65 Z"/><path d="M74,43 L82,43 L82,65 C81,67 75,67 74,65 Z"/>',
+      forearms:'<path d="M18,68 L26,68 L24,96 L16,96 Z"/><path d="M74,68 L82,68 L84,96 L76,96 Z"/>',
+      core:'<path d="M33,58 L67,58 L65,82 L35,82 Z"/>',
+      quads:'<path d="M35,84 L49,84 L48,136 L34,136 Z"/><path d="M51,84 L65,84 L66,136 L52,136 Z"/>',
+      calves:'<path d="M35,140 L48,140 L46,190 L37,190 Z"/><path d="M52,140 L65,140 L63,190 L54,190 Z"/>',
+    };
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 100 210");
+    svg.setAttribute("class", "otw-heatmap-svg");
+    const headG = document.createElementNS(ns, "g");
+    headG.innerHTML = '<ellipse cx="50" cy="14" rx="10" ry="11" fill="#0c0c0c" stroke="#2a2520" stroke-width="0.8"/>';
+    svg.appendChild(headG);
+    for (const [region, pathData] of Object.entries(frontPaths)) {
+      const g = document.createElementNS(ns, "g");
+      g.setAttribute("fill", "#1a1816"); g.setAttribute("stroke", "#2a2520"); g.setAttribute("stroke-width", "0.6");
+      g.style.cursor = "pointer"; g.style.transition = "fill 0.15s"; g.innerHTML = pathData;
+      selectorOverlayEls.push(g);
+      g.dataset.region = region;
+      g.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const parentMuscle = REGION_TO_MUSCLE[region];
+        if (!parentMuscle) return;
+        if (selectedMuscles.has(parentMuscle)) selectedMuscles.delete(parentMuscle);
+        else selectedMuscles.add(parentMuscle);
+        updateSelectorVisuals();
+        updateToggleButtons();
+      });
+      svg.appendChild(g);
+    }
+    selectorWrap.appendChild(svg);
   }
 
-  selectorWrap.appendChild(buildSelectorSvg("front"));
-  selectorWrap.appendChild(buildSelectorSvg("back"));
-
   function updateSelectorVisuals() {
-    for (const [region, gList] of selectedRegionEls) {
+    for (const el of selectorOverlayEls) {
+      const region = el.dataset.region;
       const parentMuscle = REGION_TO_MUSCLE[region];
       const isSelected = parentMuscle && selectedMuscles.has(parentMuscle);
-      for (const g of gList) {
-        g.setAttribute("fill", isSelected ? THEME.color + "80" : "#1a1816");
-        g.setAttribute("stroke", isSelected ? THEME.color + "60" : "#2a2520");
+      if (el.tagName === "DIV" || el.tagName === "div") {
+        // Overlay hotspot div
+        el.style.background = isSelected ? THEME.color + "40" : "transparent";
+        el.style.borderColor = isSelected ? THEME.color + "60" : "transparent";
+      } else {
+        // SVG group
+        el.setAttribute("fill", isSelected ? THEME.color + "80" : "#1a1816");
+        el.setAttribute("stroke", isSelected ? THEME.color + "60" : "#2a2520");
       }
     }
   }
