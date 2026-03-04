@@ -287,7 +287,9 @@ export class OlenEngine {
 
     // 1. DEATH CHECK
     if (this.settings.inTartarus) {
-      return this.buildSuggestion(activities[0], "death", "Escape Tartarus — complete your penance.");
+      const neglected = this.getNeglectedActivitiesSorted(activities);
+      const target = neglected.length > 0 ? neglected[0] : activities.sort((a, b) => b.priority - a.priority)[0];
+      return this.buildSuggestion(target, "death", "Escape Tartarus — complete your penance.");
     }
 
     if (this.settings.failedThresholdDays >= 2) {
@@ -375,6 +377,10 @@ export class OlenEngine {
   }
 
   private applyRules(activities: ActivityConfig[]): ActivityConfig | null {
+    // Activities with blocking rules get top priority — they suppress others
+    const blockers = activities.filter((a) => a.blocks && a.blocks.length > 0);
+    if (blockers.length > 0) return blockers[0];
+
     for (const activity of activities) {
       // Check alternating rule
       if (activity.alternatesWith) {
@@ -387,11 +393,11 @@ export class OlenEngine {
         }
       }
 
-      // Check blocking rules
-      if (activity.blocks && activity.blocks.length > 0) {
-        // This activity blocks others when neglected — it should be prioritized
-        return activity;
-      }
+      // Check if this activity is blocked by a neglected blocker
+      const isBlocked = activities.some((other) =>
+        other.blocks?.includes(activity.id) && other.id !== activity.id
+      );
+      if (isBlocked) continue; // skip — a blocker takes precedence
 
       return activity;
     }
@@ -408,14 +414,17 @@ export class OlenEngine {
     const effectiveNow = this.getEffectiveNow();
     const dayOfWeek = effectiveNow.getDay(); // 0=Sun
     const adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek; // Mon=1
-    const remainingDays = 7 - adjustedDay + 1;
+    const remainingDays = 7 - adjustedDay + 1; // including today
 
     return activities
       .filter((a) => {
         if (this.isDoneToday(a.id)) return false;
         const progress = this.getWeeklyProgress(a.id);
-        const remaining = progress.target - progress.done;
-        return remaining > 0 && remaining >= remainingDays;
+        const deficit = progress.target - progress.done;
+        if (deficit <= 0) return false;
+        // Behind if needed pace (deficit/remaining) exceeds average pace (target/7)
+        // Equivalent: deficit * 7 > target * remainingDays
+        return deficit * 7 > progress.target * remainingDays;
       })
       .sort((a, b) => b.priority - a.priority);
   }
