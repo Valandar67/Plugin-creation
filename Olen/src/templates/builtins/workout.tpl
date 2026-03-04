@@ -176,7 +176,7 @@ function updateWarmupWeights(ex, newW) {
 const MUSCLE_GROUP_REGIONS = {
   Neck:      ["neck"],
   Chest:     ["chest"],
-  Back:      ["lats", "traps", "lower_back", "rear_delts"],
+  Back:      ["lats", "traps", "lower_back"],
   Shoulders: ["front_delts", "rear_delts"],
   Core:      ["core"],
   Legs:      ["quads", "hamstrings", "glutes", "calves"],
