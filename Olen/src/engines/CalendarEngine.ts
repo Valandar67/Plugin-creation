@@ -342,6 +342,34 @@ export class CalendarEngine {
         qt.postponedFrom = qt.postponedFrom ?? qt.date;
         qt.date = tomorrowStr;
       }
+    } else if (task.source === "daily-note" && task.filePath !== undefined && task.lineNumber !== undefined) {
+      // Move task line from today's note to tomorrow's note
+      const file = this.app.vault.getAbstractFileByPath(task.filePath);
+      if (!file || !(file instanceof TFile)) return;
+
+      const content = await this.app.vault.read(file);
+      const lines = content.split("\n");
+      if (task.lineNumber >= lines.length) return;
+
+      // Extract the task line and remove from today's note
+      const taskLine = lines[task.lineNumber];
+      lines.splice(task.lineNumber, 1);
+      await this.app.vault.modify(file, lines.join("\n"));
+
+      // Append to tomorrow's note (create if needed)
+      const folder = this.settings.calendar.dailyNotesFolder;
+      const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
+      const tomorrowPath = `${normalizedFolder}${tomorrowStr}.md`;
+
+      const tomorrowFile = this.app.vault.getAbstractFileByPath(tomorrowPath);
+      if (tomorrowFile && tomorrowFile instanceof TFile) {
+        const tomorrowContent = await this.app.vault.read(tomorrowFile);
+        await this.app.vault.modify(tomorrowFile, tomorrowContent + "\n" + taskLine);
+      } else {
+        try {
+          await this.app.vault.create(tomorrowPath, `---\n---\n\n${taskLine}\n`);
+        } catch { /* may already exist */ }
+      }
     } else if (task.source === "tasks-plugin" && task.filePath !== undefined && task.lineNumber !== undefined) {
       // Update the due date in the file
       const file = this.app.vault.getAbstractFileByPath(task.filePath);

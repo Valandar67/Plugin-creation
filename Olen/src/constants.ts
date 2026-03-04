@@ -197,6 +197,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
     directive_title: "THE DIRECTIVE",
     boss_status_title: "BOSS STATUS",
     weekly_rhythm_title: "WEEKLY RHYTHM",
+    analytics_title: "PROGRESS",
     activity_grid_title: "ACTIVITIES",
     temple_title: "THE TEMPLE",
     eudaimonia_title: "Eudaimonia Index",
@@ -216,7 +217,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   heroHeight: 350,
   sectionOrder: [
     "hero", "heatmap", "eudaimonia", "daymap", "directive", "boss",
-    "weekly", "activities", "temple", "quote",
+    "weekly", "analytics", "activities", "temple", "quote",
   ],
   hiddenSections: [],
   activityGridColumns: 2,

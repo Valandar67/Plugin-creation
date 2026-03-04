@@ -20,6 +20,7 @@ import { renderQuoteFooter } from "../components/QuoteFooter";
 import { renderDayTimeline } from "../components/DayTimeline";
 import { renderStrengthHeatmap, showMuscleProgressPopup, showOverallProgressPopup, showMuscleSelector } from "../components/StrengthHeatmap";
 import { renderWeightNotification } from "../components/WeightProgress";
+import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import type { MuscleGroupId } from "../constants";
 
 export class DashboardView extends ItemView {
@@ -147,6 +148,10 @@ export class DashboardView extends ItemView {
 
         case "weekly":
           renderWeeklyRhythm(root, settings, engine, staggerIdx++);
+          break;
+
+        case "analytics":
+          renderProgressAnalytics(root, settings, engine, staggerIdx++);
           break;
 
         case "activities":

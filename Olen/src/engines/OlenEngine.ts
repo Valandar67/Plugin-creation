@@ -660,4 +660,180 @@ export class OlenEngine {
     }
     return bestTotal > 0 ? best.day : "--";
   }
+
+  // --- Daily Stats ---
+
+  getDailyStats(): { sessions: number; perActivity: Array<{ id: string; name: string; emoji: string; category: Category; done: boolean }> } {
+    const activities = this.getEnabledActivities();
+    let sessions = 0;
+    const perActivity: Array<{ id: string; name: string; emoji: string; category: Category; done: boolean }> = [];
+
+    for (const activity of activities) {
+      const done = this.isDoneToday(activity.id);
+      if (done) sessions++;
+      perActivity.push({
+        id: activity.id,
+        name: activity.name,
+        emoji: activity.emoji,
+        category: activity.category,
+        done,
+      });
+    }
+
+    return { sessions, perActivity };
+  }
+
+  // --- Weekly Stats (enhanced) ---
+
+  getWeeklyStats(): {
+    activeDays: number;
+    totalSessions: number;
+    bestDay: string;
+    weekOverWeek: number; // +/- difference vs last week
+    byDay: Array<{ day: string; date: string; completions: Map<Category, number> }>;
+  } {
+    const byDay = this.getWeeklyCompletionsByDay();
+    const activeDays = this.getActiveDaysThisWeek();
+    const bestDay = this.getBestDayThisWeek();
+
+    let totalSessions = 0;
+    for (const d of byDay) {
+      d.completions.forEach((v) => { totalSessions += v; });
+    }
+
+    // Last week's total for comparison
+    const effectiveNow = this.getEffectiveNow();
+    const lastWeekStart = new Date(this.getWeekStart(effectiveNow));
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+    let lastWeekTotal = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(lastWeekStart);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      for (const activity of this.getEnabledActivities()) {
+        const comps = this.getCompletionsForActivity(activity.id);
+        if (comps.some((c) => c.date === dateStr && c.completed)) lastWeekTotal++;
+      }
+    }
+
+    return {
+      activeDays,
+      totalSessions,
+      bestDay,
+      weekOverWeek: totalSessions - lastWeekTotal,
+      byDay,
+    };
+  }
+
+  // --- Monthly Stats ---
+
+  getMonthlyStats(): {
+    totalSessions: number;
+    activeDays: number;
+    avgDaily: number;
+    byWeek: Array<{ label: string; total: number; byCategory: Map<Category, number> }>;
+    calendarGrid: Array<{ date: string; total: number }>;
+  } {
+    const effectiveNow = this.getEffectiveNow();
+    const year = effectiveNow.getFullYear();
+    const month = effectiveNow.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayDate = effectiveNow.getDate();
+
+    const activities = this.getEnabledActivities();
+    const daysSet = new Set<string>();
+    let totalSessions = 0;
+    const calendarGrid: Array<{ date: string; total: number }> = [];
+
+    // Per-day counts for the whole month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      let dayTotal = 0;
+      for (const activity of activities) {
+        const comps = this.getCompletionsForActivity(activity.id);
+        if (comps.some((c) => c.date === dateStr && c.completed)) dayTotal++;
+      }
+      if (dayTotal > 0) daysSet.add(dateStr);
+      totalSessions += dayTotal;
+      calendarGrid.push({ date: dateStr, total: dayTotal });
+    }
+
+    // Group into weeks
+    const byWeek: Array<{ label: string; total: number; byCategory: Map<Category, number> }> = [];
+    let weekNum = 1;
+    for (let d = 1; d <= daysInMonth; d += 7) {
+      const weekEnd = Math.min(d + 6, daysInMonth);
+      let weekTotal = 0;
+      const byCat = new Map<Category, number>();
+      for (let wd = d; wd <= weekEnd; wd++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(wd).padStart(2, "0")}`;
+        for (const activity of activities) {
+          const comps = this.getCompletionsForActivity(activity.id);
+          if (comps.some((c) => c.date === dateStr && c.completed)) {
+            weekTotal++;
+            byCat.set(activity.category, (byCat.get(activity.category) ?? 0) + 1);
+          }
+        }
+      }
+      byWeek.push({ label: `W${weekNum}`, total: weekTotal, byCategory: byCat });
+      weekNum++;
+    }
+
+    return {
+      totalSessions,
+      activeDays: daysSet.size,
+      avgDaily: todayDate > 0 ? Math.round((totalSessions / todayDate) * 10) / 10 : 0,
+      byWeek,
+      calendarGrid,
+    };
+  }
+
+  // --- Yearly Stats ---
+
+  getYearlyStats(): {
+    totalSessions: number;
+    activeDays: number;
+    byMonth: Array<{ label: string; total: number; byCategory: Map<Category, number> }>;
+    categoryDistribution: Map<Category, number>;
+  } {
+    const effectiveNow = this.getEffectiveNow();
+    const year = effectiveNow.getFullYear();
+    const activities = this.getEnabledActivities();
+    const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    let totalSessions = 0;
+    const daysSet = new Set<string>();
+    const categoryDist = new Map<Category, number>();
+    const byMonth: Array<{ label: string; total: number; byCategory: Map<Category, number> }> = [];
+
+    for (let m = 0; m < 12; m++) {
+      const daysInMonth = new Date(year, m + 1, 0).getDate();
+      let monthTotal = 0;
+      const byCat = new Map<Category, number>();
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        for (const activity of activities) {
+          const comps = this.getCompletionsForActivity(activity.id);
+          if (comps.some((c) => c.date === dateStr && c.completed)) {
+            monthTotal++;
+            totalSessions++;
+            daysSet.add(dateStr);
+            byCat.set(activity.category, (byCat.get(activity.category) ?? 0) + 1);
+            categoryDist.set(activity.category, (categoryDist.get(activity.category) ?? 0) + 1);
+          }
+        }
+      }
+
+      byMonth.push({ label: monthLabels[m], total: monthTotal, byCategory: byCat });
+    }
+
+    return {
+      totalSessions,
+      activeDays: daysSet.size,
+      byMonth,
+      categoryDistribution: categoryDist,
+    };
+  }
 }
