@@ -12,7 +12,8 @@ export function renderHeroCard(
   container: HTMLElement,
   settings: OlenSettings,
   engine: OlenEngine,
-  staggerIndex: number
+  staggerIndex: number,
+  callbacks?: { onMyWhy?: () => void }
 ): void {
   const hero = container.createDiv({ cls: "olen-hero" });
   hero.style.setProperty("--i", String(staggerIndex));
@@ -64,6 +65,14 @@ export function renderHeroCard(
     // Scroll to the eudaimonia section
     const eudSection = container.querySelector(".olen-card");
     if (eudSection) eudSection.scrollIntoView({ behavior: "smooth" });
+  });
+
+  const whyBtn = actions.createEl("button", {
+    cls: "olen-hero-btn",
+    text: "My Why",
+  });
+  whyBtn.addEventListener("click", () => {
+    callbacks?.onMyWhy?.();
   });
 
   const reflectBtn = actions.createEl("button", {

@@ -3177,3 +3177,91 @@
   transform: scale(0.98);
 }
 
+/* --- My Why Modal --- */
+
+.olen-mywhy-sheet {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.olen-mywhy-field {
+  margin-bottom: 16px;
+}
+
+.olen-mywhy-field label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.olen-mywhy-textarea {
+  width: 100%;
+  min-height: 70px;
+  resize: vertical;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xs);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-family: "Georgia", serif;
+  font-size: 14px;
+  font-style: italic;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.olen-mywhy-textarea:focus {
+  border-color: var(--accent-gold);
+}
+
+.olen-mywhy-goals-header {
+  margin-bottom: 8px;
+}
+
+.olen-mywhy-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.olen-mywhy-goal-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.olen-mywhy-goal-input {
+  flex: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xs);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.olen-mywhy-goal-input:focus {
+  border-color: var(--accent-gold);
+}
+
+.olen-mywhy-goal-remove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: none;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.olen-mywhy-goal-remove:active {
+  opacity: 0.7;
+}
+

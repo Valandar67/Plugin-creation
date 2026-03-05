@@ -218,7 +218,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   animationStaggerMs: 80,
   heroHeight: 350,
   sectionOrder: [
-    "hero", "heatmap", "statsrow", "eudaimonia", "daymap", "directive", "boss",
+    "hero", "heatmap", "statsrow", "eudaimonia", "directive", "daymap", "boss",
     "weekly", "analytics", "activities", "monthlyheatmap", "collage", "temple", "quote",
   ],
   hiddenSections: [],
@@ -283,7 +283,10 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   // Profile
   userName: "Warrior",
   myWhy: "",
+  goals: [],
   heroBackground: "",
+  scrollingBackground: "",
+  tabColor: "",
   homepage: "",
 
   // Activities

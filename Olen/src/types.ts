@@ -299,7 +299,10 @@ export interface OlenSettings {
   // Profile
   userName: string;
   myWhy: string;
+  goals: string[];  // Multiple goals / aspirations accessible via dashboard modal
   heroBackground: string;
+  scrollingBackground: string; // Background image that scrolls with the dashboard
+  tabColor: string;  // Obsidian tab header accent color
   homepage: string; // vault file path to open when "Open homepage" is selected (e.g. "Home.md")
 
   // Activities

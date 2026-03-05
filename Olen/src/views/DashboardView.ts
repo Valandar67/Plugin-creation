@@ -24,6 +24,7 @@ import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import { renderStatsRow } from "../components/StatsRow";
 import { renderMonthlyHeatmap } from "../components/MonthlyHeatmap";
 import { renderSessionCollage } from "../components/SessionCollage";
+import { showMyWhyModal } from "../modals/MyWhyModal";
 import type { MuscleGroupId } from "../constants";
 
 export class DashboardView extends ItemView {
@@ -100,7 +101,11 @@ export class DashboardView extends ItemView {
 
       switch (section) {
         case "hero":
-          renderHeroCard(root, settings, engine, staggerIdx++);
+          renderHeroCard(root, settings, engine, staggerIdx++, {
+            onMyWhy: () => {
+              showMyWhyModal(this.plugin, () => this.render());
+            },
+          });
           break;
 
         case "heatmap":
@@ -504,14 +509,83 @@ export class DashboardView extends ItemView {
 
   private applyThemeOverrides(root: HTMLElement): void {
     const overrides = this.plugin.settings.themeOverrides;
-    if (!overrides) return;
+    if (overrides) {
+      if (overrides.bgPrimary) root.style.setProperty("--bg-primary", overrides.bgPrimary);
+      if (overrides.cardBg) root.style.setProperty("--card-bg", overrides.cardBg);
+      if (overrides.textPrimary) root.style.setProperty("--text-primary", overrides.textPrimary);
+      if (overrides.textMuted) root.style.setProperty("--text-muted", overrides.textMuted);
+      if (overrides.accentGold) root.style.setProperty("--accent-gold", overrides.accentGold);
+      if (overrides.danger) root.style.setProperty("--danger", overrides.danger);
+      if (overrides.success) root.style.setProperty("--success", overrides.success);
+    }
 
-    if (overrides.bgPrimary) root.style.setProperty("--bg-primary", overrides.bgPrimary);
-    if (overrides.cardBg) root.style.setProperty("--card-bg", overrides.cardBg);
-    if (overrides.textPrimary) root.style.setProperty("--text-primary", overrides.textPrimary);
-    if (overrides.textMuted) root.style.setProperty("--text-muted", overrides.textMuted);
-    if (overrides.accentGold) root.style.setProperty("--accent-gold", overrides.accentGold);
-    if (overrides.danger) root.style.setProperty("--danger", overrides.danger);
-    if (overrides.success) root.style.setProperty("--success", overrides.success);
+    // Scrolling background image
+    const bgImage = this.plugin.settings.scrollingBackground;
+    if (bgImage) {
+      const adapter = this.app.vault.adapter;
+      const resourcePath = (adapter as any).getResourcePath
+        ? (adapter as any).getResourcePath(bgImage)
+        : bgImage;
+      root.style.backgroundImage = `
+        linear-gradient(rgba(7, 6, 10, 0.75), rgba(7, 6, 10, 0.85)),
+        url("${resourcePath}")
+      `;
+      root.style.backgroundAttachment = "scroll";
+      root.style.backgroundSize = "cover";
+      root.style.backgroundPosition = "center top";
+      root.style.backgroundRepeat = "no-repeat";
+    }
+
+    // Tab color override
+    const tabColor = this.plugin.settings.tabColor;
+    if (tabColor) {
+      this.applyTabColor(tabColor);
+    }
+  }
+
+  private applyTabColor(color: string): void {
+    // Apply color to the Obsidian workspace tab header for this view's leaf
+    const leafEl = (this.leaf as any).containerEl as HTMLElement | undefined;
+    if (!leafEl) return;
+
+    // The tab header is a sibling or ancestor element — find it
+    const tabHeader = leafEl.closest(".workspace-leaf")
+      ?.querySelector(".workspace-tab-header-inner-icon");
+    if (tabHeader instanceof HTMLElement) {
+      tabHeader.style.color = color;
+    }
+
+    // Also set the workspace-leaf active indicator
+    const tabEl = leafEl.closest(".workspace-tab-header");
+    if (tabEl instanceof HTMLElement) {
+      tabEl.style.setProperty("--tab-text-color-focused-active", color);
+    }
+
+    // Set a CSS variable on the root so we can use it elsewhere
+    const rootEl = this.contentEl.querySelector(".olen-dashboard") as HTMLElement | null;
+    if (rootEl) {
+      rootEl.style.setProperty("--olen-tab-color", color);
+    }
+
+    // Inject a style tag to override the tab color globally for Olen tabs
+    let styleEl = document.getElementById("olen-tab-color-override");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "olen-tab-color-override";
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      .workspace-tab-header:has(+ .workspace-leaf-content [data-type="olen-dashboard-view"]),
+      .workspace-tab-header:has(+ .workspace-leaf-content [data-type="olen-activity-dashboard-view"]) {
+        --tab-text-color-focused-active: ${color} !important;
+      }
+      .workspace-tab-header-inner-icon:has(~ .workspace-tab-header-inner-title:not(:empty)) {
+        /* fallback handled below */
+      }
+      .workspace-leaf-content[data-type="olen-dashboard-view"] ~ .workspace-tab-header .workspace-tab-header-inner-icon,
+      .workspace-leaf-content[data-type="olen-activity-dashboard-view"] ~ .workspace-tab-header .workspace-tab-header-inner-icon {
+        color: ${color} !important;
+      }
+    `;
   }
 }
