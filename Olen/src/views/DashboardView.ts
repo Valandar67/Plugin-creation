@@ -21,6 +21,9 @@ import { renderDayTimeline } from "../components/DayTimeline";
 import { renderStrengthHeatmap, showMuscleProgressPopup, showOverallProgressPopup, showMuscleSelector } from "../components/StrengthHeatmap";
 import { renderWeightNotification } from "../components/WeightProgress";
 import { renderProgressAnalytics } from "../components/ProgressAnalytics";
+import { renderStatsRow } from "../components/StatsRow";
+import { renderMonthlyHeatmap } from "../components/MonthlyHeatmap";
+import { renderSessionCollage } from "../components/SessionCollage";
 import type { MuscleGroupId } from "../constants";
 
 export class DashboardView extends ItemView {
@@ -154,8 +157,22 @@ export class DashboardView extends ItemView {
           renderProgressAnalytics(root, settings, engine, staggerIdx++);
           break;
 
+        case "statsrow":
+          renderStatsRow(root, settings, engine, staggerIdx++);
+          break;
+
+        case "monthlyheatmap":
+          renderMonthlyHeatmap(root, settings, engine, staggerIdx++);
+          break;
+
+        case "collage":
+          renderSessionCollage(root, this.app, settings, staggerIdx++);
+          break;
+
         case "activities":
-          renderActivityGrid(root, settings, engine, staggerIdx++);
+          renderActivityGrid(root, settings, engine, staggerIdx++, (activityId) => {
+            this.plugin.activateActivityDashboard(activityId);
+          });
           break;
 
         case "temple":

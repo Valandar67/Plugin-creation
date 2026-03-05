@@ -43,10 +43,13 @@ export interface ActivityConfig {
   timeOverride?: TimeOverride;
   estimatedDuration: number; // minutes
 
+  // === Screen Sources (§I dual system) ===
+  dashboardSource?: "native" | "custom";
+  dashboardCustomFile?: string;   // Vault path (without .md)
+  workspaceSource?: "native" | "custom";
+  workspaceCustomFile?: string;   // Vault path (without .md)
+
   // Post-completion navigation
-  // "dashboard" = return to Olen dashboard (default)
-  // "stay"      = stay on the note (show completion summary)
-  // "homepage"  = open the global homepage file defined in Profile settings
   completionReturnTo?: string;
 
   // Advanced Rules
@@ -362,6 +365,9 @@ export interface OlenSettings {
   quoteFolderPath: string;
   lastQuoteIndex: number;
   recentQuoteIds: number[];
+
+  // Onboarding
+  onboardingComplete: boolean;
 }
 
 // --- TrackHabitRank data.json shape (for migration) ---

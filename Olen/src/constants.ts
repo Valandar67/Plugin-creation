@@ -17,6 +17,8 @@ import type {
 
 export const VIEW_TYPE_OLEN = "olen-dashboard-view";
 export const VIEW_TYPE_WORKSPACE = "olen-workspace-view";
+export const VIEW_TYPE_ACTIVITY_DASHBOARD = "olen-activity-dashboard-view";
+export const VIEW_TYPE_ONBOARDING = "olen-onboarding-view";
 
 // --- Boss Definitions (13 tiers) ---
 
@@ -216,8 +218,8 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   animationStaggerMs: 80,
   heroHeight: 350,
   sectionOrder: [
-    "hero", "heatmap", "eudaimonia", "daymap", "directive", "boss",
-    "weekly", "analytics", "activities", "temple", "quote",
+    "hero", "heatmap", "statsrow", "eudaimonia", "daymap", "directive", "boss",
+    "weekly", "analytics", "activities", "monthlyheatmap", "collage", "temple", "quote",
   ],
   hiddenSections: [],
   activityGridColumns: 2,
@@ -352,4 +354,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   quoteFolderPath: "",
   lastQuoteIndex: -1,
   recentQuoteIds: [],
+
+  // Onboarding
+  onboardingComplete: false,
 };

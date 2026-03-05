@@ -10,7 +10,8 @@ export function renderActivityGrid(
   container: HTMLElement,
   settings: OlenSettings,
   engine: OlenEngine,
-  staggerIndex: number
+  staggerIndex: number,
+  onActivityTap?: (activityId: string) => void
 ): void {
   const label = settings.devConfig.labels.activity_grid_title ?? "ACTIVITIES";
 
@@ -28,7 +29,12 @@ export function renderActivityGrid(
   const activities = engine.getEnabledActivities();
 
   for (const activity of activities) {
-    const card = grid.createDiv({ cls: "olen-activity-card" });
+    const card = grid.createDiv({ cls: "olen-activity-card olen-clickable" });
+
+    // Navigate to activity dashboard on tap
+    if (onActivityTap) {
+      card.addEventListener("click", () => onActivityTap(activity.id));
+    }
 
     // Category accent bar
     const accent = card.createDiv({ cls: "olen-activity-accent" });

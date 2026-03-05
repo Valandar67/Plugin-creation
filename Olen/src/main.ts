@@ -5,9 +5,11 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
+import { ActivityDashboardView } from "./views/ActivityDashboardView";
+import { OnboardingView } from "./views/OnboardingView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
 
@@ -76,6 +78,18 @@ export default class OlenPlugin extends Plugin {
     this.registerView(
       VIEW_TYPE_WORKSPACE,
       (leaf) => new WorkspaceView(leaf, this)
+    );
+
+    // Register activity dashboard view
+    this.registerView(
+      VIEW_TYPE_ACTIVITY_DASHBOARD,
+      (leaf) => new ActivityDashboardView(leaf, this)
+    );
+
+    // Register onboarding view
+    this.registerView(
+      VIEW_TYPE_ONBOARDING,
+      (leaf) => new OnboardingView(leaf, this)
     );
 
     // Ribbon icon
@@ -164,6 +178,12 @@ export default class OlenPlugin extends Plugin {
   // --- View Management ---
 
   async activateDashboard(): Promise<void> {
+    // Check if onboarding is needed
+    if (!this.settings.onboardingComplete && !this.settings.migrated) {
+      await this.activateOnboarding();
+      return;
+    }
+
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(VIEW_TYPE_OLEN)[0];
 
@@ -175,6 +195,40 @@ export default class OlenPlugin extends Plugin {
     }
 
     await workspace.revealLeaf(leaf);
+  }
+
+  async activateOnboarding(): Promise<void> {
+    const { workspace } = this.app;
+
+    // Close existing onboarding views
+    workspace.getLeavesOfType(VIEW_TYPE_ONBOARDING).forEach((leaf) => leaf.detach());
+
+    const leaf = workspace.getLeaf("tab");
+    if (!leaf) return;
+    await leaf.setViewState({ type: VIEW_TYPE_ONBOARDING, active: true });
+    await workspace.revealLeaf(leaf);
+  }
+
+  async activateActivityDashboard(activityId: string): Promise<void> {
+    const { workspace } = this.app;
+
+    // Close existing activity dashboards
+    workspace.getLeavesOfType(VIEW_TYPE_ACTIVITY_DASHBOARD).forEach((leaf) => leaf.detach());
+
+    // Open in the same tab as the main dashboard if possible
+    const dashLeaves = workspace.getLeavesOfType(VIEW_TYPE_OLEN);
+    const targetLeaf = dashLeaves[0] ?? workspace.getLeaf("tab");
+    if (!targetLeaf) return;
+
+    await targetLeaf.setViewState({ type: VIEW_TYPE_ACTIVITY_DASHBOARD, active: true });
+
+    const view = targetLeaf.view as unknown as ActivityDashboardView;
+    if (view && typeof view.setActivityId === "function") {
+      view.setActivityId(activityId);
+      await view.render();
+    }
+
+    await workspace.revealLeaf(targetLeaf);
   }
 
   refreshDashboard(): void {
