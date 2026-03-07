@@ -1,6 +1,6 @@
 // ============================================================
 // Olen — Boss Status Card Component
-// Compact boss HP bar with tier and rank
+// Compact boss HP bar with tier and rank (no emoji)
 // ============================================================
 
 import type { OlenSettings } from "../types";
@@ -25,10 +25,8 @@ export function renderBossStatusCard(
   const card = container.createDiv({ cls: cardCls });
   card.style.setProperty("--i", String(staggerIndex));
 
-  // Row: emoji + info
+  // Row: info only (no emoji)
   const row = card.createDiv({ cls: "olen-boss-row" });
-
-  row.createEl("div", { cls: "olen-boss-emoji", text: getBossEmoji(status.tier) });
 
   const info = row.createDiv({ cls: "olen-boss-info" });
   info.createEl("div", { cls: "olen-boss-name", text: status.boss.name });
@@ -48,14 +46,4 @@ export function renderBossStatusCard(
     cls: "olen-boss-hp-text",
     text: `${status.currentHP}/${status.maxHP} HP (${status.percent}%)`,
   });
-}
-
-function getBossEmoji(tier: number): string {
-  const emojis: Record<number, string> = {
-    1: "\u{1F47B}", 2: "\u{1F9DC}", 3: "\u{1F409}", 4: "\u{1F402}",
-    5: "\u{1F40D}", 6: "\u{1F981}", 7: "\u{1F525}", 8: "\u{1F43A}",
-    9: "\u{1F30A}", 10: "\u{1F47F}", 11: "\u{1F329}", 12: "\u231B",
-    13: "\u{1F300}",
-  };
-  return emojis[tier] ?? "\u2694\uFE0F";
 }

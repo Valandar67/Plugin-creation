@@ -12,6 +12,7 @@ import { ActivityDashboardView } from "./views/ActivityDashboardView";
 import { OnboardingView } from "./views/OnboardingView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
+import { getTracker } from "./tracker-bridge";
 
 export default class OlenPlugin extends Plugin {
   settings!: OlenSettings;
@@ -67,6 +68,9 @@ export default class OlenPlugin extends Plugin {
     if (!this.settings.migrated) {
       await this.migrateFromTrackHabitRank();
     }
+
+    // Sync state from TrackHabitRank (Mythological Habit Tracker)
+    this.syncFromTracker();
 
     // Register main dashboard view
     this.registerView(
@@ -175,6 +179,101 @@ export default class OlenPlugin extends Plugin {
     // Cleanup handled by DashboardView.onClose()
   }
 
+  // --- TrackHabitRank Sync ---
+
+  /**
+   * Read live state from the Mythological Habit Tracker plugin.
+   * Syncs boss HP, tier, Tartarus, rewards, and activity data.
+   */
+  syncFromTracker(): void {
+    const tracker = getTracker(this.app);
+    if (!tracker) return;
+
+    const s = tracker.settings;
+
+    // Boss state
+    if (s.currentTier !== undefined) this.settings.currentTier = s.currentTier;
+    if (s.bossMaxHP !== undefined) this.settings.bossMaxHP = s.bossMaxHP;
+    if (s.bossCurrentHP !== undefined) this.settings.bossCurrentHP = s.bossCurrentHP;
+    if (s.inTartarus !== undefined) this.settings.inTartarus = s.inTartarus;
+
+    // Tartarus details
+    if (s.tartarusPenanceTasks !== undefined) this.settings.tartarusPenanceTasks = s.tartarusPenanceTasks;
+    if (s.tartarusStartDate !== undefined) this.settings.tartarusStartDate = s.tartarusStartDate;
+
+    // Streak data
+    if (s.consecutivePerfectWeeks !== undefined) this.settings.consecutivePerfectWeeks = s.consecutivePerfectWeeks;
+
+    // System state
+    if (s.systemState !== undefined) this.settings.systemState = s.systemState;
+    if (s.pauseStartTime !== undefined) this.settings.pauseStartTime = s.pauseStartTime;
+    if (s.totalPausedTime !== undefined) this.settings.totalPausedTime = s.totalPausedTime;
+
+    // Rewards
+    if (s.pendingRewards !== undefined) this.settings.pendingRewards = s.pendingRewards;
+    if (s.claimedRewards !== undefined) this.settings.claimedRewards = s.claimedRewards;
+    if (s.bankedRewards !== undefined) this.settings.bankedRewards = s.bankedRewards;
+
+    // Simulated date (share between plugins)
+    if (s.simulatedDate !== undefined && s.simulatedDate) {
+      this.settings.simulatedDate = s.simulatedDate;
+    }
+
+    // Sync activity enabled states and overrides from tracker
+    if (s.enabledActivities && typeof s.enabledActivities === "object") {
+      for (const activity of this.settings.activities) {
+        // The tracker uses activity names as keys (e.g. "Workout": true)
+        const trackerKey = activity.name;
+        if (trackerKey in s.enabledActivities) {
+          activity.enabled = s.enabledActivities[trackerKey] !== false;
+        }
+      }
+    }
+
+    // Sync damage values from activity overrides if available
+    if (s.activityOverrides && typeof s.activityOverrides === "object") {
+      for (const activity of this.settings.activities) {
+        const override = s.activityOverrides[activity.name];
+        if (override) {
+          if (override.damagePerCompletion !== undefined) {
+            activity.damagePerCompletion = override.damagePerCompletion;
+          }
+          if (override.weeklyTarget !== undefined) {
+            activity.weeklyTarget = override.weeklyTarget;
+          }
+        }
+      }
+    }
+
+    // Sync custom habits from tracker
+    if (Array.isArray(s.customHabits)) {
+      for (const custom of s.customHabits) {
+        const existing = this.settings.activities.find(
+          (a) => a.id === `tracker-${custom.name?.toLowerCase().replace(/\s+/g, "-")}`
+        );
+        if (!existing && custom.name && custom.folder && custom.field) {
+          this.settings.activities.push({
+            id: `tracker-${custom.name.toLowerCase().replace(/\s+/g, "-")}`,
+            name: custom.name,
+            emoji: custom.emoji ?? "\u2B50",
+            category: custom.category ?? "spirit",
+            enabled: custom.enabled !== false,
+            folder: custom.folder,
+            property: custom.field,
+            damagePerCompletion: custom.damagePerCompletion ?? 1,
+            weeklyTarget: custom.weeklyTarget ?? 3,
+            trackingMode: "daily",
+            hasWorkspace: true,
+            priority: 5,
+            neglectThreshold: 3,
+            preferredTime: "anytime",
+            estimatedDuration: 30,
+          });
+        }
+      }
+    }
+  }
+
   // --- View Management ---
 
   async activateDashboard(): Promise<void> {
@@ -232,6 +331,9 @@ export default class OlenPlugin extends Plugin {
   }
 
   refreshDashboard(): void {
+    // Sync latest state from TrackHabitRank before re-rendering
+    this.syncFromTracker();
+
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_OLEN);
     for (const leaf of leaves) {
       const view = leaf.view as unknown as DashboardView;
