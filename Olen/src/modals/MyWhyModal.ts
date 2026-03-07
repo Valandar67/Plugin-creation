@@ -1,140 +1,179 @@
 // ============================================================
 // Olen — My Why Modal
-// Bottom-sheet modal for viewing/editing goals & aspirations
+// Keyboard-aware bottom sheet for goals & aspirations
 // ============================================================
 
 import { Notice } from "obsidian";
 import type OlenPlugin from "../main";
 
 /**
- * Shows a bottom-sheet modal for managing the user's "My Why" + multiple goals.
- * Accessible from the dashboard hero card.
+ * Shows a keyboard-aware modal for managing "My Why" + multiple goals.
  */
 export function showMyWhyModal(
   plugin: OlenPlugin,
   onSaved?: () => void
 ): void {
   const overlay = document.createElement("div");
-  overlay.className = "olen-sheet-overlay";
+  overlay.className = "olen-modal-overlay";
 
-  const sheet = overlay.createDiv({ cls: "olen-sheet olen-mywhy-sheet" });
-  sheet.createDiv({ cls: "olen-sheet-handle" });
+  const sheet = document.createElement("div");
+  sheet.className = "olen-modal-sheet olen-mywhy-sheet";
+  overlay.appendChild(sheet);
 
-  sheet.createEl("div", { cls: "olen-heading-lg", text: "MY WHY" });
+  // Handle bar
+  const handle = document.createElement("div");
+  handle.className = "olen-modal-handle";
+  sheet.appendChild(handle);
+
+  // Title
+  const title = document.createElement("div");
+  title.className = "olen-modal-title";
+  title.textContent = "My Why";
+  sheet.appendChild(title);
 
   // Core motivation
-  const whyField = sheet.createDiv({ cls: "olen-mywhy-field" });
-  whyField.createEl("label", {
-    cls: "olen-data-sm",
-    text: "Core motivation",
-  });
-  const whyInput = whyField.createEl("textarea", {
-    cls: "olen-mywhy-textarea",
-    attr: {
-      placeholder: "I pursue discipline because...",
-      rows: "3",
-    },
-  });
+  const whyLabel = document.createElement("label");
+  whyLabel.className = "olen-modal-label";
+  whyLabel.textContent = "Core motivation";
+  sheet.appendChild(whyLabel);
+
+  const whyInput = document.createElement("textarea");
+  whyInput.className = "olen-modal-textarea";
+  whyInput.placeholder = "I pursue discipline because...";
+  whyInput.rows = 3;
   whyInput.value = plugin.settings.myWhy ?? "";
+  sheet.appendChild(whyInput);
 
-  // Goals list
-  const goalsHeader = sheet.createDiv({ cls: "olen-mywhy-goals-header" });
-  goalsHeader.createEl("label", { cls: "olen-data-sm", text: "Goals & aspirations" });
+  // Goals
+  const goalsLabel = document.createElement("label");
+  goalsLabel.className = "olen-modal-label";
+  goalsLabel.textContent = "Goals & aspirations";
+  goalsLabel.style.marginTop = "12px";
+  sheet.appendChild(goalsLabel);
 
-  const goalsContainer = sheet.createDiv({ cls: "olen-mywhy-goals" });
+  const goalsContainer = document.createElement("div");
+  goalsContainer.className = "olen-modal-goals";
+  sheet.appendChild(goalsContainer);
 
-  // Track goals in a mutable array
   const currentGoals = [...(plugin.settings.goals ?? [])];
 
   function renderGoals(): void {
-    goalsContainer.empty();
+    goalsContainer.innerHTML = "";
 
     if (currentGoals.length === 0) {
-      goalsContainer.createEl("div", {
-        cls: "olen-body-italic",
-        text: "No goals yet. Add your first one below.",
-        attr: { style: "padding: 8px 0;" },
-      });
+      const empty = document.createElement("div");
+      empty.className = "olen-modal-hint";
+      empty.textContent = "No goals yet. Add your first one below.";
+      goalsContainer.appendChild(empty);
     }
 
     for (let i = 0; i < currentGoals.length; i++) {
-      const row = goalsContainer.createDiv({ cls: "olen-mywhy-goal-row" });
+      const row = document.createElement("div");
+      row.className = "olen-modal-goal-row";
 
-      const goalInput = row.createEl("input", {
-        cls: "olen-mywhy-goal-input",
-        attr: { type: "text", value: currentGoals[i] },
-      });
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "olen-modal-input";
+      input.value = currentGoals[i];
+      input.addEventListener("input", () => { currentGoals[i] = input.value.trim(); });
 
-      goalInput.addEventListener("change", () => {
-        currentGoals[i] = goalInput.value.trim();
-      });
-      goalInput.addEventListener("blur", () => {
-        currentGoals[i] = goalInput.value.trim();
-      });
-
-      const removeBtn = row.createEl("button", {
-        cls: "olen-mywhy-goal-remove",
-        text: "\u00D7",
-        attr: { "aria-label": "Remove goal" },
-      });
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "olen-modal-goal-remove";
+      removeBtn.textContent = "\u00D7";
       removeBtn.addEventListener("click", () => {
         currentGoals.splice(i, 1);
         renderGoals();
       });
+
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      goalsContainer.appendChild(row);
     }
   }
 
   renderGoals();
 
   // Add goal button
-  const addGoalBtn = sheet.createEl("button", {
-    cls: "olen-btn olen-btn-secondary",
-    text: "+ ADD GOAL",
-    attr: { style: "margin-top: 8px; width: 100%;" },
-  });
-  addGoalBtn.addEventListener("click", () => {
+  const addBtn = document.createElement("button");
+  addBtn.className = "olen-modal-btn-add";
+  addBtn.textContent = "+ Add goal";
+  addBtn.addEventListener("click", () => {
     currentGoals.push("");
     renderGoals();
-    // Focus the newly added input
-    const inputs = goalsContainer.querySelectorAll(".olen-mywhy-goal-input");
+    const inputs = goalsContainer.querySelectorAll(".olen-modal-input");
     const last = inputs[inputs.length - 1] as HTMLInputElement | undefined;
     last?.focus();
   });
+  sheet.appendChild(addBtn);
 
   // Actions
-  const actions = sheet.createDiv({
-    cls: "olen-directive-actions",
-    attr: { style: "margin-top: 20px;" },
-  });
+  const actions = document.createElement("div");
+  actions.className = "olen-modal-actions";
+  sheet.appendChild(actions);
 
-  const saveBtn = actions.createEl("button", {
-    cls: "olen-btn olen-btn-primary",
-    text: "SAVE",
-  });
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "olen-modal-btn-primary";
+  saveBtn.textContent = "Save";
   saveBtn.addEventListener("click", async () => {
     plugin.settings.myWhy = whyInput.value.trim();
     plugin.settings.goals = currentGoals.filter((g) => g.trim().length > 0);
     await plugin.saveSettings();
     new Notice("Your Why has been saved.");
-    closeSheet();
+    closeModal();
     onSaved?.();
   });
 
-  const cancelBtn = actions.createEl("button", {
-    cls: "olen-btn olen-btn-secondary",
-    text: "CANCEL",
-  });
-  cancelBtn.addEventListener("click", () => closeSheet());
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "olen-modal-btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => closeModal());
 
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+
+  // Close on overlay tap
   overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeSheet();
+    if (e.target === overlay) closeModal();
   });
 
-  const closeSheet = () => {
+  function closeModal(): void {
     overlay.classList.remove("visible");
-    setTimeout(() => overlay.remove(), 350);
-  };
+    cleanupViewport();
+    setTimeout(() => overlay.remove(), 300);
+  }
+
+  // Keyboard awareness via visualViewport
+  let cleanupViewport = setupKeyboardAwareness(sheet);
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add("visible"));
+}
+
+/**
+ * Adjusts the modal position when the virtual keyboard appears on mobile.
+ * Returns a cleanup function.
+ */
+function setupKeyboardAwareness(sheet: HTMLElement): () => void {
+  const vv = (window as any).visualViewport;
+  if (!vv) return () => {};
+
+  function onResize() {
+    const offsetFromBottom = window.innerHeight - (vv.offsetTop + vv.height);
+    if (offsetFromBottom > 50) {
+      // Keyboard is open — lift the sheet above it
+      sheet.style.transform = `translateY(-${offsetFromBottom}px)`;
+      sheet.style.maxHeight = `${vv.height - 20}px`;
+    } else {
+      sheet.style.transform = "";
+      sheet.style.maxHeight = "";
+    }
+  }
+
+  vv.addEventListener("resize", onResize);
+  vv.addEventListener("scroll", onResize);
+
+  return () => {
+    vv.removeEventListener("resize", onResize);
+    vv.removeEventListener("scroll", onResize);
+  };
 }

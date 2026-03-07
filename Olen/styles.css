@@ -642,7 +642,7 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   opacity: 0;
   transition: opacity var(--transition);
 }
@@ -762,9 +762,9 @@
   max-height: 85vh;
   background: var(--card-bg-solid);
   background-image:
-    radial-gradient(ellipse 80% 30% at 50% 0%, rgba(212, 168, 67, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 30% at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
     var(--glass-sheen);
-  border: 1px solid rgba(212, 168, 67, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: none;
   border-radius: var(--radius) var(--radius) 0 0;
   padding: var(--spacing-lg);
@@ -772,7 +772,7 @@
   transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5), 0 -2px 16px rgba(212, 168, 67, 0.05);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5), 0 -2px 16px rgba(255, 255, 255, 0.02);
 }
 
 .olen-sheet-overlay.visible .olen-sheet {
@@ -804,7 +804,7 @@
   color: var(--text-muted);
   text-align: center;
   padding: 18px 8px;
-  border-top: 1px solid rgba(212, 168, 67, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   margin-top: 18px;
 }
 
@@ -1172,7 +1172,7 @@
 
 .olen-timeline-current {
   background: rgba(212, 168, 67, 0.06);
-  border: 1px solid rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-sm);
 }
 
@@ -1685,7 +1685,7 @@
   background: var(--card-bg, rgba(16, 14, 20, 0.92));
   -webkit-backdrop-filter: blur(60px) saturate(180%);
   backdrop-filter: blur(60px) saturate(180%);
-  border: 1px solid var(--card-border, rgba(212, 168, 67, 0.08));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
   border-bottom: none;
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
@@ -1710,7 +1710,7 @@
   width: 100%;
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   color: var(--text-primary, #f5f0e8);
   font-size: 14px;
@@ -1720,7 +1720,7 @@
 }
 
 .olen-quick-task-input:focus {
-  border-color: rgba(212, 168, 67, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .olen-quick-task-row {
@@ -1733,7 +1733,7 @@
   flex: 1;
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   color: var(--text-primary, #f5f0e8);
   font-size: 13px;
@@ -1741,7 +1741,7 @@
 }
 
 .olen-quick-task-row input:focus {
-  border-color: rgba(212, 168, 67, 0.35);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .olen-quick-task-actions {
@@ -1772,14 +1772,14 @@
 }
 
 .olen-quick-task-add {
-  background: linear-gradient(135deg, rgba(212, 168, 67, 0.2), rgba(196, 136, 32, 0.15));
-  color: var(--accent-gold-bright, #e8c35a);
-  border: 1px solid rgba(212, 168, 67, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
+  color: var(--text-primary, #f5f0e8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .olen-quick-task-add:active {
-  background: linear-gradient(135deg, rgba(212, 168, 67, 0.35), rgba(196, 136, 32, 0.25));
-  box-shadow: 0 0 16px rgba(212, 168, 67, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.05);
 }
 
 /* ============================================================
@@ -3264,5 +3264,442 @@
 
 .olen-mywhy-goal-remove:active {
   opacity: 0.7;
+}
+
+/* ============================================================
+   DIRECTIVE V2 — Redesigned with cycling + reason badges
+   ============================================================ */
+
+.olen-directive-wrapper {
+  animation: olenFadeIn calc(var(--stagger-base) + var(--i, 0) * var(--stagger-step, 80ms)) ease forwards;
+}
+
+.olen-directive-v2 {
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.olen-directive-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0.7;
+}
+
+.olen-directive-reason {
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+
+.olen-directive-activity-v2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Georgia", serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.olen-directive-emoji {
+  font-size: 20px;
+}
+
+.olen-directive-lore {
+  font-family: "Georgia", serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.olen-directive-meta {
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  font-size: 10px;
+  color: var(--text-dim, rgba(255,255,255,0.35));
+  letter-spacing: 0.3px;
+  margin-bottom: 14px;
+}
+
+.olen-directive-weekly-pill {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.olen-directive-actions-v2 {
+  display: flex;
+  gap: 10px;
+}
+
+.olen-directive-begin {
+  flex: 1;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary, #f5f0e8);
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 0.2s ease;
+}
+
+.olen-directive-begin:active {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(0.98);
+}
+
+.olen-directive-skip {
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: var(--text-muted, #928d85);
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 0.2s ease;
+}
+
+.olen-directive-skip:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.olen-directive-dots {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.olen-directive-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.olen-directive-dot.active {
+  width: 14px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.olen-directive-dot-more {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.25);
+  margin-left: 2px;
+}
+
+.olen-directive-done {
+  text-align: center;
+}
+
+/* Expanded directive — up-next section */
+
+.olen-directive-expanded {
+  max-height: 90vh;
+}
+
+.olen-directive-upnext {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.olen-directive-upnext .olen-data-sm {
+  margin-bottom: 8px;
+}
+
+.olen-directive-upnext-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.olen-directive-upnext-badge {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   HERO — My Why area
+   ============================================================ */
+
+.olen-hero-why {
+  position: relative;
+  z-index: 2;
+  padding: 8px 20px 14px;
+  text-align: center;
+}
+
+.olen-hero-why-text {
+  font-family: "Georgia", serif;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.5;
+}
+
+.olen-hero-why-placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================
+   REDESIGNED MODALS — Keyboard-aware, glass, neutral
+   ============================================================ */
+
+.olen-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.olen-modal-overlay.visible {
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.olen-modal-sheet {
+  width: 100%;
+  max-width: 440px;
+  max-height: 80vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 20px 28px;
+  background: rgba(18, 16, 22, 0.94);
+  -webkit-backdrop-filter: blur(60px) saturate(180%);
+  backdrop-filter: blur(60px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              max-height 0.2s ease;
+}
+
+.olen-modal-overlay.visible .olen-modal-sheet {
+  transform: translateY(0);
+}
+
+.olen-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  margin: 0 auto 18px;
+}
+
+.olen-modal-title {
+  font-family: "Georgia", serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #f5f0e8);
+  margin-bottom: 16px;
+}
+
+.olen-modal-label {
+  display: block;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
+}
+
+.olen-modal-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--text-primary, #f5f0e8);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.olen-modal-input:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.olen-modal-textarea {
+  width: 100%;
+  min-height: 60px;
+  resize: none;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--text-primary, #f5f0e8);
+  font-family: "Georgia", serif;
+  font-size: 14px;
+  font-style: italic;
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.olen-modal-textarea:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.olen-modal-row {
+  display: flex;
+  gap: 10px;
+}
+
+.olen-modal-field {
+  flex: 1;
+}
+
+.olen-modal-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.olen-modal-goal-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.olen-modal-goal-row .olen-modal-input {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.olen-modal-goal-remove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.olen-modal-goal-remove:active {
+  opacity: 0.6;
+}
+
+.olen-modal-hint {
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.25);
+  padding: 6px 0;
+}
+
+.olen-modal-btn-add {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: all 0.2s;
+}
+
+.olen-modal-btn-add:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.olen-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.olen-modal-btn-primary {
+  flex: 1;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary, #f5f0e8);
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 0.2s;
+}
+
+.olen-modal-btn-primary:active {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(0.98);
+}
+
+.olen-modal-btn-secondary {
+  padding: 12px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: var(--text-muted, #928d85);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all 0.2s;
+}
+
+.olen-modal-btn-secondary:active {
+  background: rgba(255, 255, 255, 0.04);
 }
 

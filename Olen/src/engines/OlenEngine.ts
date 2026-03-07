@@ -282,72 +282,94 @@ export class OlenEngine {
   // --- Suggestion Algorithm (Waterfall) ---
 
   getSuggestion(): DirectiveSuggestion | null {
+    const all = this.getAllSuggestions();
+    return all.length > 0 ? all[0] : null;
+  }
+
+  /**
+   * Returns ALL ranked suggestions in priority order.
+   * The directive card uses this to cycle through options on "Not now".
+   */
+  getAllSuggestions(): DirectiveSuggestion[] {
     const activities = this.getEnabledActivities();
-    if (activities.length === 0) return null;
+    if (activities.length === 0) return [];
+
+    const suggestions: DirectiveSuggestion[] = [];
+    const used = new Set<string>();
+
+    const addIfNew = (s: DirectiveSuggestion) => {
+      if (!used.has(s.activityId)) {
+        used.add(s.activityId);
+        suggestions.push(s);
+      }
+    };
 
     // 1. DEATH CHECK
     if (this.settings.inTartarus) {
       const neglected = this.getNeglectedActivitiesSorted(activities);
-      const target = neglected.length > 0 ? neglected[0] : activities.sort((a, b) => b.priority - a.priority)[0];
-      return this.buildSuggestion(target, "death", "Escape Tartarus — complete your penance.");
+      const targets = neglected.length > 0 ? neglected : [...activities].sort((a, b) => b.priority - a.priority);
+      for (const t of targets) {
+        addIfNew(this.buildSuggestion(t, "death", "Escape Tartarus — complete your penance."));
+      }
     }
 
     if (this.settings.failedThresholdDays >= 2) {
       const neglected = this.getNeglectedActivitiesSorted(activities);
-      if (neglected.length > 0) {
-        return this.buildSuggestion(neglected[0], "death", "Death looms. Act now or descend to Tartarus.");
+      for (const n of neglected) {
+        addIfNew(this.buildSuggestion(n, "death", "Death looms. Act now or descend to Tartarus."));
       }
     }
 
     // 2. BOSS FINISH
     if (this.bossEngine.isDangerZone()) {
-      const best = this.getHighestDamageActivity(activities);
-      if (best) {
-        return this.buildSuggestion(best, "boss", "One final blow remains. Finish the beast.");
+      const notDone = activities.filter((a) => !this.isDoneToday(a.id))
+        .sort((a, b) => b.damagePerCompletion - a.damagePerCompletion);
+      for (const a of notDone) {
+        addIfNew(this.buildSuggestion(a, "boss", "One final blow remains. Finish the beast."));
       }
     }
 
     // 3. NEGLECT + PRIORITY
     const neglected = this.getNeglectedActivitiesSorted(activities);
-    if (neglected.length > 0) {
-      const top = this.applyRules(neglected);
-      if (top) {
-        const days = this.getDaysSinceLastDone(top.id);
-        const lore = NEGLECT_LORE[top.id] ?? `${days} days since you last practiced. The skill atrophies.`;
-        return this.buildSuggestion(top, "neglect", lore);
-      }
+    for (const n of neglected) {
+      if (used.has(n.id)) continue;
+      const days = this.getDaysSinceLastDone(n.id);
+      const lore = NEGLECT_LORE[n.id] ?? `${days} days since you last practiced. The skill atrophies.`;
+      addIfNew(this.buildSuggestion(n, "neglect", lore));
     }
 
     // 4. WEEKLY CATCH-UP
     const behindSchedule = this.getBehindScheduleActivities(activities);
-    if (behindSchedule.length > 0) {
-      const top = behindSchedule[0];
-      const progress = this.getWeeklyProgress(top.id);
-      return this.buildSuggestion(top, "weekly", `Behind schedule: ${progress.done}/${progress.target} this week.`);
+    for (const a of behindSchedule) {
+      if (used.has(a.id)) continue;
+      const progress = this.getWeeklyProgress(a.id);
+      addIfNew(this.buildSuggestion(a, "weekly", `Behind schedule: ${progress.done}/${progress.target} this week.`));
     }
 
     // 5. CHAIN CHECK
     const chained = this.getChainedActivities(activities);
-    if (chained.length > 0) {
-      return this.buildSuggestion(chained[0], "chain", "Your prerequisite is done. Time for the next step.");
+    for (const a of chained) {
+      if (used.has(a.id)) continue;
+      addIfNew(this.buildSuggestion(a, "chain", "Your prerequisite is done. Time for the next step."));
     }
 
     // 6. TIME-BASED
     const timeBased = this.getTimeBasedActivities(activities);
-    if (timeBased.length > 0) {
-      return this.buildSuggestion(timeBased[0], "time", "The time is right. Begin.");
+    for (const a of timeBased) {
+      if (used.has(a.id)) continue;
+      addIfNew(this.buildSuggestion(a, "time", "The time is right. Begin."));
     }
 
-    // 7. BALANCED FALLBACK
-    const longestGap = activities
-      .filter((a) => !this.isDoneToday(a.id))
+    // 7. BALANCED FALLBACK — all remaining not-done activities
+    const remaining = activities
+      .filter((a) => !this.isDoneToday(a.id) && !used.has(a.id))
       .sort((a, b) => this.getDaysSinceLastDone(b.id) - this.getDaysSinceLastDone(a.id));
 
-    if (longestGap.length > 0) {
-      return this.buildSuggestion(longestGap[0], "balanced", "Balance your path. This has waited longest.");
+    for (const a of remaining) {
+      addIfNew(this.buildSuggestion(a, "balanced", "Balance your path. This has waited longest."));
     }
 
-    return null;
+    return suggestions;
   }
 
   private buildSuggestion(

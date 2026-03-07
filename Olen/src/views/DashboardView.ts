@@ -25,6 +25,7 @@ import { renderStatsRow } from "../components/StatsRow";
 import { renderMonthlyHeatmap } from "../components/MonthlyHeatmap";
 import { renderSessionCollage } from "../components/SessionCollage";
 import { showMyWhyModal } from "../modals/MyWhyModal";
+import { showTaskModal } from "../modals/TaskModal";
 import type { MuscleGroupId } from "../constants";
 
 export class DashboardView extends ItemView {
@@ -102,9 +103,7 @@ export class DashboardView extends ItemView {
       switch (section) {
         case "hero":
           renderHeroCard(root, settings, engine, staggerIdx++, {
-            onMyWhy: () => {
-              showMyWhyModal(this.plugin, () => this.render());
-            },
+            onMyWhy: () => showMyWhyModal(this.plugin, () => this.render()),
           });
           break;
 
@@ -526,8 +525,10 @@ export class DashboardView extends ItemView {
       const resourcePath = (adapter as any).getResourcePath
         ? (adapter as any).getResourcePath(bgImage)
         : bgImage;
+      const darkness = (this.plugin.settings.backgroundDarkness ?? 75) / 100;
+      const darknessTop = Math.min(darkness + 0.1, 1);
       root.style.backgroundImage = `
-        linear-gradient(rgba(7, 6, 10, 0.75), rgba(7, 6, 10, 0.85)),
+        linear-gradient(rgba(7, 6, 10, ${darkness}), rgba(7, 6, 10, ${darknessTop})),
         url("${resourcePath}")
       `;
       root.style.backgroundAttachment = "scroll";

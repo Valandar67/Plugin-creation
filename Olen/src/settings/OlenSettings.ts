@@ -189,42 +189,6 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(body)
-      .setName("Scrolling background image")
-      .setDesc("Vault path to an image that scrolls with the dashboard (dark overlay applied)")
-      .addText((text) =>
-        text
-          .setPlaceholder("path/to/background.jpg")
-          .setValue(this.plugin.settings.scrollingBackground ?? "")
-          .onChange(async (value) => {
-            this.plugin.settings.scrollingBackground = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(body)
-      .setName("Tab color")
-      .setDesc("Override the Obsidian tab accent color for Olen views")
-      .addColorPicker((cp) =>
-        cp
-          .setValue(this.plugin.settings.tabColor || "#8b5cf6")
-          .onChange(async (value) => {
-            this.plugin.settings.tabColor = value;
-            await this.plugin.saveSettings();
-            this.plugin.refreshDashboard();
-          })
-      )
-      .addButton((btn) =>
-        btn.setButtonText("Reset").onClick(async () => {
-          this.plugin.settings.tabColor = "";
-          await this.plugin.saveSettings();
-          const styleEl = document.getElementById("olen-tab-color-override");
-          if (styleEl) styleEl.remove();
-          this.plugin.refreshDashboard();
-          this.display();
-        })
-      );
-
-    new Setting(body)
       .setName("Homepage")
       .setDesc("Vault file to open when activities are set to 'Open homepage' after completion (e.g. Home.md)")
       .addText((text) =>
@@ -899,6 +863,59 @@ export class OlenSettingTab extends PluginSettingTab {
             })
         );
     }
+
+    // --- Background & Tab ---
+
+    new Setting(body)
+      .setName("Scrolling background image")
+      .setDesc("Vault path to an image that scrolls with the dashboard")
+      .addText((text) =>
+        text
+          .setPlaceholder("path/to/background.jpg")
+          .setValue(this.plugin.settings.scrollingBackground ?? "")
+          .onChange(async (value) => {
+            this.plugin.settings.scrollingBackground = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
+      .setName("Background darkness")
+      .setDesc("How dark the background overlay is (0 = no overlay, 100 = fully black)")
+      .addSlider((s) =>
+        s
+          .setLimits(0, 100, 5)
+          .setValue(this.plugin.settings.backgroundDarkness ?? 75)
+          .setDynamicTooltip()
+          .onChange(async (v) => {
+            this.plugin.settings.backgroundDarkness = v;
+            await this.plugin.saveSettings();
+            this.plugin.refreshDashboard();
+          })
+      );
+
+    new Setting(body)
+      .setName("Tab color")
+      .setDesc("Override the Obsidian tab accent color for Olen views")
+      .addColorPicker((cp) =>
+        cp
+          .setValue(this.plugin.settings.tabColor || "#8b5cf6")
+          .onChange(async (value) => {
+            this.plugin.settings.tabColor = value;
+            await this.plugin.saveSettings();
+            this.plugin.refreshDashboard();
+          })
+      )
+      .addButton((btn) =>
+        btn.setButtonText("Reset").onClick(async () => {
+          this.plugin.settings.tabColor = "";
+          await this.plugin.saveSettings();
+          const styleEl = document.getElementById("olen-tab-color-override");
+          if (styleEl) styleEl.remove();
+          this.plugin.refreshDashboard();
+          this.display();
+        })
+      );
 
     new Setting(body).addButton((btn) =>
       btn.setButtonText("Reset to Elysian Dark").onClick(async () => {

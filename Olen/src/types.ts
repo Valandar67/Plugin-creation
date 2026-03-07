@@ -302,6 +302,7 @@ export interface OlenSettings {
   goals: string[];  // Multiple goals / aspirations accessible via dashboard modal
   heroBackground: string;
   scrollingBackground: string; // Background image that scrolls with the dashboard
+  backgroundDarkness: number;  // 0-100, how dark the background overlay is (default 75)
   tabColor: string;  // Obsidian tab header accent color
   homepage: string; // vault file path to open when "Open homepage" is selected (e.g. "Home.md")
 

@@ -1,64 +1,92 @@
 // ============================================================
 // Olen — Task Modal
-// Quick task creation with time + duration + title
+// Keyboard-aware bottom sheet for quick task creation
 // ============================================================
 
 import { Notice } from "obsidian";
 import type OlenPlugin from "../main";
 
 /**
- * Shows a bottom-sheet modal for adding a quick task to the Day Map.
+ * Shows a keyboard-aware modal for adding a quick task.
  */
 export function showTaskModal(
   plugin: OlenPlugin,
   onCreated?: () => void
 ): void {
   const overlay = document.createElement("div");
-  overlay.className = "olen-sheet-overlay";
+  overlay.className = "olen-modal-overlay";
 
-  const sheet = overlay.createDiv({ cls: "olen-sheet" });
-  sheet.createDiv({ cls: "olen-sheet-handle" });
+  const sheet = document.createElement("div");
+  sheet.className = "olen-modal-sheet";
+  overlay.appendChild(sheet);
 
-  sheet.createEl("div", { cls: "olen-heading-lg", text: "ADD TASK" });
+  // Handle
+  const handle = document.createElement("div");
+  handle.className = "olen-modal-handle";
+  sheet.appendChild(handle);
 
   // Title
-  const titleWrap = sheet.createDiv({ cls: "olen-task-field" });
-  titleWrap.createEl("label", { cls: "olen-data-sm", text: "Task name" });
-  const titleInput = titleWrap.createEl("input", {
-    cls: "olen-task-input",
-    attr: { type: "text", placeholder: "What needs doing?" },
-  });
+  const title = document.createElement("div");
+  title.className = "olen-modal-title";
+  title.textContent = "Add Task";
+  sheet.appendChild(title);
 
-  // Time
-  const timeWrap = sheet.createDiv({ cls: "olen-task-field" });
-  timeWrap.createEl("label", { cls: "olen-data-sm", text: "Time (optional)" });
-  const timeInput = timeWrap.createEl("input", {
-    cls: "olen-task-input",
-    attr: { type: "time" },
-  });
+  // Task name
+  const nameLabel = document.createElement("label");
+  nameLabel.className = "olen-modal-label";
+  nameLabel.textContent = "Task name";
+  sheet.appendChild(nameLabel);
 
-  // Duration
-  const durWrap = sheet.createDiv({ cls: "olen-task-field" });
-  durWrap.createEl("label", { cls: "olen-data-sm", text: "Duration (min)" });
-  const durInput = durWrap.createEl("input", {
-    cls: "olen-task-input",
-    attr: { type: "number", min: "5", max: "480", value: "30", placeholder: "30" },
-  });
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.className = "olen-modal-input";
+  nameInput.placeholder = "What needs doing?";
+  sheet.appendChild(nameInput);
+
+  // Time + Duration row
+  const row = document.createElement("div");
+  row.className = "olen-modal-row";
+  sheet.appendChild(row);
+
+  const timeWrap = document.createElement("div");
+  timeWrap.className = "olen-modal-field";
+  const timeLabel = document.createElement("label");
+  timeLabel.className = "olen-modal-label";
+  timeLabel.textContent = "Time";
+  const timeInput = document.createElement("input");
+  timeInput.type = "time";
+  timeInput.className = "olen-modal-input";
+  timeWrap.appendChild(timeLabel);
+  timeWrap.appendChild(timeInput);
+
+  const durWrap = document.createElement("div");
+  durWrap.className = "olen-modal-field";
+  const durLabel = document.createElement("label");
+  durLabel.className = "olen-modal-label";
+  durLabel.textContent = "Duration (min)";
+  const durInput = document.createElement("input");
+  durInput.type = "number";
+  durInput.className = "olen-modal-input";
+  durInput.min = "5";
+  durInput.max = "480";
+  durInput.value = "30";
+  durWrap.appendChild(durLabel);
+  durWrap.appendChild(durInput);
+
+  row.appendChild(timeWrap);
+  row.appendChild(durWrap);
 
   // Actions
-  const actions = sheet.createDiv({
-    cls: "olen-directive-actions",
-    attr: { style: "margin-top: 20px;" },
-  });
+  const actions = document.createElement("div");
+  actions.className = "olen-modal-actions";
+  sheet.appendChild(actions);
 
-  const addBtn = actions.createEl("button", {
-    cls: "olen-btn olen-btn-primary",
-    text: "ADD TASK",
-  });
-
+  const addBtn = document.createElement("button");
+  addBtn.className = "olen-modal-btn-primary";
+  addBtn.textContent = "Add Task";
   addBtn.addEventListener("click", async () => {
-    const title = titleInput.value.trim();
-    if (!title) {
+    const taskName = nameInput.value.trim();
+    if (!taskName) {
       new Notice("Please enter a task name");
       return;
     }
@@ -70,7 +98,7 @@ export function showTaskModal(
 
     plugin.settings.calendar.quickTasks.push({
       id: `qt-${Date.now()}`,
-      title,
+      title: taskName,
       date: today,
       time: timeInput.value || undefined,
       duration: parseInt(durInput.value) || 30,
@@ -78,29 +106,60 @@ export function showTaskModal(
     });
 
     await plugin.saveSettings();
-    new Notice(`⚡ Task added: ${title}`);
-    closeSheet();
+    new Notice(`Task added: ${taskName}`);
+    closeModal();
     onCreated?.();
   });
 
-  const cancelBtn = actions.createEl("button", {
-    cls: "olen-btn olen-btn-secondary",
-    text: "CANCEL",
-  });
-  cancelBtn.addEventListener("click", () => closeSheet());
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "olen-modal-btn-secondary";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", () => closeModal());
 
+  actions.appendChild(addBtn);
+  actions.appendChild(cancelBtn);
+
+  // Close on overlay tap
   overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeSheet();
+    if (e.target === overlay) closeModal();
   });
 
-  const closeSheet = () => {
+  function closeModal(): void {
     overlay.classList.remove("visible");
-    setTimeout(() => overlay.remove(), 350);
-  };
+    cleanupViewport();
+    setTimeout(() => overlay.remove(), 300);
+  }
+
+  // Keyboard awareness
+  let cleanupViewport = setupKeyboardAwareness(sheet);
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => {
     overlay.classList.add("visible");
-    titleInput.focus();
+    nameInput.focus();
   });
+}
+
+function setupKeyboardAwareness(sheet: HTMLElement): () => void {
+  const vv = (window as any).visualViewport;
+  if (!vv) return () => {};
+
+  function onResize() {
+    const offsetFromBottom = window.innerHeight - (vv.offsetTop + vv.height);
+    if (offsetFromBottom > 50) {
+      sheet.style.transform = `translateY(-${offsetFromBottom}px)`;
+      sheet.style.maxHeight = `${vv.height - 20}px`;
+    } else {
+      sheet.style.transform = "";
+      sheet.style.maxHeight = "";
+    }
+  }
+
+  vv.addEventListener("resize", onResize);
+  vv.addEventListener("scroll", onResize);
+
+  return () => {
+    vv.removeEventListener("resize", onResize);
+    vv.removeEventListener("scroll", onResize);
+  };
 }

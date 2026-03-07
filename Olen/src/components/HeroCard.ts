@@ -1,6 +1,7 @@
 // ============================================================
 // Olen — Hero Card Component
-// Full-width blurred bg with greeting, rank badge, action buttons
+// Full-width blurred bg with greeting, rank badge
+// "My Why" shown subtly under the subtitle — tap to edit
 // ============================================================
 
 import type { OlenSettings } from "../types";
@@ -54,36 +55,30 @@ export function renderHeroCard(
     text: `${title} · ${toRoman(eudIndex)}`,
   });
 
-  // Action buttons
-  const actions = hero.createDiv({ cls: "olen-hero-actions" });
+  // "My Why" — shown as a subtle italic line if set, tappable
+  const myWhy = settings.myWhy?.trim();
+  const goals = settings.goals?.filter((g) => g.trim().length > 0) ?? [];
 
-  const progressBtn = actions.createEl("button", {
-    cls: "olen-hero-btn",
-    text: "Your progress",
-  });
-  progressBtn.addEventListener("click", () => {
-    // Scroll to the eudaimonia section
-    const eudSection = container.querySelector(".olen-card");
-    if (eudSection) eudSection.scrollIntoView({ behavior: "smooth" });
-  });
+  if (myWhy || goals.length > 0 || callbacks?.onMyWhy) {
+    const whyArea = hero.createDiv({ cls: "olen-hero-why" });
 
-  const whyBtn = actions.createEl("button", {
-    cls: "olen-hero-btn",
-    text: "My Why",
-  });
-  whyBtn.addEventListener("click", () => {
-    callbacks?.onMyWhy?.();
-  });
+    if (myWhy) {
+      whyArea.createEl("div", {
+        cls: "olen-hero-why-text",
+        text: `"${myWhy}"`,
+      });
+    } else {
+      whyArea.createEl("div", {
+        cls: "olen-hero-why-text olen-hero-why-placeholder",
+        text: "Tap to set your Why",
+      });
+    }
 
-  const reflectBtn = actions.createEl("button", {
-    cls: "olen-hero-btn",
-    text: "Reflect",
-  });
-  reflectBtn.addEventListener("click", () => {
-    // Scroll to the quote section
-    const quoteSection = container.querySelector(".olen-quote");
-    if (quoteSection) quoteSection.scrollIntoView({ behavior: "smooth" });
-  });
+    if (callbacks?.onMyWhy) {
+      whyArea.addClass("olen-clickable");
+      whyArea.addEventListener("click", () => callbacks.onMyWhy?.());
+    }
+  }
 }
 
 function getGreeting(settings: OlenSettings): string {

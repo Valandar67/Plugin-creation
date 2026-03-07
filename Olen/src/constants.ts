@@ -218,7 +218,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   animationStaggerMs: 80,
   heroHeight: 350,
   sectionOrder: [
-    "hero", "heatmap", "statsrow", "eudaimonia", "directive", "daymap", "boss",
+    "hero", "directive", "heatmap", "statsrow", "eudaimonia", "daymap", "boss",
     "weekly", "analytics", "activities", "monthlyheatmap", "collage", "temple", "quote",
   ],
   hiddenSections: [],
@@ -286,6 +286,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   goals: [],
   heroBackground: "",
   scrollingBackground: "",
+  backgroundDarkness: 75,
   tabColor: "",
   homepage: "",
 
