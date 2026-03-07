@@ -544,21 +544,37 @@ export class DashboardView extends ItemView {
   }
 
   private applyTabColor(color: string): void {
-    // Apply color to the Obsidian workspace tab header for this view's leaf
-    const leafEl = (this.leaf as any).containerEl as HTMLElement | undefined;
-    if (!leafEl) return;
+    // Access the tab header directly via Obsidian's leaf API
+    const leaf = this.leaf as any;
 
-    // The tab header is a sibling or ancestor element — find it
-    const tabHeader = leafEl.closest(".workspace-leaf")
-      ?.querySelector(".workspace-tab-header-inner-icon");
-    if (tabHeader instanceof HTMLElement) {
-      tabHeader.style.color = color;
+    // Obsidian exposes tabHeaderEl on each leaf (desktop & mobile)
+    const tabHeaderEl: HTMLElement | undefined =
+      leaf.tabHeaderEl ?? leaf.tabHeaderInnerIconEl?.parentElement;
+
+    if (tabHeaderEl) {
+      tabHeaderEl.style.setProperty("--tab-text-color-focused-active", color, "important");
+      // Color the icon directly
+      const iconEl = tabHeaderEl.querySelector(".workspace-tab-header-inner-icon");
+      if (iconEl instanceof HTMLElement) {
+        iconEl.style.color = color;
+      }
     }
 
-    // Also set the workspace-leaf active indicator
-    const tabEl = leafEl.closest(".workspace-tab-header");
-    if (tabEl instanceof HTMLElement) {
-      tabEl.style.setProperty("--tab-text-color-focused-active", color);
+    // Fallback: traverse from containerEl up to find the tab header
+    if (!tabHeaderEl && leaf.containerEl) {
+      const container = leaf.containerEl as HTMLElement;
+      // On mobile, the workspace-leaf wraps both the tab header and content
+      const leafRoot = container.closest(".workspace-leaf");
+      if (leafRoot) {
+        const icon = leafRoot.querySelector(".workspace-tab-header-inner-icon");
+        if (icon instanceof HTMLElement) {
+          icon.style.color = color;
+        }
+        const header = leafRoot.querySelector(".workspace-tab-header");
+        if (header instanceof HTMLElement) {
+          header.style.setProperty("--tab-text-color-focused-active", color, "important");
+        }
+      }
     }
 
     // Set a CSS variable on the root so we can use it elsewhere
@@ -567,7 +583,7 @@ export class DashboardView extends ItemView {
       rootEl.style.setProperty("--olen-tab-color", color);
     }
 
-    // Inject a style tag to override the tab color globally for Olen tabs
+    // Inject a broad override — avoid :has() for mobile compatibility
     let styleEl = document.getElementById("olen-tab-color-override");
     if (!styleEl) {
       styleEl = document.createElement("style");
@@ -575,15 +591,10 @@ export class DashboardView extends ItemView {
       document.head.appendChild(styleEl);
     }
     styleEl.textContent = `
-      .workspace-tab-header:has(+ .workspace-leaf-content [data-type="olen-dashboard-view"]),
-      .workspace-tab-header:has(+ .workspace-leaf-content [data-type="olen-activity-dashboard-view"]) {
+      .workspace-tab-header.is-active {
         --tab-text-color-focused-active: ${color} !important;
       }
-      .workspace-tab-header-inner-icon:has(~ .workspace-tab-header-inner-title:not(:empty)) {
-        /* fallback handled below */
-      }
-      .workspace-leaf-content[data-type="olen-dashboard-view"] ~ .workspace-tab-header .workspace-tab-header-inner-icon,
-      .workspace-leaf-content[data-type="olen-activity-dashboard-view"] ~ .workspace-tab-header .workspace-tab-header-inner-icon {
+      .workspace-tab-header.is-active .workspace-tab-header-inner-icon {
         color: ${color} !important;
       }
     `;
