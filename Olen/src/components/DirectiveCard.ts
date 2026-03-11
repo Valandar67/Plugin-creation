@@ -2,7 +2,7 @@
 // Olen — Directive Card Component
 // Conversational style: "Olen suggests…" / "Olen: it's time for…"
 // Weight logging as top priority override when due.
-// Swipe right = accept, swipe left = reject (next)
+// Accept / Skip buttons (no outlines, transparent design)
 // ============================================================
 
 import type { OlenSettings, PriorityReason, DirectiveSuggestion, TempleTask, WeightLogFrequency } from "../types";
@@ -61,10 +61,6 @@ export function renderDirectiveCard(
     // Transparent card with increased height
     const card = wrapper.createDiv({ cls: "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded" });
 
-    // Swipe hint
-    const swipeHint = card.createDiv({ cls: "olen-directive-swipe-hint" });
-    swipeHint.innerHTML = `<span class="olen-swipe-left">\u2190 reject</span><span class="olen-swipe-right">accept \u2192</span>`;
-
     // Olen speaks — conversational style
     card.createEl("div", {
       cls: "olen-directive-oracle olen-directive-conversational",
@@ -83,110 +79,29 @@ export function renderDirectiveCard(
       card.createEl("div", { cls: "olen-directive-temple-tag olen-directive-weight-tag", text: "HEALTH" });
     }
 
-    // Swipe gesture handling
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let isDragging = false;
+    // Action buttons — no outlines, minimal, transparent design
+    const actions = card.createDiv({ cls: "olen-directive-actions-v2" });
 
-    card.addEventListener("touchstart", (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      isDragging = false;
-    }, { passive: true });
-
-    card.addEventListener("touchmove", (e) => {
-      const dx = e.touches[0].clientX - touchStartX;
-      const dy = e.touches[0].clientY - touchStartY;
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-        isDragging = true;
-        card.style.transform = `translateX(${dx * 0.6}px) rotate(${dx * 0.02}deg)`;
-        card.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 300));
-      }
-    }, { passive: true });
-
-    card.addEventListener("touchend", (e) => {
-      const dx = (e.changedTouches[0]?.clientX ?? touchStartX) - touchStartX;
-      if (!isDragging || Math.abs(dx) < 60) {
-        card.style.transform = "";
-        card.style.opacity = "";
-        return;
-      }
-      if (dx > 60) {
-        card.style.transform = "translateX(120%) rotate(5deg)";
-        card.style.opacity = "0";
-        card.style.transition = "all 0.3s ease";
-        setTimeout(() => handleAccept(command), 300);
-      } else if (dx < -60) {
-        card.style.transform = "translateX(-120%) rotate(-5deg)";
-        card.style.opacity = "0";
-        card.style.transition = "all 0.3s ease";
-        setTimeout(() => {
-          dismissed.add(currentIndex);
-          currentIndex++;
-          renderCurrent();
-        }, 250);
-      }
+    const acceptBtn = actions.createEl("button", {
+      cls: "olen-directive-btn olen-directive-btn-accept",
+      text: command.type === "weight" ? "Log now" : "Begin",
     });
+    acceptBtn.addEventListener("click", () => handleAccept(command));
 
-    // Mouse fallback
-    let mouseStartX = 0;
-    let mouseDown = false;
-
-    card.addEventListener("mousedown", (e) => {
-      mouseStartX = e.clientX;
-      mouseDown = true;
-      isDragging = false;
+    const skipBtn = actions.createEl("button", {
+      cls: "olen-directive-btn olen-directive-btn-skip",
+      text: "Skip",
     });
-
-    card.addEventListener("mousemove", (e) => {
-      if (!mouseDown) return;
-      const dx = e.clientX - mouseStartX;
-      if (Math.abs(dx) > 10) {
-        isDragging = true;
-        card.style.transform = `translateX(${dx * 0.6}px) rotate(${dx * 0.02}deg)`;
-        card.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 300));
-      }
-    });
-
-    card.addEventListener("mouseup", (e) => {
-      if (!mouseDown) return;
-      mouseDown = false;
-      const dx = e.clientX - mouseStartX;
-      if (!isDragging || Math.abs(dx) < 60) {
-        card.style.transform = "";
-        card.style.opacity = "";
-        return;
-      }
-      if (dx > 60) {
-        card.style.transform = "translateX(120%) rotate(5deg)";
-        card.style.opacity = "0";
-        card.style.transition = "all 0.3s ease";
-        setTimeout(() => handleAccept(command), 300);
-      } else if (dx < -60) {
-        card.style.transform = "translateX(-120%) rotate(-5deg)";
-        card.style.opacity = "0";
-        card.style.transition = "all 0.3s ease";
-        setTimeout(() => {
-          dismissed.add(currentIndex);
-          currentIndex++;
-          renderCurrent();
-        }, 250);
-      }
-    });
-
-    card.addEventListener("mouseleave", () => {
-      if (mouseDown) {
-        mouseDown = false;
-        card.style.transform = "";
-        card.style.opacity = "";
-      }
+    skipBtn.addEventListener("click", () => {
+      dismissed.add(currentIndex);
+      currentIndex++;
+      renderCurrent();
     });
 
     // Animate in
     requestAnimationFrame(() => {
-      card.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+      card.style.transition = "opacity 0.25s ease";
       card.style.opacity = "1";
-      card.style.transform = "translateX(0)";
     });
   }
 
@@ -288,10 +203,9 @@ function getIntervalDays(freq: WeightLogFrequency, customDays: number): number {
 }
 
 const WEIGHT_NARRATIVES = [
-  "Olen: it's time to step on the scale.",
+  "Olen: time to log your weight.",
   "Olen suggests you log your weight today.",
-  "Olen: your body tells a story. Record it.",
-  "Olen: tracking is discipline. Log your weight.",
+  "Olen: track your progress. Log your weight.",
 ];
 
 function getWeightNarrative(settings: OlenSettings): string {
@@ -310,43 +224,37 @@ function isTempleDue(task: TempleTask, now: Date): boolean {
   return daysSince >= task.intervalDays;
 }
 
-// ── Olen's voice — conversational style ──
+// ── Olen's voice — conversational, straightforward ──
 
 const OLEN_CONVERSATIONAL: Record<string, string[]> = {
   death: [
-    "Olen: you are spiraling. Do this now.",
-    "Olen: this is not a suggestion. This is survival.",
-    "Olen suggests you stop everything and do this.",
+    "Olen suggests to do {name} today.",
+    "Olen: it's time for {name}.",
   ],
   boss: [
-    "Olen: it's time for a final strike.",
-    "Olen suggests to finish what you started.",
-    "Olen: the beast is wounded. Go.",
+    "Olen: it's time for {name}.",
+    "Olen suggests to do {name}.",
   ],
   neglect: [
-    "Olen suggests to do a session of {name}.",
-    "Olen: it's time for {name}. You've been away too long.",
-    "Olen: {name} misses you. Show up.",
-    "Olen suggests you return to {name} today.",
+    "Olen suggests to do a {name} session.",
+    "Olen: it's time for {name}.",
+    "Olen suggests you get back to {name}.",
   ],
   weekly: [
-    "Olen: it's time for {name}. The week is slipping.",
-    "Olen suggests to squeeze in a {name} session.",
-    "Olen: you're behind on {name}. Reclaim this week.",
+    "Olen: it's time for {name}.",
+    "Olen suggests to fit in a {name} session.",
   ],
   chain: [
-    "Olen suggests to carry the momentum with {name}.",
-    "Olen: ride the wave. Do {name} next.",
+    "Olen suggests to continue with {name}.",
+    "Olen: keep going. Do {name} next.",
   ],
   time: [
     "Olen: it's time for {name}.",
-    "Olen suggests to do {name} right now.",
-    "Olen: this is {name} hour. Begin.",
+    "Olen suggests to do {name} now.",
   ],
   balanced: [
     "Olen suggests to do a {name} session.",
     "Olen: it's time for {name}.",
-    "Olen: balance demands {name} today.",
   ],
 };
 
@@ -362,8 +270,6 @@ function getTempleNarrative(task: TempleTask, now: Date): string {
   const TEMPLE_LINES = [
     `Olen: it's time for ${task.name}.`,
     `Olen suggests to take care of ${task.name}.`,
-    `Olen: ${task.name} is overdue. Handle it.`,
-    `Olen suggests you tend to ${task.name} today.`,
   ];
   const seed = task.id.length + now.getDate();
   return TEMPLE_LINES[seed % TEMPLE_LINES.length];
@@ -372,10 +278,9 @@ function getTempleNarrative(task: TempleTask, now: Date): string {
 // ── All dismissed messages ──
 
 const ALL_DISMISSED_LINES = [
-  "Olen: nothing suits you today?",
-  "Olen: I offered everything I had.",
-  "Olen: fine. But tomorrow, you answer to me.",
-  "Olen: the day is yours to waste, then.",
+  "Nothing more for now.",
+  "All caught up.",
+  "You're free for now.",
 ];
 
 function renderAllDismissed(container: HTMLElement, settings: OlenSettings, staggerIndex: number): void {

@@ -16,14 +16,14 @@ export const ELYSIAN_DARK: ElysianTheme = {
   success: "#d4940a",
   bodyColor: "#c9a84c",
   mindColor: "#6b8cce",
-  spiritColor: "#8b7ec8",
+  spiritColor: "#928d85",
 };
 
 /** Category color definitions matching the identity system */
 export const CATEGORY_COLORS = {
   body: "#c9a84c",
   mind: "#6b8cce",
-  spirit: "#8b7ec8",
+  spirit: "#928d85",
 } as const;
 
 /** Combination title pairs for display */

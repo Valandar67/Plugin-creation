@@ -7,7 +7,6 @@
 import type { OlenSettings } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
 import { BossEngine } from "../engines/BossEngine";
-import { toRoman } from "../constants";
 
 export function renderHeroCard(
   container: HTMLElement,
@@ -37,15 +36,6 @@ export function renderHeroCard(
   content.createEl("div", {
     cls: "olen-hero-subtitle",
     text: subtitle,
-  });
-
-  // Rank badge pill
-  const title = engine.getDynamicTitle();
-  const eudIndex = engine.getEudaimoniaIndex();
-  const badge = content.createDiv({ cls: "olen-hero-rank-badge" });
-  badge.createEl("span", {
-    cls: "olen-hero-rank-text",
-    text: `${title} · ${toRoman(eudIndex)}`,
   });
 
   // "My Why" — shown as a subtle italic line if set, tappable

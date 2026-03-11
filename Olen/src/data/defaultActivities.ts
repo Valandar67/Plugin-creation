@@ -12,7 +12,7 @@ export const CATEGORY_META: Record<
 > = {
   body: { label: "Warrior", icon: "⚔️", color: "#c9a84c" },
   mind: { label: "Scholar", icon: "📜", color: "#6b8cce" },
-  spirit: { label: "Artisan", icon: "🔨", color: "#8b7ec8" },
+  spirit: { label: "Artisan", icon: "🔨", color: "#928d85" },
 };
 
 /** Pre-built activity templates users can toggle during onboarding */

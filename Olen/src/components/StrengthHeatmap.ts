@@ -633,7 +633,7 @@ function renderMuscleBreakdownChart(
   }
 
   const now = new Date();
-  const colors = ["#d4a843", "#e8c35a", "#7b9de0", "#a08de0", "#5e9a7a", "#c48820"];
+  const colors = ["#d4a843", "#e8c35a", "#7b9de0", "#928d85", "#5e9a7a", "#c48820"];
 
   const svgNS = "http://www.w3.org/2000/svg";
   const width = 280;

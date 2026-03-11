@@ -41,8 +41,8 @@ export const BOSSES: BossDefinition[] = [
 
 export const RANK_TIER_COLORS: Record<number, string> = {
   1: "#6B7280", 2: "#EF4444", 3: "#F59E0B", 4: "#10B981",
-  5: "#3B82F6", 6: "#8B5CF6", 7: "#EC4899", 8: "#F97316",
-  9: "#06B6D4", 10: "#A855F7", 11: "#DC2626", 12: "#7C3AED",
+  5: "#3B82F6", 6: "#928d85", 7: "#EC4899", 8: "#F97316",
+  9: "#06B6D4", 10: "#c9a84c", 11: "#DC2626", 12: "#928d85",
   13: "#c9a227",
 };
 
@@ -296,7 +296,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   categoryColors: {
     body: "#c9a84c",
     mind: "#6b8cce",
-    spirit: "#8b7ec8",
+    spirit: "#928d85",
   },
   titleOverride: "",
 
