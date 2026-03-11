@@ -5,11 +5,12 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
 import { ActivityDashboardView } from "./views/ActivityDashboardView";
 import { OnboardingView } from "./views/OnboardingView";
+import { DreamBoardView } from "./views/DreamBoardView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
 import { getTracker } from "./tracker-bridge";
@@ -94,6 +95,12 @@ export default class OlenPlugin extends Plugin {
     this.registerView(
       VIEW_TYPE_ONBOARDING,
       (leaf) => new OnboardingView(leaf, this)
+    );
+
+    // Register dream board view
+    this.registerView(
+      VIEW_TYPE_DREAMBOARD,
+      (leaf) => new DreamBoardView(leaf, this)
     );
 
     // Ribbon icon
@@ -362,6 +369,21 @@ export default class OlenPlugin extends Plugin {
     this.activateDashboard();
   }
 
+  async activateDreamBoard(): Promise<void> {
+    const { workspace } = this.app;
+
+    // Close existing dream board views
+    workspace.getLeavesOfType(VIEW_TYPE_DREAMBOARD).forEach((leaf) => leaf.detach());
+
+    // Open in the same tab as the main dashboard if possible
+    const dashLeaves = workspace.getLeavesOfType(VIEW_TYPE_OLEN);
+    const targetLeaf = dashLeaves[0] ?? workspace.getLeaf("tab");
+    if (!targetLeaf) return;
+
+    await targetLeaf.setViewState({ type: VIEW_TYPE_DREAMBOARD, active: true });
+    await workspace.revealLeaf(targetLeaf);
+  }
+
   // --- Template Registry: Post-Processor ---
 
   private registerTemplatePostProcessor(): void {
@@ -604,11 +626,6 @@ export default class OlenPlugin extends Plugin {
       this.settings.pauseStartTime = data.pauseStartTime ?? null;
       this.settings.totalPausedTime = data.totalPausedTime ?? 0;
       this.settings.simulatedDate = data.simulatedDate ?? null;
-
-      // Migrate hero background
-      if (data.dashboardBgImage) {
-        this.settings.heroBackground = data.dashboardBgImage;
-      }
 
       // Migrate activities from enabledActivities + customHabits
       this.settings.activities = this.migrateActivities(data);

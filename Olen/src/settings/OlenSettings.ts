@@ -164,31 +164,6 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(body)
-      .setName("My Why")
-      .setDesc("Your core motivation — shown periodically on the dashboard")
-      .addTextArea((area) =>
-        area
-          .setValue(this.plugin.settings.myWhy)
-          .onChange(async (value) => {
-            this.plugin.settings.myWhy = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(body)
-      .setName("Hero background image")
-      .setDesc("Vault path to the hero background image (e.g., images/hero.jpg)")
-      .addText((text) =>
-        text
-          .setPlaceholder("path/to/image.jpg")
-          .setValue(this.plugin.settings.heroBackground)
-          .onChange(async (value) => {
-            this.plugin.settings.heroBackground = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(body)
       .setName("Homepage")
       .setDesc("Vault file to open when activities are set to 'Open homepage' after completion (e.g. Home.md)")
       .addText((text) =>
@@ -892,29 +867,6 @@ export class OlenSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
             this.plugin.refreshDashboard();
           })
-      );
-
-    new Setting(body)
-      .setName("Tab color")
-      .setDesc("Override the Obsidian tab accent color for Olen views")
-      .addColorPicker((cp) =>
-        cp
-          .setValue(this.plugin.settings.tabColor || "#8b5cf6")
-          .onChange(async (value) => {
-            this.plugin.settings.tabColor = value;
-            await this.plugin.saveSettings();
-            this.plugin.refreshDashboard();
-          })
-      )
-      .addButton((btn) =>
-        btn.setButtonText("Reset").onClick(async () => {
-          this.plugin.settings.tabColor = "";
-          await this.plugin.saveSettings();
-          const styleEl = document.getElementById("olen-tab-color-override");
-          if (styleEl) styleEl.remove();
-          this.plugin.refreshDashboard();
-          this.display();
-        })
       );
 
     new Setting(body).addButton((btn) =>

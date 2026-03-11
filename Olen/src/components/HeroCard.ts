@@ -19,13 +19,6 @@ export function renderHeroCard(
   const hero = container.createDiv({ cls: "olen-hero" });
   hero.style.setProperty("--i", String(staggerIndex));
 
-  // Background image
-  if (settings.heroBackground) {
-    const bg = hero.createDiv({ cls: "olen-hero-bg" });
-    const vaultPath = settings.heroBackground;
-    bg.style.backgroundImage = `url("${vaultPath}")`;
-  }
-
   // Dark vignette overlay
   hero.createDiv({ cls: "olen-hero-overlay" });
 

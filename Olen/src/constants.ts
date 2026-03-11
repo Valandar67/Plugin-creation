@@ -19,6 +19,7 @@ export const VIEW_TYPE_OLEN = "olen-dashboard-view";
 export const VIEW_TYPE_WORKSPACE = "olen-workspace-view";
 export const VIEW_TYPE_ACTIVITY_DASHBOARD = "olen-activity-dashboard-view";
 export const VIEW_TYPE_ONBOARDING = "olen-onboarding-view";
+export const VIEW_TYPE_DREAMBOARD = "olen-dreamboard-view";
 
 // --- Boss Definitions (13 tiers) ---
 
@@ -284,10 +285,8 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   userName: "Warrior",
   myWhy: "",
   goals: [],
-  heroBackground: "",
   scrollingBackground: "",
   backgroundDarkness: 75,
-  tabColor: "",
   homepage: "",
 
   // Activities
@@ -358,6 +357,9 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   quoteFolderPath: "",
   lastQuoteIndex: -1,
   recentQuoteIds: [],
+
+  // Dream Board
+  dreamBoardImages: [],
 
   // Onboarding
   onboardingComplete: false,

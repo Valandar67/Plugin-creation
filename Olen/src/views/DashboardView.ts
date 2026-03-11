@@ -24,7 +24,7 @@ import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import { renderStatsRow } from "../components/StatsRow";
 import { renderMonthlyHeatmap } from "../components/MonthlyHeatmap";
 import { renderSessionCollage } from "../components/SessionCollage";
-import { showMyWhyModal } from "../modals/MyWhyModal";
+// MyWhyModal is no longer used — tapping "My Why" navigates to DreamBoardView
 import { showTaskModal } from "../modals/TaskModal";
 import type { MuscleGroupId } from "../constants";
 
@@ -103,7 +103,7 @@ export class DashboardView extends ItemView {
       switch (section) {
         case "hero":
           renderHeroCard(root, settings, engine, staggerIdx++, {
-            onMyWhy: () => showMyWhyModal(this.plugin, () => this.render()),
+            onMyWhy: () => this.plugin.activateDreamBoard(),
           });
           break;
 
@@ -147,6 +147,7 @@ export class DashboardView extends ItemView {
           renderDirectiveCard(root, settings, engine, staggerIdx++,
             (activityId) => this.handleEnterWorkspace(activityId),
             (taskId) => this.handleTempleComplete(taskId),
+            () => this.handleLogWeight(),
           );
           break;
 
@@ -542,67 +543,5 @@ export class DashboardView extends ItemView {
       root.style.backgroundRepeat = "no-repeat";
     }
 
-    // Tab color override
-    const tabColor = this.plugin.settings.tabColor;
-    if (tabColor) {
-      this.applyTabColor(tabColor);
-    }
-  }
-
-  private applyTabColor(color: string): void {
-    // Access the tab header directly via Obsidian's leaf API
-    const leaf = this.leaf as any;
-
-    // Obsidian exposes tabHeaderEl on each leaf (desktop & mobile)
-    const tabHeaderEl: HTMLElement | undefined =
-      leaf.tabHeaderEl ?? leaf.tabHeaderInnerIconEl?.parentElement;
-
-    if (tabHeaderEl) {
-      tabHeaderEl.style.setProperty("--tab-text-color-focused-active", color, "important");
-      // Color the icon directly
-      const iconEl = tabHeaderEl.querySelector(".workspace-tab-header-inner-icon");
-      if (iconEl instanceof HTMLElement) {
-        iconEl.style.color = color;
-      }
-    }
-
-    // Fallback: traverse from containerEl up to find the tab header
-    if (!tabHeaderEl && leaf.containerEl) {
-      const container = leaf.containerEl as HTMLElement;
-      // On mobile, the workspace-leaf wraps both the tab header and content
-      const leafRoot = container.closest(".workspace-leaf");
-      if (leafRoot) {
-        const icon = leafRoot.querySelector(".workspace-tab-header-inner-icon");
-        if (icon instanceof HTMLElement) {
-          icon.style.color = color;
-        }
-        const header = leafRoot.querySelector(".workspace-tab-header");
-        if (header instanceof HTMLElement) {
-          header.style.setProperty("--tab-text-color-focused-active", color, "important");
-        }
-      }
-    }
-
-    // Set a CSS variable on the root so we can use it elsewhere
-    const rootEl = this.contentEl.querySelector(".olen-dashboard") as HTMLElement | null;
-    if (rootEl) {
-      rootEl.style.setProperty("--olen-tab-color", color);
-    }
-
-    // Inject a broad override — avoid :has() for mobile compatibility
-    let styleEl = document.getElementById("olen-tab-color-override");
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = "olen-tab-color-override";
-      document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = `
-      .workspace-tab-header.is-active {
-        --tab-text-color-focused-active: ${color} !important;
-      }
-      .workspace-tab-header.is-active .workspace-tab-header-inner-icon {
-        color: ${color} !important;
-      }
-    `;
   }
 }
