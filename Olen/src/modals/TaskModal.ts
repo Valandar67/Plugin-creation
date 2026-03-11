@@ -1,14 +1,11 @@
 // ============================================================
 // Olen — Task Modal
-// Keyboard-aware bottom sheet for quick task creation
+// Center-positioned, keyboard-aware quick task creation
 // ============================================================
 
 import { Notice } from "obsidian";
 import type OlenPlugin from "../main";
 
-/**
- * Shows a keyboard-aware modal for adding a quick task.
- */
 export function showTaskModal(
   plugin: OlenPlugin,
   onCreated?: () => void
@@ -119,7 +116,6 @@ export function showTaskModal(
   actions.appendChild(addBtn);
   actions.appendChild(cancelBtn);
 
-  // Close on overlay tap
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
@@ -130,8 +126,7 @@ export function showTaskModal(
     setTimeout(() => overlay.remove(), 300);
   }
 
-  // Keyboard awareness
-  let cleanupViewport = setupKeyboardAwareness(sheet);
+  const cleanupViewport = setupKeyboardAwareness(overlay, sheet);
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => {
@@ -140,26 +135,32 @@ export function showTaskModal(
   });
 }
 
-function setupKeyboardAwareness(sheet: HTMLElement): () => void {
+function setupKeyboardAwareness(overlay: HTMLElement, sheet: HTMLElement): () => void {
   const vv = (window as any).visualViewport;
   if (!vv) return () => {};
 
-  function onResize() {
-    const offsetFromBottom = window.innerHeight - (vv.offsetTop + vv.height);
-    if (offsetFromBottom > 50) {
-      sheet.style.transform = `translateY(-${offsetFromBottom}px)`;
-      sheet.style.maxHeight = `${vv.height - 20}px`;
+  function onViewportChange() {
+    const keyboardHeight = window.innerHeight - (vv.offsetTop + vv.height);
+
+    if (keyboardHeight > 50) {
+      overlay.style.height = `${vv.height}px`;
+      overlay.style.top = `${vv.offsetTop}px`;
+      sheet.style.maxHeight = `${vv.height - 40}px`;
     } else {
-      sheet.style.transform = "";
+      overlay.style.height = "";
+      overlay.style.top = "";
       sheet.style.maxHeight = "";
     }
   }
 
-  vv.addEventListener("resize", onResize);
-  vv.addEventListener("scroll", onResize);
+  vv.addEventListener("resize", onViewportChange);
+  vv.addEventListener("scroll", onViewportChange);
 
   return () => {
-    vv.removeEventListener("resize", onResize);
-    vv.removeEventListener("scroll", onResize);
+    vv.removeEventListener("resize", onViewportChange);
+    vv.removeEventListener("scroll", onViewportChange);
+    overlay.style.height = "";
+    overlay.style.top = "";
+    sheet.style.maxHeight = "";
   };
 }

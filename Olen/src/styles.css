@@ -383,9 +383,8 @@
   font-family: "Playfair Display", "Georgia", serif;
   font-size: 17px;
   font-weight: 400;
-  color: var(--accent-gold-bright);
+  color: var(--text-primary);
   letter-spacing: 0.5px;
-  text-shadow: 0 0 30px rgba(212, 168, 67, 0.15);
 }
 
 .olen-eudaimonia-xp {
@@ -414,16 +413,16 @@
 }
 
 .olen-eudaimonia-segment-filled {
-  background: linear-gradient(180deg, var(--accent-gold-bright), var(--accent-amber));
-  box-shadow: 0 0 12px rgba(212, 168, 67, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.25));
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .olen-eudaimonia-segment-partial {
   background: linear-gradient(90deg,
-    var(--accent-gold) 50%,
+    rgba(255, 255, 255, 0.3) 50%,
     rgba(255, 255, 255, 0.04) 50%
   );
-  box-shadow: 0 0 8px rgba(212, 168, 67, 0.15);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.06);
 }
 
 .olen-eudaimonia-chapter {
@@ -586,10 +585,23 @@
   font-family: "Playfair Display", "Georgia", serif;
   font-size: 20px;
   font-weight: 400;
-  color: var(--accent-gold-bright);
+  color: var(--text-primary);
   margin: 8px 0 4px;
   letter-spacing: 0.5px;
-  text-shadow: 0 0 40px rgba(212, 168, 67, 0.15);
+}
+
+/* Categories card — transparent like surrounding elements */
+.olen-card-transparent {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.olen-card-transparent::before {
+  display: none;
 }
 
 /* ============================================================
@@ -3267,7 +3279,7 @@
 }
 
 /* ============================================================
-   DIRECTIVE V2 — Redesigned with cycling + reason badges
+   DIRECTIVE V2 — Olen's Oracle Command with swipe
    ============================================================ */
 
 .olen-directive-wrapper {
@@ -3277,179 +3289,83 @@
 .olen-directive-v2 {
   position: relative;
   overflow: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
 }
 
-.olen-directive-accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  opacity: 0.7;
+/* Swipe hints — subtle left/right labels */
+.olen-directive-swipe-hint {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
-.olen-directive-reason {
-  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+.olen-swipe-left,
+.olen-swipe-right {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  margin-bottom: 10px;
-  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* Olen's oracle text — the commanding voice */
+.olen-directive-oracle {
+  font-family: "Georgia", serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--text-secondary, #c8c0b2);
+  line-height: 1.6;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.olen-directive-oracle-dim {
+  color: var(--text-muted, #7e7769);
+  font-size: 14px;
+}
+
+.olen-directive-oracle-sub {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  text-align: center;
+  letter-spacing: 1px;
+  margin-top: 8px;
 }
 
 .olen-directive-activity-v2 {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-family: "Georgia", serif;
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .olen-directive-emoji {
   font-size: 20px;
 }
 
-.olen-directive-lore {
-  font-family: "Georgia", serif;
-  font-size: 13px;
-  font-style: italic;
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin-bottom: 8px;
-}
-
-.olen-directive-meta {
-  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
-  font-size: 10px;
-  color: var(--text-dim, rgba(255,255,255,0.35));
-  letter-spacing: 0.3px;
-  margin-bottom: 14px;
-}
-
-.olen-directive-weekly-pill {
-  margin-left: 8px;
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-.olen-directive-actions-v2 {
-  display: flex;
-  gap: 10px;
-}
-
-.olen-directive-begin {
-  flex: 1;
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.08);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: var(--text-primary, #f5f0e8);
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  min-height: 44px;
-  transition: all 0.2s ease;
-}
-
-.olen-directive-begin:active {
-  background: rgba(255, 255, 255, 0.14);
-  transform: scale(0.98);
-}
-
-.olen-directive-skip {
-  padding: 10px 16px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  color: var(--text-muted, #928d85);
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  min-height: 44px;
-  transition: all 0.2s ease;
-}
-
-.olen-directive-skip:active {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.olen-directive-dots {
-  display: flex;
-  gap: 5px;
-  justify-content: center;
-  margin-top: 14px;
-  align-items: center;
-}
-
-.olen-directive-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  transition: all 0.2s ease;
-}
-
-.olen-directive-dot.active {
-  width: 14px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.olen-directive-dot-more {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.25);
-  margin-left: 2px;
-}
-
-.olen-directive-done {
+/* Temple task tag */
+.olen-directive-temple-tag {
   text-align: center;
-}
-
-/* Expanded directive — up-next section */
-
-.olen-directive-expanded {
-  max-height: 90vh;
-}
-
-.olen-directive-upnext {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.olen-directive-upnext .olen-data-sm {
-  margin-bottom: 8px;
-}
-
-.olen-directive-upnext-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.olen-directive-upnext-badge {
+  margin-top: 6px;
   font-family: "SF Mono", "Fira Code", monospace;
   font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Exhausted / all-dismissed state */
+.olen-directive-exhausted {
+  text-align: center;
+  padding: 28px 22px;
 }
 
 /* ============================================================
@@ -3485,7 +3401,7 @@
   background: rgba(0, 0, 0, 0);
   z-index: 9999;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   transition: background 0.3s ease;
   -webkit-tap-highlight-color: transparent;
@@ -3498,8 +3414,8 @@
 }
 
 .olen-modal-sheet {
-  width: 100%;
-  max-width: 440px;
+  width: calc(100% - 32px);
+  max-width: 420px;
   max-height: 80vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -3508,16 +3424,17 @@
   -webkit-backdrop-filter: blur(60px) saturate(180%);
   backdrop-filter: blur(60px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
-  transform: translateY(100%);
-  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
               max-height 0.2s ease;
 }
 
 .olen-modal-overlay.visible .olen-modal-sheet {
-  transform: translateY(0);
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 .olen-modal-handle {

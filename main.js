@@ -7513,7 +7513,13 @@ var TrackHabitRankPlugin = class extends import_obsidian.Plugin {
     });
     if (belowThreshold) {
       this.settings.failedThresholdDays++;
-      debugLog.log("THRESH", "Failed day incremented (warning only)", { failedDays: this.settings.failedThresholdDays });
+      debugLog.log("THRESH", "Failed day incremented", { failedDays: this.settings.failedThresholdDays });
+      if (this.settings.failedThresholdDays >= 3) {
+        debugLog.log("THRESH", "DEATH THRESHOLD REACHED — entering Tartarus!", { failedDays: this.settings.failedThresholdDays });
+        enterTartarus(this.settings);
+        await this.saveSettings();
+        this.refreshRankView();
+      }
     } else {
       this.settings.failedThresholdDays = 0;
     }

@@ -1,14 +1,11 @@
 // ============================================================
 // Olen — My Why Modal
-// Keyboard-aware bottom sheet for goals & aspirations
+// Center-positioned, keyboard-aware modal for goals
 // ============================================================
 
 import { Notice } from "obsidian";
 import type OlenPlugin from "../main";
 
-/**
- * Shows a keyboard-aware modal for managing "My Why" + multiple goals.
- */
 export function showMyWhyModal(
   plugin: OlenPlugin,
   onSaved?: () => void
@@ -131,7 +128,6 @@ export function showMyWhyModal(
   actions.appendChild(saveBtn);
   actions.appendChild(cancelBtn);
 
-  // Close on overlay tap
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
@@ -142,38 +138,45 @@ export function showMyWhyModal(
     setTimeout(() => overlay.remove(), 300);
   }
 
-  // Keyboard awareness via visualViewport
-  let cleanupViewport = setupKeyboardAwareness(sheet);
+  const cleanupViewport = setupKeyboardAwareness(overlay, sheet);
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add("visible"));
 }
 
 /**
- * Adjusts the modal position when the virtual keyboard appears on mobile.
- * Returns a cleanup function.
+ * Positions the modal in the visible viewport and follows the keyboard.
+ * When keyboard opens: sheet moves up so content stays visible.
+ * When keyboard closes: sheet returns to center.
  */
-function setupKeyboardAwareness(sheet: HTMLElement): () => void {
+function setupKeyboardAwareness(overlay: HTMLElement, sheet: HTMLElement): () => void {
   const vv = (window as any).visualViewport;
   if (!vv) return () => {};
 
-  function onResize() {
-    const offsetFromBottom = window.innerHeight - (vv.offsetTop + vv.height);
-    if (offsetFromBottom > 50) {
-      // Keyboard is open — lift the sheet above it
-      sheet.style.transform = `translateY(-${offsetFromBottom}px)`;
-      sheet.style.maxHeight = `${vv.height - 20}px`;
+  function onViewportChange() {
+    const keyboardHeight = window.innerHeight - (vv.offsetTop + vv.height);
+
+    if (keyboardHeight > 50) {
+      // Keyboard is open — position the overlay to fit within visible area
+      overlay.style.height = `${vv.height}px`;
+      overlay.style.top = `${vv.offsetTop}px`;
+      sheet.style.maxHeight = `${vv.height - 40}px`;
     } else {
-      sheet.style.transform = "";
+      // Keyboard closed — reset
+      overlay.style.height = "";
+      overlay.style.top = "";
       sheet.style.maxHeight = "";
     }
   }
 
-  vv.addEventListener("resize", onResize);
-  vv.addEventListener("scroll", onResize);
+  vv.addEventListener("resize", onViewportChange);
+  vv.addEventListener("scroll", onViewportChange);
 
   return () => {
-    vv.removeEventListener("resize", onResize);
-    vv.removeEventListener("scroll", onResize);
+    vv.removeEventListener("resize", onViewportChange);
+    vv.removeEventListener("scroll", onViewportChange);
+    overlay.style.height = "";
+    overlay.style.top = "";
+    sheet.style.maxHeight = "";
   };
 }

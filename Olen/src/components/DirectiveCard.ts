@@ -1,278 +1,362 @@
 // ============================================================
 // Olen — Directive Card Component
-// Smart priority-ranked suggestion with "Not now" cycling
+// Olen speaks as an oracle — commanding, not reporting.
+// Swipe right = accept (enter workspace), swipe left = reject (next)
+// Includes due temple tasks as fallback suggestions.
 // ============================================================
 
-import type { OlenSettings, PriorityReason, DirectiveSuggestion } from "../types";
+import type { OlenSettings, PriorityReason, DirectiveSuggestion, TempleTask } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
 import { FALLBACK_QUOTES } from "../constants";
+
+/** A unified item that Olen can command — either an activity or a temple task. */
+interface OlenCommand {
+  type: "activity" | "temple";
+  id: string;
+  name: string;
+  emoji: string;
+  olenSpeaks: string;  // What Olen says about this
+  activityId?: string; // only for activities
+  templeTask?: TempleTask; // only for temple
+}
 
 export function renderDirectiveCard(
   container: HTMLElement,
   settings: OlenSettings,
   engine: OlenEngine,
   staggerIndex: number,
-  onEnterWorkspace?: (activityId: string) => void
+  onEnterWorkspace?: (activityId: string) => void,
+  onTempleComplete?: (taskId: string) => void
 ): void {
-  const suggestions = engine.getAllSuggestions();
-  if (suggestions.length === 0) {
-    // All done — show a congratulations card
-    renderAllDoneCard(container, staggerIndex);
+  const commands = buildCommandQueue(settings, engine);
+
+  if (commands.length === 0) {
+    renderAllDismissed(container, settings, staggerIndex);
     return;
   }
 
   let currentIndex = 0;
+  let dismissed = new Set<number>();
 
-  // Wrapper div so we can animate transitions
   const wrapper = container.createDiv({ cls: "olen-directive-wrapper" });
   wrapper.style.setProperty("--i", String(staggerIndex));
 
+  function getCurrentCommand(): OlenCommand | null {
+    // Skip dismissed ones
+    while (dismissed.has(currentIndex) && currentIndex < commands.length) {
+      currentIndex++;
+    }
+    if (currentIndex >= commands.length) return null;
+    return commands[currentIndex];
+  }
+
   function renderCurrent(): void {
     wrapper.empty();
-    const suggestion = suggestions[currentIndex];
+    const command = getCurrentCommand();
 
-    // Reason label for context
-    const reasonText = getReasonLabel(suggestion.reason);
+    if (!command) {
+      // All dismissed — show the "no mood" message
+      renderAllDismissedInline(wrapper, settings);
+      return;
+    }
 
-    // Card
     const card = wrapper.createDiv({ cls: "olen-card olen-directive-v2" });
 
-    // Top accent line colored by reason
-    const accentColor = getReasonColor(suggestion.reason);
-    const accent = card.createDiv({ cls: "olen-directive-accent" });
-    accent.style.background = `linear-gradient(90deg, transparent, ${accentColor}, transparent)`;
+    // Swipe hint
+    const swipeHint = card.createDiv({ cls: "olen-directive-swipe-hint" });
+    swipeHint.innerHTML = `<span class="olen-swipe-left">\u2190 reject</span><span class="olen-swipe-right">accept \u2192</span>`;
 
-    // Reason badge
-    const reasonBadge = card.createDiv({ cls: "olen-directive-reason" });
-    reasonBadge.style.color = accentColor;
-    reasonBadge.textContent = reasonText;
+    // Olen speaks — the oracle's command
+    card.createEl("div", {
+      cls: "olen-directive-oracle",
+      text: command.olenSpeaks,
+    });
 
     // Activity name
     const activityEl = card.createDiv({ cls: "olen-directive-activity-v2" });
-    activityEl.createEl("span", { cls: "olen-directive-emoji", text: suggestion.emoji });
-    activityEl.createEl("span", { text: suggestion.activityName });
+    activityEl.createEl("span", { cls: "olen-directive-emoji", text: command.emoji });
+    activityEl.createEl("span", { text: command.name });
 
-    // Lore / context text
-    card.createEl("div", {
-      cls: "olen-directive-lore",
-      text: suggestion.loreText,
-    });
-
-    // Neglect info or weekly progress
-    const metaEl = card.createDiv({ cls: "olen-directive-meta" });
-    if (suggestion.daysSinceLastDone < 999) {
-      metaEl.textContent = `${suggestion.daysSinceLastDone}d since last session`;
-    } else {
-      metaEl.textContent = "Not yet started";
-    }
-
-    // Weekly progress inline
-    const wp = engine.getWeeklyProgress(suggestion.activityId);
-    if (wp.target > 0) {
-      const wpEl = metaEl.createEl("span", {
-        cls: "olen-directive-weekly-pill",
-        text: ` ${wp.done}/${wp.target} this week`,
+    // Type indicator for temple tasks
+    if (command.type === "temple") {
+      card.createEl("div", {
+        cls: "olen-directive-temple-tag",
+        text: "TEMPLE",
       });
     }
 
-    // Action buttons
-    const actions = card.createDiv({ cls: "olen-directive-actions-v2" });
+    // Swipe gesture handling
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
 
-    const beginBtn = actions.createEl("button", {
-      cls: "olen-directive-begin",
-      text: "BEGIN",
-    });
-    beginBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      onEnterWorkspace?.(suggestion.activityId);
-    });
+    card.addEventListener("touchstart", (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isDragging = false;
+    }, { passive: true });
 
-    const notNowBtn = actions.createEl("button", {
-      cls: "olen-directive-skip",
-      text: suggestions.length > 1 ? "NEXT" : "NOT NOW",
-    });
-    notNowBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (suggestions.length <= 1) {
-        // Only one suggestion — dismiss
-        wrapper.style.opacity = "0";
-        wrapper.style.transform = "translateY(-8px)";
-        wrapper.style.transition = "all 0.3s ease";
-        setTimeout(() => wrapper.style.display = "none", 300);
+    card.addEventListener("touchmove", (e) => {
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+
+      // Only track horizontal swipes
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        isDragging = true;
+        // Visual drag feedback
+        card.style.transform = `translateX(${dx * 0.6}px) rotate(${dx * 0.02}deg)`;
+        card.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 300));
+      }
+    }, { passive: true });
+
+    card.addEventListener("touchend", (e) => {
+      const dx = (e.changedTouches[0]?.clientX ?? touchStartX) - touchStartX;
+
+      if (!isDragging || Math.abs(dx) < 60) {
+        // Not a swipe — reset
+        card.style.transform = "";
+        card.style.opacity = "";
         return;
       }
-      // Cycle to next suggestion with a subtle transition
-      card.style.opacity = "0";
-      card.style.transform = "translateX(-20px)";
-      card.style.transition = "all 0.2s ease";
-      setTimeout(() => {
-        currentIndex = (currentIndex + 1) % suggestions.length;
-        renderCurrent();
-      }, 200);
+
+      if (dx > 60) {
+        // Swipe RIGHT — accept
+        card.style.transform = "translateX(120%) rotate(5deg)";
+        card.style.opacity = "0";
+        card.style.transition = "all 0.3s ease";
+        setTimeout(() => {
+          if (command.type === "activity" && command.activityId) {
+            onEnterWorkspace?.(command.activityId);
+          } else if (command.type === "temple" && command.templeTask) {
+            onTempleComplete?.(command.templeTask.id);
+            dismissed.add(currentIndex);
+            currentIndex++;
+            renderCurrent();
+          }
+        }, 300);
+      } else if (dx < -60) {
+        // Swipe LEFT — reject, show next
+        card.style.transform = "translateX(-120%) rotate(-5deg)";
+        card.style.opacity = "0";
+        card.style.transition = "all 0.3s ease";
+        setTimeout(() => {
+          dismissed.add(currentIndex);
+          currentIndex++;
+          renderCurrent();
+        }, 250);
+      }
     });
 
-    // Position indicator dots (if multiple)
-    if (suggestions.length > 1) {
-      const dots = card.createDiv({ cls: "olen-directive-dots" });
-      const maxDots = Math.min(suggestions.length, 7);
-      for (let i = 0; i < maxDots; i++) {
-        const dot = dots.createEl("span", { cls: "olen-directive-dot" });
-        if (i === currentIndex % maxDots) dot.addClass("active");
+    // Mouse fallback for desktop
+    let mouseStartX = 0;
+    let mouseDown = false;
+
+    card.addEventListener("mousedown", (e) => {
+      mouseStartX = e.clientX;
+      mouseDown = true;
+      isDragging = false;
+    });
+
+    card.addEventListener("mousemove", (e) => {
+      if (!mouseDown) return;
+      const dx = e.clientX - mouseStartX;
+      if (Math.abs(dx) > 10) {
+        isDragging = true;
+        card.style.transform = `translateX(${dx * 0.6}px) rotate(${dx * 0.02}deg)`;
+        card.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 300));
       }
-      if (suggestions.length > 7) {
-        dots.createEl("span", { cls: "olen-directive-dot-more", text: `+${suggestions.length - 7}` });
+    });
+
+    card.addEventListener("mouseup", (e) => {
+      if (!mouseDown) return;
+      mouseDown = false;
+      const dx = e.clientX - mouseStartX;
+
+      if (!isDragging || Math.abs(dx) < 60) {
+        card.style.transform = "";
+        card.style.opacity = "";
+        return;
       }
-    }
+
+      if (dx > 60) {
+        card.style.transform = "translateX(120%) rotate(5deg)";
+        card.style.opacity = "0";
+        card.style.transition = "all 0.3s ease";
+        setTimeout(() => {
+          if (command.type === "activity" && command.activityId) {
+            onEnterWorkspace?.(command.activityId);
+          } else if (command.type === "temple" && command.templeTask) {
+            onTempleComplete?.(command.templeTask.id);
+            dismissed.add(currentIndex);
+            currentIndex++;
+            renderCurrent();
+          }
+        }, 300);
+      } else if (dx < -60) {
+        card.style.transform = "translateX(-120%) rotate(-5deg)";
+        card.style.opacity = "0";
+        card.style.transition = "all 0.3s ease";
+        setTimeout(() => {
+          dismissed.add(currentIndex);
+          currentIndex++;
+          renderCurrent();
+        }, 250);
+      }
+    });
+
+    card.addEventListener("mouseleave", () => {
+      if (mouseDown) {
+        mouseDown = false;
+        card.style.transform = "";
+        card.style.opacity = "";
+      }
+    });
 
     // Animate in
     requestAnimationFrame(() => {
+      card.style.transition = "opacity 0.25s ease, transform 0.25s ease";
       card.style.opacity = "1";
       card.style.transform = "translateX(0)";
     });
   }
 
   renderCurrent();
-
-  // Tap card to show expanded view
-  wrapper.addEventListener("click", () => {
-    const suggestion = suggestions[currentIndex];
-    showExpandedDirective(container, settings, suggestion, suggestions, currentIndex, onEnterWorkspace);
-  });
 }
 
-function renderAllDoneCard(container: HTMLElement, staggerIndex: number): void {
-  const card = container.createDiv({ cls: "olen-card olen-directive-v2 olen-directive-done" });
-  card.style.setProperty("--i", String(staggerIndex));
+// ── Build the command queue ──
 
-  const accent = card.createDiv({ cls: "olen-directive-accent" });
-  accent.style.background = "linear-gradient(90deg, transparent, rgba(74, 222, 128, 0.5), transparent)";
+function buildCommandQueue(settings: OlenSettings, engine: OlenEngine): OlenCommand[] {
+  const commands: OlenCommand[] = [];
 
-  card.createDiv({ cls: "olen-directive-reason", text: "ALL CLEAR" }).style.color = "#4ade80";
+  // Activity suggestions from the engine
+  const suggestions = engine.getAllSuggestions();
+  for (const s of suggestions) {
+    commands.push({
+      type: "activity",
+      id: s.activityId,
+      name: s.activityName,
+      emoji: s.emoji,
+      olenSpeaks: getOlenNarrative(s, settings),
+      activityId: s.activityId,
+    });
+  }
+
+  // Due temple tasks as fallback
+  const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+  for (const task of settings.templeTasks ?? []) {
+    if (isTempleDue(task, now)) {
+      commands.push({
+        type: "temple",
+        id: task.id,
+        name: task.name,
+        emoji: task.emoji,
+        olenSpeaks: getTempleNarrative(task, now),
+        templeTask: task,
+      });
+    }
+  }
+
+  return commands;
+}
+
+function isTempleDue(task: TempleTask, now: Date): boolean {
+  if (!task.lastCompleted) return true;
+  const last = new Date(task.lastCompleted);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysSince = Math.floor((now.getTime() - last.getTime()) / msPerDay);
+  return daysSince >= task.intervalDays;
+}
+
+// ── Olen's voice — the oracle commands, not reports ──
+
+const OLEN_COMMANDS: Record<string, string[]> = {
+  death: [
+    "You are spiraling. I won't watch you fall.",
+    "This is not a suggestion. This is survival.",
+    "The abyss is one step behind you. Move.",
+  ],
+  boss: [
+    "The beast is wounded. Finish what you started.",
+    "One strike away from victory. Do not hesitate.",
+    "I see the opening. Strike now.",
+  ],
+  neglect: [
+    "You've been avoiding this. I noticed.",
+    "This has gone silent for too long. Speak through action.",
+    "I waited. You didn't show up. Today, you will.",
+    "Your absence here is louder than you think.",
+  ],
+  weekly: [
+    "The week is slipping. Reclaim it.",
+    "You're behind, and the days don't wait.",
+    "Time is not your ally this week. Act.",
+  ],
+  chain: [
+    "The momentum is there. Carry it forward.",
+    "One thing leads to another. Follow the thread.",
+  ],
+  time: [
+    "Now is the hour. I chose it for you.",
+    "The timing is deliberate. Begin.",
+    "This moment was made for this.",
+  ],
+  balanced: [
+    "I see what you need, even if you don't.",
+    "Balance requires intention. Here's yours.",
+    "Not everything screams for attention. This whispers. Listen.",
+  ],
+};
+
+function getOlenNarrative(suggestion: DirectiveSuggestion, settings: OlenSettings): string {
+  const pool = OLEN_COMMANDS[suggestion.reason] ?? OLEN_COMMANDS.balanced;
+  // Deterministic-ish based on activity + day
+  const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+  const seed = suggestion.activityId.length + now.getDate() + now.getMonth();
+  return pool[seed % pool.length];
+}
+
+function getTempleNarrative(task: TempleTask, now: Date): string {
+  const TEMPLE_LINES = [
+    "The temple needs tending. Small acts hold the structure.",
+    "Discipline isn't only in the grand gestures.",
+    "Your body is your temple. Maintain it.",
+    "This is beneath no one. Do it.",
+  ];
+  const seed = task.id.length + now.getDate();
+  return TEMPLE_LINES[seed % TEMPLE_LINES.length];
+}
+
+// ── All dismissed messages ──
+
+const ALL_DISMISSED_LINES = [
+  "Nothing suits you today?",
+  "I offered everything I had.",
+  "Even I can't help someone who won't be helped.",
+  "Fine. But tomorrow, you answer to me.",
+  "The day is yours to waste, then.",
+  "I'll remember this when you wonder where the time went.",
+];
+
+function renderAllDismissed(container: HTMLElement, settings: OlenSettings, staggerIndex: number): void {
+  const wrapper = container.createDiv({ cls: "olen-directive-wrapper" });
+  wrapper.style.setProperty("--i", String(staggerIndex));
+  renderAllDismissedInline(wrapper, settings);
+}
+
+function renderAllDismissedInline(wrapper: HTMLElement, settings: OlenSettings): void {
+  const card = wrapper.createDiv({ cls: "olen-card olen-directive-v2 olen-directive-exhausted" });
+
+  const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+  const seed = now.getDate() + now.getMonth() + now.getFullYear();
+  const line = ALL_DISMISSED_LINES[seed % ALL_DISMISSED_LINES.length];
+
   card.createEl("div", {
-    cls: "olen-directive-lore",
-    text: "Everything is done for today. Rest, or push further.",
-    attr: { style: "text-align: center; margin: 12px 0;" },
-  });
-}
-
-function showExpandedDirective(
-  container: HTMLElement,
-  settings: OlenSettings,
-  suggestion: DirectiveSuggestion,
-  allSuggestions: DirectiveSuggestion[],
-  currentIndex: number,
-  onEnterWorkspace?: (activityId: string) => void
-): void {
-  const overlay = document.createElement("div");
-  overlay.className = "olen-sheet-overlay";
-
-  const sheet = overlay.createDiv({ cls: "olen-sheet olen-directive-expanded" });
-  sheet.createDiv({ cls: "olen-sheet-handle" });
-
-  // Reason
-  const reasonColor = getReasonColor(suggestion.reason);
-  const reasonEl = sheet.createDiv({ cls: "olen-directive-reason" });
-  reasonEl.style.color = reasonColor;
-  reasonEl.textContent = getReasonLabel(suggestion.reason);
-
-  // Activity name
-  sheet.createEl("div", {
-    cls: "olen-directive-activity-v2",
-    attr: { style: "font-size: 22px; margin: 12px 0 8px; justify-content: center;" },
-  }).innerHTML = `<span class="olen-directive-emoji">${suggestion.emoji}</span> ${suggestion.activityName}`;
-
-  // Lore
-  sheet.createEl("div", {
-    cls: "olen-sheet-lore",
-    text: `"${suggestion.loreText}"`,
+    cls: "olen-directive-oracle olen-directive-oracle-dim",
+    text: line,
   });
 
-  // Random quote
-  const quote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
-  const quoteSection = sheet.createDiv({ cls: "olen-sheet-quote" });
-  quoteSection.createEl("div", { text: `"${quote.text}"` });
-  quoteSection.createEl("div", {
-    cls: "olen-quote-attribution",
-    text: `\u2014 ${quote.attribution}`,
-    attr: { style: "margin-top: 6px;" },
+  card.createEl("div", {
+    cls: "olen-directive-oracle-sub",
+    text: `\u2014 Olen`,
   });
-
-  // Up-next preview (next 2 suggestions)
-  if (allSuggestions.length > 1) {
-    const upNext = sheet.createDiv({ cls: "olen-directive-upnext" });
-    upNext.createEl("div", { cls: "olen-data-sm", text: "UP NEXT" });
-    const nextItems = [];
-    for (let i = 1; i <= Math.min(3, allSuggestions.length - 1); i++) {
-      const idx = (currentIndex + i) % allSuggestions.length;
-      nextItems.push(allSuggestions[idx]);
-    }
-    for (const item of nextItems) {
-      const row = upNext.createDiv({ cls: "olen-directive-upnext-row" });
-      row.createEl("span", { text: `${item.emoji} ${item.activityName}` });
-      const badge = row.createEl("span", { cls: "olen-directive-upnext-badge", text: getReasonLabel(item.reason) });
-      badge.style.color = getReasonColor(item.reason);
-    }
-  }
-
-  // Actions
-  const actions = sheet.createDiv({ cls: "olen-directive-actions-v2" });
-  actions.style.marginTop = "20px";
-  actions.style.justifyContent = "center";
-
-  const beginBtn = actions.createEl("button", {
-    cls: "olen-directive-begin",
-    text: "BEGIN",
-  });
-  beginBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeSheet();
-    onEnterWorkspace?.(suggestion.activityId);
-  });
-
-  const dismissBtn = actions.createEl("button", {
-    cls: "olen-directive-skip",
-    text: "DISMISS",
-  });
-  dismissBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeSheet();
-  });
-
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeSheet();
-  });
-
-  function closeSheet(): void {
-    overlay.classList.remove("visible");
-    setTimeout(() => overlay.remove(), 350);
-  }
-
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => overlay.classList.add("visible"));
-}
-
-function getReasonLabel(reason: PriorityReason): string {
-  switch (reason) {
-    case "death": return "CRITICAL";
-    case "boss": return "BOSS KILL";
-    case "neglect": return "NEGLECTED";
-    case "weekly": return "BEHIND SCHEDULE";
-    case "chain": return "CHAIN READY";
-    case "time": return "RIGHT TIME";
-    case "balanced": return "SUGGESTED";
-    default: return "DIRECTIVE";
-  }
-}
-
-function getReasonColor(reason: PriorityReason): string {
-  switch (reason) {
-    case "death": return "#ef4444";
-    case "boss": return "#eab308";
-    case "neglect": return "#f97316";
-    case "weekly": return "#3b82f6";
-    case "chain": return "#a78bfa";
-    case "time": return "#06b6d4";
-    case "balanced": return "rgba(255,255,255,0.5)";
-    default: return "rgba(255,255,255,0.4)";
-  }
 }

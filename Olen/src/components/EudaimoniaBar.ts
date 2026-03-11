@@ -140,7 +140,7 @@ function renderCategoriesCard(
   engine: OlenEngine,
   staggerIndex: number
 ): void {
-  const card = container.createDiv({ cls: "olen-card" });
+  const card = container.createDiv({ cls: "olen-card olen-card-transparent" });
   card.style.setProperty("--i", String(staggerIndex));
 
   // Dynamic title

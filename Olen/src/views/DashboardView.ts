@@ -144,9 +144,10 @@ export class DashboardView extends ItemView {
           break;
 
         case "directive":
-          renderDirectiveCard(root, settings, engine, staggerIdx++, (activityId) => {
-            this.handleEnterWorkspace(activityId);
-          });
+          renderDirectiveCard(root, settings, engine, staggerIdx++,
+            (activityId) => this.handleEnterWorkspace(activityId),
+            (taskId) => this.handleTempleComplete(taskId),
+          );
           break;
 
         case "boss":
@@ -490,6 +491,10 @@ export class DashboardView extends ItemView {
     });
 
     setTimeout(() => input.focus(), 50);
+  }
+
+  private async handleTempleComplete(taskId: string): Promise<void> {
+    return this.handleTempleUpdate(taskId);
   }
 
   private async handleTempleUpdate(taskId: string): Promise<void> {
