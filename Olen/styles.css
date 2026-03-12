@@ -3296,12 +3296,13 @@
 /* Olen's oracle text — the commanding voice */
 .olen-directive-oracle {
   font-family: "Georgia", serif;
-  font-size: 15px;
+  font-size: 14px;
   font-style: italic;
-  color: var(--text-secondary, #c8c0b2);
-  line-height: 1.6;
-  margin-bottom: 14px;
+  color: var(--text-muted, #7e7769);
+  line-height: 1.5;
+  margin-bottom: 16px;
   text-align: center;
+  letter-spacing: 0.2px;
 }
 
 .olen-directive-oracle-dim {
@@ -3319,19 +3320,40 @@
 }
 
 .olen-directive-activity-v2 {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   font-family: "Georgia", serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  text-shadow: 0 0 24px rgba(212, 168, 67, 0.06);
+  letter-spacing: 0.3px;
+}
+
+/* Subtle gold divider between oracle text and activity name */
+.olen-directive-activity-v2::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: -10px;
+  left: 25%;
+  right: 25%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 168, 67, 0.12),
+    transparent
+  );
 }
 
 .olen-directive-emoji {
-  font-size: 20px;
+  font-size: 22px;
+  filter: drop-shadow(0 0 8px rgba(212, 168, 67, 0.2));
 }
 
 /* Temple task tag */
@@ -3346,8 +3368,8 @@
 
 /* Expanded directive — more height, transparent */
 .olen-directive-expanded {
-  min-height: 140px;
-  padding: 32px 22px 28px;
+  min-height: 150px;
+  padding: 28px 24px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3356,8 +3378,8 @@
 
 /* Conversational Olen text */
 .olen-directive-conversational {
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 14.5px;
+  line-height: 1.6;
 }
 
 /* Weight tag */
@@ -3368,9 +3390,9 @@
 /* Directive action buttons — no outlines, transparent design */
 .olen-directive-actions-v2 {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  margin-top: 18px;
+  margin-top: 22px;
 }
 
 .olen-directive-btn {
@@ -3379,26 +3401,33 @@
   outline: none;
   cursor: pointer;
   font-family: "Georgia", serif;
-  font-size: 14px;
-  padding: 10px 28px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 10px 24px;
   border-radius: 8px;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, background 0.2s;
   min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .olen-directive-btn:active {
-  opacity: 0.6;
+  opacity: 0.7;
+  transform: scale(0.97);
 }
 
 .olen-directive-btn-accept {
   color: var(--accent-gold, #d4a843);
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.5px;
+  background: rgba(212, 168, 67, 0.08);
+  text-shadow: 0 0 16px rgba(212, 168, 67, 0.1);
 }
 
 .olen-directive-btn-skip {
   color: var(--text-muted, #7e7769);
   font-weight: 400;
+  letter-spacing: 1.5px;
 }
 
 /* Exhausted / all-dismissed state */
