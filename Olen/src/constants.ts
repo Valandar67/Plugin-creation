@@ -219,7 +219,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   animationStaggerMs: 80,
   heroHeight: 350,
   sectionOrder: [
-    "hero", "directive", "heatmap", "statsrow", "eudaimonia", "daymap", "boss",
+    "hero", "heatmap", "statsrow", "eudaimonia", "directive", "daymap", "boss",
     "weekly", "analytics", "activities", "monthlyheatmap", "collage", "temple", "quote",
   ],
   hiddenSections: [],

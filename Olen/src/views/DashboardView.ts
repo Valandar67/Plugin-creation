@@ -130,7 +130,7 @@ export class DashboardView extends ItemView {
 
         case "eudaimonia":
           renderEudaimoniaBar(root, settings, engine, staggerIdx);
-          staggerIdx += 3; // eudaimonia card + stat cards + categories card
+          staggerIdx += 2; // eudaimonia card + stat cards
           break;
 
         case "daymap":

@@ -1,17 +1,11 @@
 // ============================================================
 // Olen — Eudaimonia Bar Component
-// Segmented progress bar, stat cards, category rows with icons
+// Segmented progress bar + stat cards
 // ============================================================
 
-import type { OlenSettings, Category } from "../types";
+import type { OlenSettings } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
 import { toRoman } from "../constants";
-
-const CATEGORY_ICONS: Record<Category, string> = {
-  body: "\u{1F3CB}", // weightlifter
-  mind: "\u{1F4DA}", // books
-  spirit: "\u{1F54A}", // dove
-};
 
 const TOTAL_SEGMENTS = 10;
 
@@ -26,9 +20,6 @@ export function renderEudaimoniaBar(
 
   // --- 2. Stat Cards Row (separate from the card) ---
   renderStatCards(container, engine, staggerIndex + 1);
-
-  // --- 3. Categories Card (icon rows with bars) ---
-  renderCategoriesCard(container, settings, engine, staggerIndex + 2);
 }
 
 // ---- Eudaimonia Card ----
@@ -129,62 +120,5 @@ function createStatCard(
       }
       dots.createDiv({ cls });
     }
-  }
-}
-
-// ---- Categories Card ----
-
-function renderCategoriesCard(
-  container: HTMLElement,
-  settings: OlenSettings,
-  engine: OlenEngine,
-  staggerIndex: number
-): void {
-  const card = container.createDiv({ cls: "olen-card olen-card-transparent" });
-  card.style.setProperty("--i", String(staggerIndex));
-
-  // Dynamic title
-  const title = engine.getDynamicTitle();
-  card.createEl("div", { cls: "olen-dynamic-title", text: title });
-
-  // Divider
-  card.createDiv({ cls: "olen-divider" });
-
-  // Category rows
-  const grid = card.createDiv({ cls: "olen-categories-grid" });
-
-  const categories: { key: Category; label: string }[] = [
-    { key: "body", label: "Body" },
-    { key: "mind", label: "Mind" },
-    { key: "spirit", label: "Spirit" },
-  ];
-
-  for (const cat of categories) {
-    const level = engine.getCategoryLevel(cat.key);
-    const color = settings.categoryColors[cat.key];
-
-    const row = grid.createDiv({ cls: "olen-category-row" });
-
-    // Icon box
-    const iconBox = row.createDiv({ cls: "olen-category-icon" });
-    iconBox.style.background = `${color}22`; // 13% opacity tint
-    iconBox.textContent = CATEGORY_ICONS[cat.key];
-
-    // Info column
-    const info = row.createDiv({ cls: "olen-category-info" });
-
-    // Name + level row
-    const nameRow = info.createDiv({ cls: "olen-category-name-row" });
-    nameRow.createEl("span", { cls: "olen-category-name", text: cat.label });
-    nameRow.createEl("span", {
-      cls: "olen-category-level-text",
-      text: `Lv ${level.level} · ${level.progressToNext}/100`,
-    });
-
-    // Progress bar
-    const bar = info.createDiv({ cls: "olen-category-bar" });
-    const fill = bar.createDiv({ cls: "olen-category-bar-fill" });
-    fill.style.width = `${level.progressToNext}%`;
-    fill.style.background = color;
   }
 }
