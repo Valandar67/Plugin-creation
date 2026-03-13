@@ -756,8 +756,9 @@
   background: rgba(0, 0, 0, 0);
   z-index: 1000;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 8vh;
   transition: background 0.35s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -777,14 +778,13 @@
     radial-gradient(ellipse 80% 30% at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
     var(--glass-sheen);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: none;
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: var(--radius);
   padding: var(--spacing-lg);
-  transform: translateY(100%);
+  transform: translateY(-120%);
   transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5), 0 -2px 16px rgba(255, 255, 255, 0.02);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 2px 16px rgba(255, 255, 255, 0.02);
 }
 
 .olen-sheet-overlay.visible .olen-sheet {
@@ -1677,8 +1677,9 @@
   inset: 0;
   z-index: 9999;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 10vh;
 }
 
 .olen-quick-task-backdrop {
@@ -1698,14 +1699,13 @@
   -webkit-backdrop-filter: blur(60px) saturate(180%);
   backdrop-filter: blur(60px) saturate(180%);
   border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
-  animation: olen-sheet-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  animation: olen-sheet-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes olen-sheet-up {
-  from { transform: translateY(100%); opacity: 0; }
+@keyframes olen-sheet-down {
+  from { transform: translateY(-40px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
