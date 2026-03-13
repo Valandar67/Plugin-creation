@@ -7,8 +7,8 @@ import type { ElysianTheme } from "../types";
 
 /** The default Elysian Dark theme */
 export const ELYSIAN_DARK: ElysianTheme = {
-  bgPrimary: "#0c0a09",
-  cardBg: "rgba(20, 18, 16, 0.85)",
+  bgPrimary: "#000000",
+  cardBg: "rgba(0, 0, 0, 0.85)",
   textPrimary: "#f5f0e8",
   textMuted: "#928d85",
   accentGold: "#c9a84c",

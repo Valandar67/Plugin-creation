@@ -534,7 +534,7 @@ export class DashboardView extends ItemView {
       const darkness = (this.plugin.settings.backgroundDarkness ?? 75) / 100;
       const darknessTop = Math.min(darkness + 0.1, 1);
       root.style.backgroundImage = `
-        linear-gradient(rgba(7, 6, 10, ${darkness}), rgba(7, 6, 10, ${darknessTop})),
+        linear-gradient(rgba(0, 0, 0, ${darkness}), rgba(0, 0, 0, ${darknessTop})),
         url("${resourcePath}")
       `;
       root.style.backgroundAttachment = "scroll";

@@ -7,10 +7,10 @@
 
 .olen-dashboard {
   /* ── Backgrounds ── */
-  --bg-primary: #07060a;
-  --bg-secondary: #0e0c12;
-  --card-bg: rgba(16, 14, 20, 0.55);
-  --card-bg-solid: #100e14;
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --card-bg: rgba(0, 0, 0, 0.55);
+  --card-bg-solid: #0a0a0a;
   --card-border: rgba(255, 255, 255, 0.06);
   --card-border-hover: rgba(255, 255, 255, 0.12);
 
@@ -270,10 +270,10 @@
   background:
     radial-gradient(ellipse 120% 80% at 50% 30%, rgba(212, 168, 67, 0.06) 0%, transparent 50%),
     linear-gradient(180deg,
-      rgba(7, 6, 10, 0.15) 0%,
-      rgba(7, 6, 10, 0.05) 40%,
-      rgba(7, 6, 10, 0.1) 70%,
-      rgba(7, 6, 10, 0.3) 100%
+      rgba(0, 0, 0, 0.15) 0%,
+      rgba(0, 0, 0, 0.05) 40%,
+      rgba(0, 0, 0, 0.1) 70%,
+      rgba(0, 0, 0, 0.3) 100%
     );
   z-index: 1;
 }
@@ -1694,7 +1694,7 @@
   width: 100%;
   max-width: 420px;
   padding: 24px 20px;
-  background: var(--card-bg, rgba(16, 14, 20, 0.92));
+  background: var(--card-bg, rgba(0, 0, 0, 0.92));
   -webkit-backdrop-filter: blur(60px) saturate(180%);
   backdrop-filter: blur(60px) saturate(180%);
   border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
@@ -2349,7 +2349,7 @@
 
 /* Slightly dimmer stat card backgrounds */
 .olen-stat-card {
-  background: rgba(16, 14, 20, 0.4);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================================
@@ -3469,8 +3469,9 @@
   background: rgba(0, 0, 0, 0);
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: 10vh;
   transition: background 0.3s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -3488,7 +3489,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 20px 20px 28px;
-  background: rgba(18, 16, 22, 0.94);
+  background: rgba(0, 0, 0, 0.94);
   -webkit-backdrop-filter: blur(60px) saturate(180%);
   backdrop-filter: blur(60px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3693,7 +3694,7 @@
    ============================================================ */
 
 .olen-dreamboard {
-  --bg-primary: #07060a;
+  --bg-primary: #000000;
   --text-primary: #f2ece0;
   --text-muted: #7e7769;
   --accent-gold: #d4a843;
@@ -4015,7 +4016,7 @@
   background: var(--accent-gold, #d4a843);
   border: none;
   border-radius: 8px;
-  color: #07060a;
+  color: #000000;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

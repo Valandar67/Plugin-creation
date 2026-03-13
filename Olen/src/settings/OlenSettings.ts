@@ -816,7 +816,7 @@ export class OlenSettingTab extends PluginSettingTab {
     const body = this.createCollapsibleSection(container, "Theme", "\u{1F3A8}");
 
     const themeFields: { key: string; label: string; defaultVal: string }[] = [
-      { key: "bgPrimary", label: "Background", defaultVal: "#0c0a09" },
+      { key: "bgPrimary", label: "Background", defaultVal: "#000000" },
       { key: "textPrimary", label: "Text", defaultVal: "#f5f0e8" },
       { key: "textMuted", label: "Muted text", defaultVal: "#928d85" },
       { key: "accentGold", label: "Accent (gold)", defaultVal: "#c9a84c" },
