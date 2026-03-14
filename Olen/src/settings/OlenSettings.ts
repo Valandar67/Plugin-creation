@@ -5,8 +5,9 @@
 
 import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency } from "../types";
+import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency, OlenThemeMode } from "../types";
 import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG } from "../constants";
+import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 
 export class OlenSettingTab extends PluginSettingTab {
   plugin: OlenPlugin;
@@ -815,13 +816,33 @@ export class OlenSettingTab extends PluginSettingTab {
   private renderThemeSection(container: HTMLElement): void {
     const body = this.createCollapsibleSection(container, "Theme", "\u{1F3A8}");
 
-    const themeFields: { key: string; label: string; defaultVal: string }[] = [
-      { key: "bgPrimary", label: "Background", defaultVal: "#000000" },
-      { key: "textPrimary", label: "Text", defaultVal: "#f5f0e8" },
-      { key: "textMuted", label: "Muted text", defaultVal: "#928d85" },
-      { key: "accentGold", label: "Accent (gold)", defaultVal: "#c9a84c" },
-      { key: "danger", label: "Danger", defaultVal: "#8b2d35" },
-      { key: "success", label: "Success", defaultVal: "#d4940a" },
+    // Theme mode picker
+    new Setting(body)
+      .setName("Theme")
+      .setDesc("Choose the overall look and feel")
+      .addDropdown((dd) => {
+        for (const mode of Object.keys(THEME_LABELS) as OlenThemeMode[]) {
+          dd.addOption(mode, THEME_LABELS[mode]);
+        }
+        dd.setValue(this.plugin.settings.themeMode ?? "dark");
+        dd.onChange(async (v) => {
+          this.plugin.settings.themeMode = v as OlenThemeMode;
+          this.plugin.settings.themeOverrides = {};
+          await this.plugin.saveSettings();
+          this.plugin.refreshDashboard();
+          this.display();
+        });
+      });
+
+    // Color overrides (defaults come from active theme preset)
+    const preset = THEME_PRESETS[this.plugin.settings.themeMode ?? "dark"];
+    const themeFields: { key: string; label: string }[] = [
+      { key: "bgPrimary", label: "Background" },
+      { key: "textPrimary", label: "Text" },
+      { key: "textMuted", label: "Muted text" },
+      { key: "accentGold", label: "Accent (gold)" },
+      { key: "danger", label: "Danger" },
+      { key: "success", label: "Success" },
     ];
 
     for (const field of themeFields) {
@@ -830,11 +851,13 @@ export class OlenSettingTab extends PluginSettingTab {
         .addColorPicker((cp) =>
           cp
             .setValue(
-              (this.plugin.settings.themeOverrides as any)?.[field.key] ?? field.defaultVal
+              (this.plugin.settings.themeOverrides as any)?.[field.key] ??
+              (preset as any)[field.key]
             )
             .onChange(async (v) => {
               (this.plugin.settings.themeOverrides as any)[field.key] = v;
               await this.plugin.saveSettings();
+              this.plugin.refreshDashboard();
             })
         );
     }
@@ -870,11 +893,12 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(body).addButton((btn) =>
-      btn.setButtonText("Reset to Elysian Dark").onClick(async () => {
+      btn.setButtonText("Reset theme colors").onClick(async () => {
         this.plugin.settings.themeOverrides = {};
         await this.plugin.saveSettings();
+        this.plugin.refreshDashboard();
         this.display();
-        new Notice("Theme reset to Elysian Dark defaults");
+        new Notice(`Theme reset to ${THEME_LABELS[this.plugin.settings.themeMode ?? "dark"]} defaults`);
       })
     );
   }

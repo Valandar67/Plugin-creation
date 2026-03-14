@@ -338,6 +338,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   simulatedDate: null,
 
   // Theme
+  themeMode: "dark" as const,
   themeOverrides: {},
 
   // Dev

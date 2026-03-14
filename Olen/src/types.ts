@@ -244,16 +244,38 @@ export interface DreamBoardImage {
 
 export interface ElysianTheme {
   bgPrimary: string;
+  bgSecondary: string;
   cardBg: string;
+  cardBgSolid: string;
+  cardBorder: string;
+  cardBorderHover: string;
   textPrimary: string;
+  textSecondary: string;
   textMuted: string;
+  textDim: string;
   accentGold: string;
+  accentGoldBright: string;
+  accentGoldDim: string;
+  accentAmber: string;
+  accentWarm: string;
   danger: string;
+  dangerDim: string;
   success: string;
+  successDim: string;
   bodyColor: string;
   mindColor: string;
   spiritColor: string;
+  cardBlur: string;
+  glassSheen: string;
+  divider: string;
+  glowGold: string;
+  glowGoldStrong: string;
+  glowDanger: string;
+  shadowCard: string;
+  shadowDeep: string;
 }
+
+export type OlenThemeMode = "dark" | "glass" | "steamy";
 
 // --- Reward (synced from TrackHabitRank) ---
 
@@ -358,6 +380,7 @@ export interface OlenSettings {
   simulatedDate: string | null;
 
   // Theme
+  themeMode: OlenThemeMode;
   themeOverrides: Partial<ElysianTheme>;
 
   // Dev Dashboard

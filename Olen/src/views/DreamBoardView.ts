@@ -8,6 +8,7 @@ import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { DreamBoardImage } from "../types";
 import { VIEW_TYPE_DREAMBOARD } from "../constants";
+import { THEME_PRESETS } from "../data/themes";
 
 export class DreamBoardView extends ItemView {
   plugin: OlenPlugin;
@@ -437,12 +438,22 @@ export class DreamBoardView extends ItemView {
   }
 
   private applyTheme(root: HTMLElement): void {
-    const overrides = this.plugin.settings.themeOverrides;
-    if (overrides) {
-      if (overrides.bgPrimary) root.style.setProperty("--bg-primary", overrides.bgPrimary);
-      if (overrides.textPrimary) root.style.setProperty("--text-primary", overrides.textPrimary);
-      if (overrides.textMuted) root.style.setProperty("--text-muted", overrides.textMuted);
-      if (overrides.accentGold) root.style.setProperty("--accent-gold", overrides.accentGold);
-    }
+    const mode = this.plugin.settings.themeMode ?? "dark";
+    const preset = THEME_PRESETS[mode];
+    const overrides = this.plugin.settings.themeOverrides ?? {};
+    const theme = { ...preset, ...overrides };
+
+    if (theme.bgPrimary) root.style.setProperty("--bg-primary", theme.bgPrimary);
+    if (theme.bgSecondary) root.style.setProperty("--bg-secondary", theme.bgSecondary);
+    if (theme.cardBg) root.style.setProperty("--card-bg", theme.cardBg);
+    if (theme.cardBgSolid) root.style.setProperty("--card-bg-solid", theme.cardBgSolid);
+    if (theme.cardBorder) root.style.setProperty("--card-border", theme.cardBorder);
+    if (theme.textPrimary) root.style.setProperty("--text-primary", theme.textPrimary);
+    if (theme.textSecondary) root.style.setProperty("--text-secondary", theme.textSecondary);
+    if (theme.textMuted) root.style.setProperty("--text-muted", theme.textMuted);
+    if (theme.textDim) root.style.setProperty("--text-dim", theme.textDim);
+    if (theme.accentGold) root.style.setProperty("--accent-gold", theme.accentGold);
+    if (theme.accentGoldBright) root.style.setProperty("--accent-gold-bright", theme.accentGoldBright);
+    if (theme.shadowCard) root.style.setProperty("--shadow-card", theme.shadowCard);
   }
 }
