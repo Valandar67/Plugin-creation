@@ -532,17 +532,77 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(details)
-      .setName("Workspace template")
-      .setDesc("Built-in template ID (e.g. 'workout') or vault path to .js file. Leave empty for default workspace.")
-      .addText((t) =>
-        t.setPlaceholder("e.g. workout")
-          .setValue(activity.workspaceTemplate ?? "")
+      .setName("Workspace source")
+      .setDesc("How the workspace content is loaded")
+      .addDropdown((d) =>
+        d.addOptions({
+          native: "Built-in / JS template",
+          custom: "Custom .md file from vault",
+        })
+          .setValue(activity.workspaceSource ?? "native")
           .onChange(async (v) => {
-            this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
-            this.plugin.templateEngine.invalidateCache();
+            this.plugin.settings.activities[index].workspaceSource = v as "native" | "custom";
             await this.plugin.saveSettings();
+            this.display();
           })
       );
+
+    if ((activity.workspaceSource ?? "native") === "native") {
+      new Setting(details)
+        .setName("Workspace template")
+        .setDesc("Built-in template ID (e.g. 'workout'), plugin-folder template, or vault path to .js file. Leave empty for default timer workspace.")
+        .addText((t) =>
+          t.setPlaceholder("e.g. workout")
+            .setValue(activity.workspaceTemplate ?? "")
+            .onChange(async (v) => {
+              this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
+              this.plugin.templateEngine.invalidateCache();
+              await this.plugin.saveSettings();
+            })
+        );
+    } else {
+      new Setting(details)
+        .setName("Custom workspace file")
+        .setDesc("Vault path to an .md file to render as the workspace (e.g. 'Workout session')")
+        .addText((t) =>
+          t.setPlaceholder("e.g. Workout session")
+            .setValue(activity.workspaceCustomFile ?? "")
+            .onChange(async (v) => {
+              this.plugin.settings.activities[index].workspaceCustomFile = v.trim() || undefined;
+              await this.plugin.saveSettings();
+            })
+        );
+    }
+
+    new Setting(details)
+      .setName("Dashboard source")
+      .setDesc("How the activity dashboard is rendered")
+      .addDropdown((d) =>
+        d.addOptions({
+          native: "Built-in native dashboard",
+          custom: "Custom .md file from vault",
+        })
+          .setValue(activity.dashboardSource ?? "native")
+          .onChange(async (v) => {
+            this.plugin.settings.activities[index].dashboardSource = v as "native" | "custom";
+            await this.plugin.saveSettings();
+            this.display();
+          })
+      );
+
+    if (activity.dashboardSource === "custom") {
+      new Setting(details)
+        .setName("Custom dashboard file")
+        .setDesc("Vault path to an .md file to render as the activity dashboard")
+        .addText((t) =>
+          t.setPlaceholder("e.g. Drawing hub")
+            .setValue(activity.dashboardCustomFile ?? "")
+            .onChange(async (v) => {
+              this.plugin.settings.activities[index].dashboardCustomFile = v.trim() || undefined;
+              await this.plugin.saveSettings();
+            })
+        );
+    }
 
     new Setting(details)
       .setName("Skill folder")

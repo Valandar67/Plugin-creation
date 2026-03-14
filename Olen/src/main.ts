@@ -172,14 +172,17 @@ export default class OlenPlugin extends Plugin {
     // --- Template Registry: Frontmatter-driven rendering ---
     this.registerTemplatePostProcessor();
 
-    // Invalidate template cache when template .js files are modified
+    // Invalidate template cache when template .js or .tpl files are modified
     this.registerEvent(
       this.app.vault.on("modify", (file) => {
-        if (file instanceof TFile && file.extension === "js") {
+        if (file instanceof TFile && (file.extension === "js" || file.extension === "tpl")) {
           this.templateEngine.invalidateCache(file.path);
         }
       })
     );
+
+    // Ensure the plugin's templates folder exists for user-distributable templates
+    this.ensurePluginTemplatesFolder();
   }
 
   onunload(): void {
@@ -577,6 +580,26 @@ export default class OlenPlugin extends Plugin {
 
     // Focus the input
     setTimeout(() => titleInput.focus(), 50);
+  }
+
+  // --- Plugin Templates Folder ---
+
+  /**
+   * Create the plugin's templates folder if it doesn't exist.
+   * This folder lives inside the plugin's install directory
+   * (e.g. .obsidian/plugins/olen/templates/) and lets users
+   * distribute workspace templates alongside the plugin.
+   */
+  private async ensurePluginTemplatesFolder(): Promise<void> {
+    const folder = this.templateEngine.getPluginTemplatesFolder();
+    try {
+      const exists = await this.app.vault.adapter.exists(folder);
+      if (!exists) {
+        await this.app.vault.adapter.mkdir(folder);
+      }
+    } catch {
+      // Not critical — folder creation can fail on some platforms
+    }
   }
 
   // --- Settings Persistence ---

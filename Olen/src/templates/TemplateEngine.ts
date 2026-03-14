@@ -5,7 +5,7 @@
 // and renders UI into a container element.
 // ============================================================
 
-import { App, TFile, Notice } from "obsidian";
+import { App, TFile, TFolder, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import { BUILTIN_TEMPLATES } from "./builtins";
 
@@ -129,6 +129,63 @@ export class TemplateEngine {
     }
   }
 
+  // --- Plugin-Folder Template Discovery ---
+
+  /**
+   * Get the path to the plugin's own templates folder inside its install directory.
+   * e.g. ".obsidian/plugins/olen/templates/"
+   */
+  getPluginTemplatesFolder(): string {
+    const pluginDir = this.plugin.manifest.dir ?? `.obsidian/plugins/${this.plugin.manifest.id}`;
+    return `${pluginDir}/templates`;
+  }
+
+  /**
+   * Load a template from the plugin's own templates folder.
+   * Checks for both .js and .tpl files.
+   */
+  async loadFromPluginFolder(templateId: string): Promise<string | null> {
+    const folder = this.getPluginTemplatesFolder();
+    const extensions = [".js", ".tpl"];
+
+    for (const ext of extensions) {
+      const path = `${folder}/${templateId}${ext}`;
+      try {
+        const exists = await this.app.vault.adapter.exists(path);
+        if (exists) {
+          const source = await this.app.vault.adapter.read(path);
+          this.templateCache.set(templateId, source);
+          return source;
+        }
+      } catch {
+        // File doesn't exist or can't be read
+      }
+    }
+    return null;
+  }
+
+  /**
+   * List all template files available in the plugin's templates folder.
+   * Returns template IDs (filename without extension).
+   */
+  async listPluginTemplates(): Promise<string[]> {
+    const folder = this.getPluginTemplatesFolder();
+    try {
+      const exists = await this.app.vault.adapter.exists(folder);
+      if (!exists) return [];
+
+      const listing = await this.app.vault.adapter.list(folder);
+      return listing.files
+        .filter((f: string) => f.endsWith(".js") || f.endsWith(".tpl"))
+        .map((f: string) => {
+          const basename = f.split("/").pop() ?? f;
+          return basename.replace(/\.(js|tpl)$/, "");
+        });
+    } catch {
+      return [];
+    }
+  }
+
   // --- Context Creation ---
 
   /**
@@ -242,8 +299,13 @@ export class TemplateEngine {
     file: TFile,
     container: HTMLElement,
   ): Promise<boolean> {
-    // 1. Resolve template source: check built-in templates first, then vault
+    // 1. Resolve template source: check built-in → plugin folder → vault
     let source: string | null = BUILTIN_TEMPLATES[templateId] ?? null;
+
+    if (!source) {
+      // Check the plugin's own templates folder (e.g. .obsidian/plugins/olen/templates/)
+      source = await this.loadFromPluginFolder(templateId);
+    }
 
     if (!source) {
       // Fall back to loading from vault as a .js file path
@@ -254,7 +316,7 @@ export class TemplateEngine {
       this.renderError(
         container,
         `Template not found: ${templateId}`,
-        "Check the template ID in Olen Settings → Activities → Configure. Built-in templates: workout.",
+        `Check the template ID in Olen Settings → Activities → Configure. Checked: built-in templates, plugin folder (${this.getPluginTemplatesFolder()}), and vault.`,
       );
       return false;
     }

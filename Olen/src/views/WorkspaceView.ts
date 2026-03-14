@@ -5,10 +5,11 @@
 // rendered instead of the default timer UI.
 // ============================================================
 
-import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, Component, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult } from "../types";
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
+import { renderEmbeddedMd } from "./EmbeddedMdView";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -19,6 +20,8 @@ export class WorkspaceView extends ItemView {
   private templateNoteFile: TFile | null = null;
   /** Tracks whether we already processed a completion (prevents double-apply) */
   private completionApplied = false;
+  /** When in custom MD workspace mode, holds the embedded component for cleanup */
+  private embeddedComponent: Component | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
@@ -50,7 +53,10 @@ export class WorkspaceView extends ItemView {
       (a) => a.id === workspace.activityId,
     );
 
-    if (activity?.workspaceTemplate) {
+    if (activity?.workspaceSource === "custom" && activity.workspaceCustomFile) {
+      // Custom MD workspace: render an .md file from the vault
+      await this.renderCustomMdWorkspace(workspace, activity);
+    } else if (activity?.workspaceTemplate) {
       // Template mode: render the activity template bound to today's daily note
       await this.renderTemplateMode(workspace, activity);
     } else {
@@ -65,6 +71,8 @@ export class WorkspaceView extends ItemView {
     this.stopTimer();
     this.templateNoteFile = null;
     this.completionApplied = false;
+    this.embeddedComponent?.unload();
+    this.embeddedComponent = null;
     this.contentEl.empty();
   }
 
@@ -118,6 +126,54 @@ export class WorkspaceView extends ItemView {
           this.applyTemplateCompletion(workspace, activity, completionType);
         }
       }),
+    );
+  }
+
+  /**
+   * Render a custom .md file from the vault as the workspace.
+   * This uses Obsidian's MarkdownRenderer to render the file with full
+   * dataviewjs support, just like ActivityDashboardView does for dashboards.
+   * Completion is detected via frontmatter watching on the daily note.
+   */
+  private async renderCustomMdWorkspace(
+    workspace: ActiveWorkspace,
+    activity: ActivityConfig,
+  ): Promise<void> {
+    const container = this.contentEl;
+    container.empty();
+
+    // Find or create today's daily note (so completion detection still works)
+    const file = await this.findOrCreateDailyNote(activity);
+    if (file) {
+      this.templateNoteFile = file;
+      await this.waitForMetadata(file);
+
+      // Watch for completion on the daily note
+      this.registerEvent(
+        this.app.metadataCache.on("changed", (changedFile) => {
+          if (this.completionApplied) return;
+          if (changedFile.path !== file.path) return;
+
+          const cache = this.app.metadataCache.getFileCache(changedFile);
+          const fm = cache?.frontmatter;
+          if (fm?.[activity.property] === true) {
+            this.completionApplied = true;
+            const completionType = fm[`${activity.property}-Type`] as string | undefined;
+            this.applyTemplateCompletion(workspace, activity, completionType);
+          }
+        }),
+      );
+    }
+
+    // Render the custom .md file
+    this.embeddedComponent = await renderEmbeddedMd(
+      this.app,
+      this.plugin,
+      activity.workspaceCustomFile!,
+      container,
+      () => this.plugin.activateDashboardView(),
+      activity.name,
+      activity.emoji,
     );
   }
 
