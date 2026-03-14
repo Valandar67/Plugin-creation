@@ -1703,7 +1703,7 @@ var TrackRankView = class extends import_obsidian.ItemView {
             `
           }
         });
-      } else if (daysInTart >= 2 && completedTart < reqTart && settings.systemState !== "paused") {
+      } else if (daysInTart >= 2 && daysInTart < 3 && completedTart < reqTart && settings.systemState !== "paused") {
         tartarusContent.createEl("div", {
           text: `Hades' Wrath in ${3 - daysInTart} day(s)`,
           attr: {
@@ -7511,9 +7511,14 @@ var TrackHabitRankPlugin = class extends import_obsidian.Plugin {
       belowThreshold,
       failedDays: this.settings.failedThresholdDays
     });
+    // Only increment once per day to prevent multiple metadata changes from stacking
+    const effectiveToday = getEffectiveTodayISO(this.settings);
     if (belowThreshold) {
-      this.settings.failedThresholdDays++;
-      debugLog.log("THRESH", "Failed day incremented", { failedDays: this.settings.failedThresholdDays });
+      if (this.settings.lastThresholdCheck !== effectiveToday) {
+        this.settings.failedThresholdDays++;
+        this.settings.lastThresholdCheck = effectiveToday;
+        debugLog.log("THRESH", "Failed day incremented", { failedDays: this.settings.failedThresholdDays });
+      }
       if (this.settings.failedThresholdDays >= 3) {
         debugLog.log("THRESH", "DEATH THRESHOLD REACHED — entering Tartarus!", { failedDays: this.settings.failedThresholdDays });
         enterTartarus(this.settings);
@@ -7522,6 +7527,7 @@ var TrackHabitRankPlugin = class extends import_obsidian.Plugin {
       }
     } else {
       this.settings.failedThresholdDays = 0;
+      this.settings.lastThresholdCheck = effectiveToday;
     }
   }
   /**
@@ -7561,6 +7567,17 @@ var TrackHabitRankPlugin = class extends import_obsidian.Plugin {
     if (this.settings.inTartarus) return;
     const isPerfectWeek = checkPerfectWeek(this.app, this.settings);
     if (isPerfectWeek) {
+      // Prevent awarding multiple times for the same week
+      const effectiveNow = getEffectiveNow(this.settings);
+      const today = new Date(effectiveNow);
+      today.setHours(0, 0, 0, 0);
+      const dayOfWeek = today.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const weekStart = new Date(today);
+      weekStart.setDate(weekStart.getDate() + mondayOffset);
+      const weekKey = weekStart.toISOString().slice(0, 10);
+      if (this.settings._lastPerfectWeekAwarded === weekKey) return;
+      this.settings._lastPerfectWeekAwarded = weekKey;
       this.settings.consecutivePerfectWeeks++;
       debugLog.log("CALC", "Perfect week achieved!", { streak: this.settings.consecutivePerfectWeeks });
       if (this.settings.disciplineTokens < 3) {
