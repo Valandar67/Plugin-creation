@@ -104,7 +104,8 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     id: "reading", name: "Reading", emoji: "\u{1F4D6}", category: "mind",
     enabled: true, folder: "Personal Life/03 Reading", property: "Reading",
     damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
-    hasWorkspace: true, priority: 6, neglectThreshold: 3,
+    hasWorkspace: true, workspaceTemplate: "reading",
+    priority: 6, neglectThreshold: 3,
     preferredTime: "evening", estimatedDuration: 45,
   },
   {

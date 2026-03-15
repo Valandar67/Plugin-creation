@@ -3,7 +3,8 @@
 // Maps template IDs to their source code (bundled at build time).
 // ============================================================
 
-import workoutSource from "./workout.tpl";
+import workoutSource from "./Workout/workout.tpl";
+import readingSource from "./Reading/reading.tpl";
 
 /**
  * Built-in templates bundled inside the plugin.
@@ -12,4 +13,5 @@ import workoutSource from "./workout.tpl";
  */
 export const BUILTIN_TEMPLATES: Record<string, string> = {
   workout: workoutSource,
+  reading: readingSource,
 };
