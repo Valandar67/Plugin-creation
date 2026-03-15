@@ -80,7 +80,7 @@ export function renderWeeklyRhythm(
 
     // If no completions, show empty bar
     if (total === 0) {
-      barEl.style.background = "rgba(255, 255, 255, 0.05)";
+      barEl.style.background = "var(--card-border)";
     }
 
     // Day label

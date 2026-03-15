@@ -7,7 +7,7 @@
 
 import { App, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import { BUILTIN_TEMPLATES } from "./builtins";
+import { BUILTIN_TEMPLATES, BUILTIN_TEMPLATE_IDS } from "./builtins";
 
 /**
  * The context object passed to every template at runtime.
@@ -242,7 +242,12 @@ export class TemplateEngine {
     file: TFile,
     container: HTMLElement,
   ): Promise<boolean> {
-    // 1. Resolve template source: check built-in templates first, then vault
+    // 1. Check for .md vault template (render as markdown, not JS)
+    if (templateId.endsWith(".md")) {
+      return this.renderMarkdownTemplate(templateId, container);
+    }
+
+    // 2. Resolve template source: check built-in templates first, then vault
     let source: string | null = BUILTIN_TEMPLATES[templateId] ?? null;
 
     if (!source) {
@@ -254,30 +259,25 @@ export class TemplateEngine {
       this.renderError(
         container,
         `Template not found: ${templateId}`,
-        "Check the template ID in Olen Settings → Activities → Configure. Built-in templates: workout.",
+        `Check the template ID in Olen Settings → Activities → Configure. Built-in templates: ${BUILTIN_TEMPLATE_IDS.join(", ")}.`,
       );
       return false;
     }
 
-    // 2. Get current frontmatter
+    // 3. Get current frontmatter
     const cache = this.app.metadataCache.getFileCache(file);
     const frontmatter = (cache?.frontmatter as Record<string, unknown>) ?? {};
 
-    // 3. Build context
+    // 4. Build context
     const ctx = this.buildContext(file, container, frontmatter);
 
-    // 4. Execute template
+    // 5. Execute template
     try {
-      // We wrap the template source so that `ctx` is available as a local variable.
-      // The template code can destructure from ctx or use it directly.
       const fn = new Function("ctx", source);
       const result = fn(ctx);
-
-      // If the template returns a promise (async template), await it
       if (result && typeof result.then === "function") {
         await result;
       }
-
       return true;
     } catch (err) {
       console.error(`Olen TemplateEngine: Error executing template ${templateId}:`, err);
@@ -286,6 +286,31 @@ export class TemplateEngine {
         `Template error: ${(err as Error).message}`,
         `In template: ${templateId}`,
       );
+      return false;
+    }
+  }
+
+  /**
+   * Render a .md vault file as a workspace template using Obsidian's markdown renderer.
+   */
+  private async renderMarkdownTemplate(
+    mdPath: string,
+    container: HTMLElement,
+  ): Promise<boolean> {
+    const file = this.app.vault.getAbstractFileByPath(mdPath);
+    if (!file || !(file instanceof TFile)) {
+      this.renderError(container, `Markdown template not found: ${mdPath}`, "Check the vault path in activity settings.");
+      return false;
+    }
+    try {
+      const content = await this.app.vault.read(file);
+      const { MarkdownRenderer, Component } = await import("obsidian");
+      const component = new Component();
+      component.load();
+      await MarkdownRenderer.render(this.app, content, container, file.path, component);
+      return true;
+    } catch (err) {
+      this.renderError(container, `Error rendering markdown: ${(err as Error).message}`, `In template: ${mdPath}`);
       return false;
     }
   }

@@ -8,6 +8,7 @@ import type OlenPlugin from "../main";
 import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency, OlenThemeMode } from "../types";
 import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG } from "../constants";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
+import { BUILTIN_TEMPLATE_IDS } from "../templates/builtins";
 
 export class OlenSettingTab extends PluginSettingTab {
   plugin: OlenPlugin;
@@ -44,7 +45,6 @@ export class OlenSettingTab extends PluginSettingTab {
     this.renderCalendarSection(containerEl);
     this.renderThemeSection(containerEl);
     this.renderAdvancedSection(containerEl);
-    this.renderDevDashboardSection(containerEl);
   }
 
   // --- Collapsible Section Helper ---
@@ -532,18 +532,45 @@ export class OlenSettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(details)
+    // Workspace template selector
+    const templateSetting = new Setting(details)
       .setName("Workspace template")
-      .setDesc("Built-in template ID (e.g. 'workout') or vault path to .js file. Leave empty for default workspace.")
-      .addText((t) =>
-        t.setPlaceholder("e.g. workout")
-          .setValue(activity.workspaceTemplate ?? "")
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
-            this.plugin.templateEngine.invalidateCache();
-            await this.plugin.saveSettings();
-          })
-      );
+      .setDesc("Built-in template, vault .js, or vault .md file");
+
+    const currentTpl = activity.workspaceTemplate ?? "";
+    const isBuiltin = BUILTIN_TEMPLATE_IDS.includes(currentTpl);
+    const isCustom = currentTpl !== "" && !isBuiltin;
+
+    templateSetting.addDropdown((d) => {
+      d.addOption("", "None (default timer)");
+      for (const id of BUILTIN_TEMPLATE_IDS) {
+        d.addOption(id, `Built-in: ${id}`);
+      }
+      d.addOption("__custom__", "Custom (vault path)");
+      d.setValue(isCustom ? "__custom__" : currentTpl);
+      d.onChange(async (v) => {
+        if (v === "__custom__") return; // handled by text field
+        this.plugin.settings.activities[index].workspaceTemplate = v || undefined;
+        this.plugin.templateEngine.invalidateCache();
+        await this.plugin.saveSettings();
+        this.display();
+      });
+    });
+
+    if (isCustom) {
+      new Setting(details)
+        .setName("Template vault path")
+        .setDesc("Path to a .js or .md file in your vault")
+        .addText((t) =>
+          t.setPlaceholder("e.g. Templates/MyWorkout.js")
+            .setValue(currentTpl)
+            .onChange(async (v) => {
+              this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
+              this.plugin.templateEngine.invalidateCache();
+              await this.plugin.saveSettings();
+            })
+        );
+    }
 
     new Setting(details)
       .setName("Skill folder")
@@ -971,103 +998,4 @@ export class OlenSettingTab extends PluginSettingTab {
       );
   }
 
-  // --- Developer Dashboard ---
-
-  private renderDevDashboardSection(container: HTMLElement): void {
-    const body = this.createCollapsibleSection(container, "Developer Dashboard", "\u{1F6E0}\uFE0F");
-
-    body.createEl("p", {
-      text: "Edit the raw devConfig JSON. Changes are applied on save.",
-      attr: { style: "font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;" },
-    });
-
-    const textarea = body.createEl("textarea", {
-      attr: {
-        style: `
-          width: 100%; min-height: 300px; font-family: monospace; font-size: 12px;
-          background: var(--background-primary); color: var(--text-normal);
-          border: 1px solid var(--background-modifier-border); border-radius: 6px;
-          padding: 10px; resize: vertical;
-        `,
-      },
-    });
-    textarea.value = JSON.stringify(this.plugin.settings.devConfig, null, 2);
-
-    new Setting(body)
-      .addButton((btn) =>
-        btn.setButtonText("Save devConfig").onClick(async () => {
-          try {
-            const parsed = JSON.parse(textarea.value);
-            this.plugin.settings.devConfig = Object.assign(
-              {},
-              DEFAULT_DEV_CONFIG,
-              parsed
-            );
-            await this.plugin.saveSettings();
-            this.plugin.refreshDashboard();
-            new Notice("devConfig saved and applied");
-          } catch (err) {
-            new Notice("Invalid JSON — please check syntax");
-          }
-        })
-      )
-      .addButton((btn) =>
-        btn.setButtonText("Reset to defaults").onClick(async () => {
-          this.plugin.settings.devConfig = { ...DEFAULT_DEV_CONFIG };
-          await this.plugin.saveSettings();
-          textarea.value = JSON.stringify(this.plugin.settings.devConfig, null, 2);
-          new Notice("devConfig reset to defaults");
-        })
-      );
-
-    // Export/Import
-    new Setting(body)
-      .setName("Export all settings")
-      .addButton((btn) =>
-        btn.setButtonText("Copy to clipboard").onClick(async () => {
-          const json = JSON.stringify(this.plugin.settings, null, 2);
-          try {
-            await navigator.clipboard.writeText(json);
-            new Notice("Settings copied to clipboard");
-          } catch {
-            // Fallback for mobile — show in a textarea for manual copy
-            const ta = document.createElement("textarea");
-            ta.value = json;
-            ta.style.cssText = "position:fixed;top:0;left:0;width:100%;height:50%;z-index:9999;font-size:11px;";
-            document.body.appendChild(ta);
-            ta.select();
-            ta.addEventListener("blur", () => ta.remove());
-            new Notice("Tap the text area and copy manually");
-          }
-        })
-      );
-
-    new Setting(body)
-      .setName("Import settings")
-      .addTextArea((area) => {
-        area.setPlaceholder("Paste JSON here...");
-        area.inputEl.style.width = "100%";
-        area.inputEl.style.minHeight = "80px";
-        area.inputEl.style.fontFamily = "monospace";
-        area.inputEl.style.fontSize = "11px";
-
-        // Store reference for the import button
-        (body as any)._importArea = area;
-      })
-      .addButton((btn) =>
-        btn.setButtonText("Import").setWarning().onClick(async () => {
-          try {
-            const area = (body as any)._importArea;
-            if (!area) return;
-            const parsed = JSON.parse(area.getValue());
-            Object.assign(this.plugin.settings, parsed);
-            await this.plugin.saveSettings();
-            this.display();
-            new Notice("Settings imported successfully");
-          } catch (err) {
-            new Notice("Invalid JSON — please check syntax");
-          }
-        })
-      );
-  }
 }

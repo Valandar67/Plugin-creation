@@ -156,7 +156,7 @@ function renderWeeklyView(
       seg.style.background = getCategoryColor(cat, settings);
     }
 
-    if (total === 0) barEl.style.background = "rgba(255, 255, 255, 0.05)";
+    if (total === 0) barEl.style.background = "var(--card-border)";
     col.createEl("div", { cls: "olen-weekly-day-label", text: day.day.charAt(0) });
   }
 
@@ -229,8 +229,9 @@ function renderMonthlyView(
 
     if (day.total > 0) {
       const intensity = Math.min(1, day.total / maxDay);
-      cell.style.background = `rgba(212, 168, 67, ${0.08 + intensity * 0.35})`;
-      cell.style.borderColor = `rgba(212, 168, 67, ${0.15 + intensity * 0.25})`;
+      const alpha = 0.08 + intensity * 0.35;
+      cell.style.background = `color-mix(in srgb, var(--accent-gold) ${Math.round(alpha * 100)}%, transparent)`;
+      cell.style.borderColor = `color-mix(in srgb, var(--accent-gold) ${Math.round((0.15 + intensity * 0.25) * 100)}%, transparent)`;
     }
 
     if (day.date === todayStr) cell.classList.add("today");
@@ -336,7 +337,7 @@ function renderBarChart(
       seg.style.background = getCategoryColor(cat, settings);
     }
 
-    if (d.total === 0) barEl.style.background = "rgba(255, 255, 255, 0.05)";
+    if (d.total === 0) barEl.style.background = "var(--card-border)";
     col.createEl("div", { cls: "olen-analytics-bar-label", text: d.label });
   }
 }

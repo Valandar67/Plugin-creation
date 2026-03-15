@@ -57,7 +57,7 @@ export function renderSkillHeatmap(
       bar.style.background = "var(--danger)";
     } else {
       const intensity = skill.count / maxCount;
-      bar.style.background = `rgba(201, 168, 76, ${0.3 + intensity * 0.7})`;
+      bar.style.background = `color-mix(in srgb, var(--accent-gold) ${Math.round((0.3 + intensity * 0.7) * 100)}%, transparent)`;
     }
 
     // Count

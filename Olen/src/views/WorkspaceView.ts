@@ -9,6 +9,7 @@ import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult } from "../types";
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
+import { THEME_PRESETS } from "../data/themes";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -95,7 +96,8 @@ export class WorkspaceView extends ItemView {
     await this.waitForMetadata(file);
 
     // Render template into the view's content area
-    const templateContainer = container.createDiv({ cls: "olen-template-root" });
+    const templateContainer = container.createDiv({ cls: "olen-dashboard olen-template-root" });
+    this.applyThemeOverrides(templateContainer);
     await this.plugin.templateEngine.render(
       activity.workspaceTemplate!,
       file,
@@ -239,11 +241,40 @@ export class WorkspaceView extends ItemView {
     }
   }
 
+  private applyThemeOverrides(root: HTMLElement): void {
+    const mode = this.plugin.settings.themeMode ?? "dark";
+    const preset = THEME_PRESETS[mode];
+    const overrides = this.plugin.settings.themeOverrides ?? {};
+    const theme = { ...preset, ...overrides };
+    const cssMap: Record<string, string> = {
+      bgPrimary: "--bg-primary", bgSecondary: "--bg-secondary",
+      cardBg: "--card-bg", cardBgSolid: "--card-bg-solid",
+      cardBorder: "--card-border", cardBorderHover: "--card-border-hover",
+      textPrimary: "--text-primary", textSecondary: "--text-secondary",
+      textMuted: "--text-muted", textDim: "--text-dim",
+      accentGold: "--accent-gold", accentGoldBright: "--accent-gold-bright",
+      accentGoldDim: "--accent-gold-dim", accentAmber: "--accent-amber",
+      accentWarm: "--accent-warm",
+      danger: "--danger", dangerDim: "--danger-dim",
+      success: "--success", successDim: "--success-dim",
+      bodyColor: "--body-color", mindColor: "--mind-color", spiritColor: "--spirit-color",
+      cardBlur: "--card-blur", glassSheen: "--glass-sheen", divider: "--divider",
+      glowGold: "--glow-gold", glowGoldStrong: "--glow-gold-strong",
+      glowDanger: "--glow-danger",
+      shadowCard: "--shadow-card", shadowDeep: "--shadow-deep",
+    };
+    for (const [key, prop] of Object.entries(cssMap)) {
+      const val = (theme as any)[key];
+      if (val) root.style.setProperty(prop, val);
+    }
+  }
+
   private render(workspace: ActiveWorkspace): void {
     const container = this.contentEl;
     container.empty();
 
     const root = container.createDiv({ cls: "olen-dashboard olen-workspace-root" });
+    this.applyThemeOverrides(root);
 
     // Top bar
     const topBar = root.createDiv({ cls: "olen-workspace-topbar" });

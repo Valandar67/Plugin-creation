@@ -64,7 +64,7 @@ export function renderMonthlyHeatmap(
     if (dayData.total > 0) {
       const intensity = Math.min(1, dayData.total / maxActivity);
       const alpha = 0.2 + intensity * 0.6;
-      cell.style.background = `rgba(201, 168, 76, ${alpha})`;
+      cell.style.background = `color-mix(in srgb, var(--accent-gold) ${Math.round(alpha * 100)}%, transparent)`;
       cell.style.color = "var(--text-primary)";
       cell.classList.add("olen-monthly-grid-active");
     }

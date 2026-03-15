@@ -47,9 +47,9 @@ export function renderDisciplineFlowChart(
   svg.classList.add("olen-disc-flow-donut");
 
   const segments = [
-    { count: counts.discipline, color: "#928d85", label: "Discipline" },
-    { count: counts.flow, color: "#c9a84c", label: "Flow" },
-    { count: counts.skipped, color: "#8b2d35", label: "Skipped" },
+    { count: counts.discipline, color: "var(--spirit-color)", label: "Discipline" },
+    { count: counts.flow, color: "var(--accent-gold)", label: "Flow" },
+    { count: counts.skipped, color: "var(--danger)", label: "Skipped" },
   ];
 
   let currentOffset = 0;
@@ -78,7 +78,7 @@ export function renderDisciplineFlowChart(
   text.setAttribute("x", String(size / 2));
   text.setAttribute("y", String(size / 2 + 4));
   text.setAttribute("text-anchor", "middle");
-  text.setAttribute("fill", "#f5f0e8");
+  text.setAttribute("fill", "var(--text-primary)");
   text.setAttribute("font-size", "14");
   text.setAttribute("font-family", "SF Mono, Courier New, monospace");
   text.textContent = String(counts.total);

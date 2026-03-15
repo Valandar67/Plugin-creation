@@ -66,7 +66,7 @@ export function renderConsistencyCalendar(
     if (isDone) {
       cell.classList.add("olen-consistency-done");
       cell.style.background = accentColor;
-      cell.style.color = "#000000";
+      cell.style.color = "var(--bg-primary)";
     } else if (isFuture) {
       cell.classList.add("olen-consistency-future");
     } else {

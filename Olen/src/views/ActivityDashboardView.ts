@@ -7,6 +7,7 @@ import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActivityConfig, CompletionMap, Completion } from "../types";
 import { VIEW_TYPE_OLEN } from "../constants";
+import { THEME_PRESETS } from "../data/themes";
 import { OlenEngine } from "../engines/OlenEngine";
 import { renderSessionPreview } from "../components/SessionPreview";
 import { renderMomentumIndicator } from "../components/MomentumIndicator";
@@ -91,6 +92,7 @@ export class ActivityDashboardView extends ItemView {
 
     // Native dashboard
     const root = container.createDiv({ cls: "olen-dashboard olen-activity-dashboard" });
+    this.applyThemeOverrides(root);
 
     // Gather completion data
     const completionData = this.gatherCompletionData();
@@ -360,6 +362,37 @@ export class ActivityDashboardView extends ItemView {
       data[activity.id] = this.getCompletionsFromFolder(activity.folder, activity.property);
     }
     return data;
+  }
+
+  private applyThemeOverrides(root: HTMLElement): void {
+    const mode = this.plugin.settings.themeMode ?? "dark";
+    const preset = THEME_PRESETS[mode];
+    const overrides = this.plugin.settings.themeOverrides ?? {};
+    const theme = { ...preset, ...overrides };
+
+    const cssMap: Record<string, string> = {
+      bgPrimary: "--bg-primary", bgSecondary: "--bg-secondary",
+      cardBg: "--card-bg", cardBgSolid: "--card-bg-solid",
+      cardBorder: "--card-border", cardBorderHover: "--card-border-hover",
+      textPrimary: "--text-primary", textSecondary: "--text-secondary",
+      textMuted: "--text-muted", textDim: "--text-dim",
+      accentGold: "--accent-gold", accentGoldBright: "--accent-gold-bright",
+      accentGoldDim: "--accent-gold-dim", accentAmber: "--accent-amber",
+      accentWarm: "--accent-warm",
+      danger: "--danger", dangerDim: "--danger-dim",
+      success: "--success", successDim: "--success-dim",
+      bodyColor: "--body-color", mindColor: "--mind-color", spiritColor: "--spirit-color",
+      cardBlur: "--card-blur", glassSheen: "--glass-sheen",
+      divider: "--divider",
+      glowGold: "--glow-gold", glowGoldStrong: "--glow-gold-strong",
+      glowDanger: "--glow-danger",
+      shadowCard: "--shadow-card", shadowDeep: "--shadow-deep",
+    };
+
+    for (const [key, prop] of Object.entries(cssMap)) {
+      const val = (theme as any)[key];
+      if (val) root.style.setProperty(prop, val);
+    }
   }
 
   private getCompletionsFromFolder(folderPath: string, fieldName: string): Completion[] {
