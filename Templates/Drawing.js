@@ -209,8 +209,8 @@ if (!document.getElementById("olen-tpl-drawing-v1")) {
     .otd-session-skill {
       display: flex; align-items: center; gap: 14px;
       padding: 14px 16px; background: #0f0f0f;
-      border: 1px solid ${T.colorBorder}; margin-bottom: 8px;
-      transition: all 0.3s ease;
+      border: 1px solid ${T.colorBorder}; margin-bottom: 0;
+      transition: all 0.3s ease; cursor: pointer;
     }
     .otd-session-skill:hover { border-color: ${T.colorBorderHover}; }
     .otd-session-skill-icon {
@@ -233,6 +233,57 @@ if (!document.getElementById("olen-tpl-drawing-v1")) {
     .otd-session-skill-remove:hover {
       border-color: #c44; color: #f66;
     }
+    .otd-session-skill-chevron {
+      color: ${T.colorMuted}; font-size: 12px; transition: transform 0.3s ease;
+      margin-left: 6px; flex-shrink: 0;
+    }
+    .otd-session-skill-chevron.open { transform: rotate(90deg); }
+
+    /* ===== Scrollable Skill Embed ===== */
+    .otd-skill-embed-wrap {
+      margin-bottom: 12px; overflow: hidden;
+    }
+    .otd-skill-embed {
+      max-height: 300px; overflow-y: auto; padding: 16px 20px;
+      background: #060606; border: 1px solid ${T.colorBorder};
+      border-top: none; position: relative;
+      -webkit-user-select: text; user-select: text;
+    }
+    .otd-skill-embed::-webkit-scrollbar { width: 4px; }
+    .otd-skill-embed::-webkit-scrollbar-track { background: transparent; }
+    .otd-skill-embed::-webkit-scrollbar-thumb { background: ${T.colorBorder}; }
+    .otd-skill-embed::-webkit-scrollbar-thumb:hover { background: ${T.colorBorderHover}; }
+    /* Fade hint at bottom when scrollable */
+    .otd-skill-embed-fade {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 40px;
+      background: linear-gradient(transparent, #060606);
+      pointer-events: none; transition: opacity 0.3s;
+    }
+    /* Override Obsidian rendered markdown to match theme */
+    .otd-skill-embed .markdown-rendered {
+      color: ${T.color} !important; font-size: 13px; line-height: 1.6;
+    }
+    .otd-skill-embed .markdown-rendered h1,
+    .otd-skill-embed .markdown-rendered h2,
+    .otd-skill-embed .markdown-rendered h3,
+    .otd-skill-embed .markdown-rendered h4 {
+      color: #ccc !important; font-family: "Courier New", monospace;
+      border-bottom: 1px solid ${T.colorBorder}; padding-bottom: 4px;
+    }
+    .otd-skill-embed .markdown-rendered a { color: ${T.color} !important; }
+    .otd-skill-embed .markdown-rendered img {
+      max-width: 100%; border: 1px solid ${T.colorBorder};
+    }
+    .otd-skill-embed .markdown-rendered code {
+      background: #111; color: #aaa; padding: 2px 4px;
+    }
+    .otd-skill-embed .markdown-rendered blockquote {
+      border-left: 2px solid ${T.colorBorder}; padding-left: 12px;
+      color: ${T.colorMuted}; font-style: italic;
+    }
+    .otd-skill-embed .markdown-rendered ul,
+    .otd-skill-embed .markdown-rendered ol { padding-left: 20px; }
+    .otd-skill-embed .markdown-rendered li { margin-bottom: 4px; }
 
     /* ===== Buttons ===== */
     .otd-btn {
@@ -420,6 +471,69 @@ function loadAvailableSkills() {
     return a.name.localeCompare(b.name);
   });
   return result;
+}
+
+// ==========================================
+// HELPER: Render markdown into a container
+// Uses Obsidian's MarkdownRenderer for full
+// fidelity (images, links, formatting, etc.)
+// ==========================================
+let _MarkdownRenderer = null;
+let _Component = null;
+
+async function ensureMarkdownRenderer() {
+  if (_MarkdownRenderer) return;
+  try {
+    const obsModule = await import("obsidian");
+    _MarkdownRenderer = obsModule.MarkdownRenderer;
+    _Component = obsModule.Component;
+  } catch (e) {
+    // Fallback: won't render markdown, will show raw text
+  }
+}
+
+async function renderSkillEmbed(containerEl, skillName) {
+  // Find the skill file path
+  const normalizedFolder = SKILL_FOLDER.endsWith("/") ? SKILL_FOLDER : SKILL_FOLDER + "/";
+  const filePath = normalizedFolder + skillName + ".md";
+  const content = await readFile(filePath);
+  if (!content) {
+    containerEl.innerHTML = '<div style="color:' + T.colorMuted + ';font-size:11px;font-style:italic;padding:8px;">No content found</div>';
+    return;
+  }
+
+  // Strip frontmatter before rendering
+  let body = content;
+  const fmMatch = content.match(/^---\n[\s\S]*?\n---\n?/);
+  if (fmMatch) {
+    body = content.substring(fmMatch[0].length).trim();
+  }
+
+  if (!body) {
+    containerEl.innerHTML = '<div style="color:' + T.colorMuted + ';font-size:11px;font-style:italic;padding:8px;">Empty note</div>';
+    return;
+  }
+
+  await ensureMarkdownRenderer();
+  if (_MarkdownRenderer && _Component) {
+    const component = new _Component();
+    component.load();
+    try {
+      await _MarkdownRenderer.render(app, body, containerEl, filePath, component);
+    } catch (e) {
+      // Fallback to plain text on error
+      const pre = document.createElement("pre");
+      pre.style.cssText = "color:" + T.color + ";font-size:12px;white-space:pre-wrap;word-break:break-word;margin:0;";
+      pre.textContent = body;
+      containerEl.appendChild(pre);
+    }
+  } else {
+    // No MarkdownRenderer available — show as plain text
+    const pre = document.createElement("pre");
+    pre.style.cssText = "color:" + T.color + ";font-size:12px;white-space:pre-wrap;word-break:break-word;margin:0;";
+    pre.textContent = body;
+    containerEl.appendChild(pre);
+  }
 }
 
 // ==========================================
@@ -776,7 +890,7 @@ function renderSkillSelector(root) {
 // ==========================================
 // SCREEN: Active Session
 // ==========================================
-function renderActiveSession(root) {
+async function renderActiveSession(root) {
   // Header card
   const header = document.createElement("div");
   header.className = "otd-card";
@@ -807,7 +921,7 @@ function renderActiveSession(root) {
     }
   }
 
-  // Skills section
+  // Skills section — scrollable embed blocks
   if (skills.length > 0) {
     const skillsSection = document.createElement("div");
     skillsSection.style.cssText = "margin-bottom:20px;";
@@ -822,13 +936,22 @@ function renderActiveSession(root) {
     const skillMap = {};
     allSkills.forEach(function(s) { skillMap[s.name] = s; });
 
+    // Track which embeds are open (all start expanded)
+    const openEmbeds = new Set(skills);
+
     skills.forEach(function(skillName, index) {
       const skillData = skillMap[skillName] || { icon: "default" };
+
+      // Wrapper for header + embed
+      const wrap = document.createElement("div");
+      wrap.className = "otd-skill-embed-wrap";
+      wrap.style.animation = "otd-fade-in 0.3s ease forwards";
+      wrap.style.animationDelay = (index * 0.05) + "s";
+      wrap.style.opacity = "0";
+
+      // Header row (clickable to toggle)
       const row = document.createElement("div");
       row.className = "otd-session-skill";
-      row.style.animation = "otd-fade-in 0.3s ease forwards";
-      row.style.animationDelay = (index * 0.05) + "s";
-      row.style.opacity = "0";
 
       const iconEl = document.createElement("div");
       iconEl.className = "otd-session-skill-icon";
@@ -840,19 +963,65 @@ function renderActiveSession(root) {
       nameEl.textContent = skillName;
       row.appendChild(nameEl);
 
+      // Chevron toggle
+      const chevron = document.createElement("span");
+      chevron.className = "otd-session-skill-chevron open";
+      chevron.innerHTML = "\u25B8"; // right triangle
+      row.appendChild(chevron);
+
       const removeBtn = document.createElement("button");
       removeBtn.className = "otd-session-skill-remove";
       removeBtn.innerHTML = "&times;";
       removeBtn.title = "Remove skill";
       row.appendChild(removeBtn);
 
-      removeBtn.onclick = async function() {
+      removeBtn.onclick = async function(e) {
+        e.stopPropagation();
         skills = skills.filter(function(s) { return s !== skillName; });
         await saveState();
         render();
       };
 
-      skillsSection.appendChild(row);
+      wrap.appendChild(row);
+
+      // Scrollable embed container
+      const embedOuter = document.createElement("div");
+      embedOuter.style.cssText = "position:relative;";
+
+      const embed = document.createElement("div");
+      embed.className = "otd-skill-embed";
+      embedOuter.appendChild(embed);
+
+      // Bottom fade hint
+      const fade = document.createElement("div");
+      fade.className = "otd-skill-embed-fade";
+      embedOuter.appendChild(fade);
+
+      // Hide fade when scrolled to bottom
+      embed.addEventListener("scroll", function() {
+        const atBottom = embed.scrollHeight - embed.scrollTop - embed.clientHeight < 10;
+        fade.style.opacity = atBottom ? "0" : "1";
+      });
+
+      wrap.appendChild(embedOuter);
+
+      // Toggle collapse on header click
+      row.onclick = function() {
+        if (openEmbeds.has(skillName)) {
+          openEmbeds.delete(skillName);
+          embedOuter.style.display = "none";
+          chevron.classList.remove("open");
+        } else {
+          openEmbeds.add(skillName);
+          embedOuter.style.display = "block";
+          chevron.classList.add("open");
+        }
+      };
+
+      skillsSection.appendChild(wrap);
+
+      // Load and render the skill file content
+      renderSkillEmbed(embed, skillName);
     });
   }
 
@@ -1026,7 +1195,7 @@ async function render() {
   }
 
   // State 3: Active session (skills selected or free session)
-  renderActiveSession(root);
+  await renderActiveSession(root);
 }
 
 return render();
