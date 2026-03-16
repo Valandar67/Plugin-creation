@@ -549,7 +549,13 @@ export class OlenSettingTab extends PluginSettingTab {
       d.addOption("__custom__", "Custom (vault path)");
       d.setValue(isCustom ? "__custom__" : currentTpl);
       d.onChange(async (v) => {
-        if (v === "__custom__") return; // handled by text field
+        if (v === "__custom__") {
+          // Set a placeholder so isCustom is true on re-render
+          this.plugin.settings.activities[index].workspaceTemplate = "__custom__";
+          await this.plugin.saveSettings();
+          this.display();
+          return;
+        }
         this.plugin.settings.activities[index].workspaceTemplate = v || undefined;
         this.plugin.templateEngine.invalidateCache();
         await this.plugin.saveSettings();
@@ -563,7 +569,7 @@ export class OlenSettingTab extends PluginSettingTab {
         .setDesc("Path to a .js or .md file in your vault")
         .addText((t) =>
           t.setPlaceholder("e.g. Templates/MyWorkout.js")
-            .setValue(currentTpl)
+            .setValue(currentTpl === "__custom__" ? "" : currentTpl)
             .onChange(async (v) => {
               this.plugin.settings.activities[index].workspaceTemplate = v.trim() || undefined;
               this.plugin.templateEngine.invalidateCache();
