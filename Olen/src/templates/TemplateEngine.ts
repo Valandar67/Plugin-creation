@@ -7,6 +7,7 @@
 
 import { App, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
+import { resolveInternalImageEmbeds } from "../views/EmbeddedMdView";
 import { BUILTIN_TEMPLATES, BUILTIN_TEMPLATE_IDS } from "./builtins";
 
 /**
@@ -308,6 +309,7 @@ export class TemplateEngine {
       const component = new Component();
       component.load();
       await MarkdownRenderer.render(this.app, content, container, file.path, component);
+      resolveInternalImageEmbeds(this.app, container, file.path);
       return true;
     } catch (err) {
       this.renderError(container, `Error rendering markdown: ${(err as Error).message}`, `In template: ${mdPath}`);

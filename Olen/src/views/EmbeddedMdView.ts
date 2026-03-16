@@ -7,6 +7,35 @@
 import { MarkdownRenderer, TFile, App, Component } from "obsidian";
 import type OlenPlugin from "../main";
 
+const IMAGE_EXTS = /\.(png|jpg|jpeg|gif|webp|svg|bmp|avif)$/i;
+
+/**
+ * Post-process rendered markdown to resolve internal image embeds
+ * (`![[image.png]]`) that MarkdownRenderer.render() leaves as
+ * unresolved `<span class="internal-embed">` placeholders.
+ */
+export function resolveInternalImageEmbeds(
+  app: App,
+  container: HTMLElement,
+  sourcePath: string,
+): void {
+  const embeds = container.querySelectorAll("span.internal-embed");
+  for (const span of Array.from(embeds)) {
+    const src = span.getAttribute("src") ?? "";
+    if (!IMAGE_EXTS.test(src)) continue;
+
+    const file = app.metadataCache.getFirstLinkpathDest(src, sourcePath);
+    if (!file) continue;
+
+    const resourcePath = app.vault.adapter.getResourcePath(file.path);
+    const img = document.createElement("img");
+    img.src = resourcePath;
+    img.alt = span.getAttribute("alt") || file.basename;
+    img.style.maxWidth = "100%";
+    span.replaceWith(img);
+  }
+}
+
 /**
  * Renders an .md file inside a container element, preserving
  * all dataviewjs blocks and interactive content.
@@ -73,6 +102,9 @@ export async function renderEmbeddedMd(
     file.path,
     component
   );
+
+  // Resolve ![[image.png]] embeds that MarkdownRenderer leaves as placeholders
+  resolveInternalImageEmbeds(app, contentArea, file.path);
 
   return component;
 }

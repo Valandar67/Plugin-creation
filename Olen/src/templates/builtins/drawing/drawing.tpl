@@ -520,6 +520,19 @@ async function renderSkillEmbed(containerEl, skillName) {
     component.load();
     try {
       await _MarkdownRenderer.render(app, body, containerEl, filePath, component);
+      // Resolve ![[image.png]] embeds into actual <img> tags
+      const imgExts = /\.(png|jpg|jpeg|gif|webp|svg|bmp|avif)$/i;
+      containerEl.querySelectorAll("span.internal-embed").forEach(function(span) {
+        var src = span.getAttribute("src") || "";
+        if (!imgExts.test(src)) return;
+        var imgFile = app.metadataCache.getFirstLinkpathDest(src, filePath);
+        if (!imgFile) return;
+        var img = document.createElement("img");
+        img.src = app.vault.adapter.getResourcePath(imgFile.path);
+        img.alt = span.getAttribute("alt") || imgFile.basename;
+        img.style.maxWidth = "100%";
+        span.replaceWith(img);
+      });
     } catch (e) {
       // Fallback to plain text on error
       const pre = document.createElement("pre");
