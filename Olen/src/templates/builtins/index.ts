@@ -6,6 +6,7 @@
 
 import workoutSource from "./workout/workout.tpl";
 import readingSource from "./reading/reading.tpl";
+import drawingSource from "./drawing/drawing.tpl";
 
 /**
  * Built-in templates bundled inside the plugin.
@@ -20,6 +21,7 @@ import readingSource from "./reading/reading.tpl";
 export const BUILTIN_TEMPLATES: Record<string, string> = {
   workout: workoutSource,
   reading: readingSource,
+  drawing: drawingSource,
 };
 
 /** List of available built-in template IDs (for settings dropdowns) */

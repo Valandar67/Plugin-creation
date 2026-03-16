@@ -132,7 +132,9 @@ export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
     id: "drawing", name: "Drawing", emoji: "\u{1F3A8}", category: "spirit",
     enabled: true, folder: "Personal Life/07 Drawing", property: "Drawing",
     damagePerCompletion: 1, weeklyTarget: 4, trackingMode: "daily",
-    hasWorkspace: true, priority: 7, neglectThreshold: 3,
+    hasWorkspace: true, workspaceTemplate: "drawing",
+    skillFolder: "Home/Starts/Drawing/Skill tree",
+    priority: 7, neglectThreshold: 3,
     preferredTime: "afternoon", estimatedDuration: 60,
   },
 ];
