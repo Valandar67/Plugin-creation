@@ -5,7 +5,7 @@
 // and renders UI into a container element.
 // ============================================================
 
-import { App, TFile, Notice } from "obsidian";
+import { App, TFile, Notice, MarkdownRenderer, Component } from "obsidian";
 import type OlenPlugin from "../main";
 import { resolveInternalImageEmbeds } from "../views/EmbeddedMdView";
 import { BUILTIN_TEMPLATES, BUILTIN_TEMPLATE_IDS } from "./builtins";
@@ -83,7 +83,7 @@ export class TemplateEngine {
     const activity = this.plugin.settings.activities.find(
       (a) => a.id === activityType && a.enabled && a.workspaceTemplate,
     );
-    if (!activity) return null;
+    if (!activity || activity.workspaceTemplate === "__custom__") return null;
     return { templateId: activity.workspaceTemplate! };
   }
 
@@ -305,7 +305,6 @@ export class TemplateEngine {
     }
     try {
       const content = await this.app.vault.read(file);
-      const { MarkdownRenderer, Component } = await import("obsidian");
       const component = new Component();
       component.load();
       await MarkdownRenderer.render(this.app, content, container, file.path, component);
