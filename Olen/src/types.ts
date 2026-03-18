@@ -284,7 +284,7 @@ export interface DreamBoardImage {
   id: string;
   src: string;        // vault path or URL
   caption: string;
-  category: "dream" | "motivation" | "goal";
+  category: string;
   addedAt: string;    // ISO date
 }
 

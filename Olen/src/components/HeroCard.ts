@@ -38,21 +38,13 @@ export function renderHeroCard(
     text: subtitle,
   });
 
-  // "My Why" — tappable area to open dream board
+  // Tappable area to open dream board (My Why)
   if (callbacks?.onMyWhy) {
     const whyArea = hero.createDiv({ cls: "olen-hero-why olen-clickable" });
-    const aphorism = settings.aphorism?.trim();
-    if (aphorism) {
-      whyArea.createEl("div", {
-        cls: "olen-hero-why-text",
-        text: `"${aphorism}"`,
-      });
-    } else {
-      whyArea.createEl("div", {
-        cls: "olen-hero-why-text olen-hero-why-placeholder",
-        text: "Tap to set your aphorism",
-      });
-    }
+    whyArea.createEl("div", {
+      cls: "olen-hero-why-text olen-hero-why-placeholder",
+      text: "My Why",
+    });
     whyArea.addEventListener("click", () => callbacks.onMyWhy?.());
   }
 }
@@ -69,11 +61,17 @@ function getGreeting(settings: OlenSettings): string {
 }
 
 function getSubtitle(settings: OlenSettings, engine: OlenEngine): string {
+  // Show user's aphorism if set
+  const aphorism = settings.aphorism?.trim();
+  if (aphorism) {
+    return `"${aphorism}"`;
+  }
+
   const bossEngine = new BossEngine(settings);
 
-  // Tartarus — show user's aphorism if set, otherwise default
+  // Tartarus
   if (settings.inTartarus) {
-    return settings.aphorism?.trim() || "The underworld awaits your penance.";
+    return "The underworld awaits your penance.";
   }
 
   // Boss danger zone

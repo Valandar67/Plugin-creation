@@ -10,31 +10,14 @@ import type {
   DreamBoardImage,
   Goal,
   SubGoal,
-  GoalType,
-  GoalCategory,
 } from "../types";
-import { GOAL_CATEGORY_LABELS } from "../types";
 import { VIEW_TYPE_DREAMBOARD } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
-
-const ALL_GOAL_CATEGORIES: GoalCategory[] = [
-  "health-fitness",
-  "financial-freedom",
-  "career-business",
-  "relationships-family",
-  "personal-growth",
-  "spiritual-mindfulness",
-  "adventure-travel",
-  "creative-expression",
-  "contribution-giving",
-  "custom",
-];
 
 export class DreamBoardView extends ItemView {
   plugin: OlenPlugin;
   private activeTab: "goals" | "completed" = "goals";
   private expandedGoals: Set<string> = new Set();
-  private categoryFilter: GoalCategory | "all" = "all";
 
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
@@ -100,10 +83,6 @@ export class DreamBoardView extends ItemView {
       cls: "olen-dreamboard-title",
       text: "My Why",
     });
-    header.createEl("div", {
-      cls: "olen-dreamboard-subtitle",
-      text: "Your vision. Your purpose. Your fire.",
-    });
 
     // Aphorism section
     this.renderAphorismSection(root, settings.aphorism ?? "");
@@ -115,9 +94,6 @@ export class DreamBoardView extends ItemView {
     this.renderTabBar(root);
 
     if (this.activeTab === "goals") {
-      // Category filter
-      this.renderCategoryFilter(root);
-
       // Goals section
       this.renderGoalsSection(root, settings.goals ?? []);
     } else {
@@ -208,37 +184,6 @@ export class DreamBoardView extends ItemView {
     });
   }
 
-  // ── Category Filter ──
-
-  private renderCategoryFilter(root: HTMLElement): void {
-    const strip = root.createDiv({ cls: "olen-dreamboard-filter-strip" });
-
-    const allBtn = strip.createEl("button", {
-      cls: `olen-dreamboard-filter-chip ${this.categoryFilter === "all" ? "olen-dreamboard-filter-active" : ""}`,
-      text: "All",
-    });
-    allBtn.addEventListener("click", () => {
-      this.categoryFilter = "all";
-      this.render();
-    });
-
-    // Only show categories that have goals
-    const usedCategories = new Set(
-      (this.plugin.settings.goals ?? []).map((g) => g.category)
-    );
-    for (const cat of ALL_GOAL_CATEGORIES) {
-      if (!usedCategories.has(cat)) continue;
-      const btn = strip.createEl("button", {
-        cls: `olen-dreamboard-filter-chip ${this.categoryFilter === cat ? "olen-dreamboard-filter-active" : ""}`,
-        text: GOAL_CATEGORY_LABELS[cat],
-      });
-      btn.addEventListener("click", () => {
-        this.categoryFilter = cat;
-        this.render();
-      });
-    }
-  }
-
   // ── Goals Section ──
 
   private renderGoalsSection(root: HTMLElement, goals: Goal[]): void {
@@ -253,13 +198,7 @@ export class DreamBoardView extends ItemView {
     });
     addBtn.addEventListener("click", () => this.addGoal());
 
-    // Filter goals
-    const filtered =
-      this.categoryFilter === "all"
-        ? goals
-        : goals.filter((g) => g.category === this.categoryFilter);
-
-    if (filtered.length === 0) {
+    if (goals.length === 0) {
       const empty = section.createDiv({ cls: "olen-dreamboard-empty" });
       empty.createEl("div", { text: "No goals yet." });
       empty.createEl("div", {
@@ -269,25 +208,8 @@ export class DreamBoardView extends ItemView {
       return;
     }
 
-    // Group by category
-    const grouped = new Map<GoalCategory, Goal[]>();
-    for (const goal of filtered) {
-      const cat = goal.category;
-      if (!grouped.has(cat)) grouped.set(cat, []);
-      grouped.get(cat)!.push(goal);
-    }
-
-    for (const [cat, catGoals] of grouped) {
-      const catLabel = GOAL_CATEGORY_LABELS[cat] ?? cat;
-      const catSection = section.createDiv({ cls: "olen-dreamboard-category-group" });
-      catSection.createEl("div", {
-        cls: "olen-dreamboard-category-label",
-        text: catLabel.toUpperCase(),
-      });
-
-      for (const goal of catGoals) {
-        this.renderGoalRow(catSection, goal);
-      }
+    for (const goal of goals) {
+      this.renderGoalRow(section, goal);
     }
   }
 
@@ -306,18 +228,11 @@ export class DreamBoardView extends ItemView {
       await this.toggleGoalCompletion(goal);
     });
 
-    // Goal text + type badge
+    // Goal text
     const textArea = row.createDiv({ cls: "olen-dreamboard-goal-content" });
     const textEl = textArea.createEl("span", {
       cls: `olen-dreamboard-goal-text ${goal.completed ? "olen-dreamboard-goal-text-done" : ""}`,
       text: goal.text,
-    });
-
-    // Type badge (became/got)
-    const typeLabel = goal.type === "title" ? "became" : "got";
-    textArea.createEl("span", {
-      cls: "olen-dreamboard-goal-type-badge",
-      text: typeLabel,
     });
 
     // Tap text to edit
@@ -404,13 +319,6 @@ export class DreamBoardView extends ItemView {
     textEl.addClass("olen-clickable");
     textEl.addEventListener("click", () => this.editSubgoal(parentGoal, index, sub));
 
-    // Type badge
-    const typeLabel = sub.type === "title" ? "became" : "got";
-    row.createEl("span", {
-      cls: "olen-dreamboard-goal-type-badge",
-      text: typeLabel,
-    });
-
     // Delete
     const delBtn = row.createEl("button", {
       cls: "olen-dreamboard-goal-delete",
@@ -456,7 +364,6 @@ export class DreamBoardView extends ItemView {
       });
 
       const textArea = row.createDiv({ cls: "olen-dreamboard-goal-content" });
-      const typeVerb = goal.type === "title" ? "Became" : "Got";
       const completedDate = goal.completedAt
         ? new Date(goal.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
         : "";
@@ -466,32 +373,20 @@ export class DreamBoardView extends ItemView {
         text: goal.text,
       });
 
-      const meta = textArea.createDiv({ cls: "olen-dreamboard-goal-meta" });
-      meta.createEl("span", {
-        cls: "olen-dreamboard-goal-type-badge",
-        text: typeVerb,
-      });
       if (completedDate) {
+        const meta = textArea.createDiv({ cls: "olen-dreamboard-goal-meta" });
         meta.createEl("span", {
           cls: "olen-dreamboard-goal-date",
           text: completedDate,
         });
-      }
 
-      const catLabel = GOAL_CATEGORY_LABELS[goal.category] ?? goal.customCategory ?? "";
-      if (catLabel) {
-        meta.createEl("span", {
-          cls: "olen-dreamboard-goal-cat-badge",
-          text: catLabel,
-        });
-      }
-
-      // Show subgoal count
-      if (goal.subgoals && goal.subgoals.length > 0) {
-        meta.createEl("span", {
-          cls: "olen-dreamboard-goal-sub-count",
-          text: `${goal.subgoals.length} subgoal${goal.subgoals.length > 1 ? "s" : ""}`,
-        });
+        // Show subgoal count
+        if (goal.subgoals && goal.subgoals.length > 0) {
+          meta.createEl("span", {
+            cls: "olen-dreamboard-goal-sub-count",
+            text: `${goal.subgoals.length} subgoal${goal.subgoals.length > 1 ? "s" : ""}`,
+          });
+        }
       }
     }
   }
@@ -507,12 +402,7 @@ export class DreamBoardView extends ItemView {
       text: "Goal Completion History",
     });
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", "olen-dreamboard-graph-svg");
-    svg.setAttribute("viewBox", "0 0 400 120");
-    svg.setAttribute("preserveAspectRatio", "none");
-
-    // Collect all completion dates (goals + subgoals)
+    // Collect all completion events
     const events: { date: Date; isSubgoal: boolean; text: string }[] = [];
 
     for (const goal of completed) {
@@ -536,89 +426,135 @@ export class DreamBoardView extends ItemView {
     }
 
     if (events.length === 0) return;
-
     events.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    const minDate = events[0].date.getTime();
-    const maxDate = Math.max(events[events.length - 1].date.getTime(), Date.now());
-    const range = maxDate - minDate || 1;
+    // Fixed 30-day window with year context
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const graphStart = thirtyDaysAgo.getTime();
+    const graphEnd = now.getTime();
+    const graphRange = graphEnd - graphStart;
 
-    // Draw the cumulative line
-    const goalEvents = events.filter((e) => !e.isSubgoal);
-    const subEvents = events.filter((e) => e.isSubgoal);
+    // Include all events (even older ones contribute to cumulative count)
+    const allGoalEvents = events.filter((e) => !e.isSubgoal);
+    const recentGoalEvents = allGoalEvents.filter((e) => e.date.getTime() >= graphStart);
+    const olderGoalCount = allGoalEvents.filter((e) => e.date.getTime() < graphStart).length;
+    const subEvents = events.filter((e) => e.isSubgoal && e.date.getTime() >= graphStart);
 
-    // Cumulative goal count over time — the graph from the user's sketch
-    // The line goes flat, then jumps up when a goal is achieved
-    let cumulativeGoals = 0;
-    const points: { x: number; y: number }[] = [{ x: 0, y: 0 }];
-    const maxGoals = goalEvents.length;
+    // Graph dimensions
+    const W = 400;
+    const H = 180;
+    const PAD_L = 10;
+    const PAD_R = 10;
+    const PAD_T = 40; // room for labels above
+    const PAD_B = 20;
+    const plotW = W - PAD_L - PAD_R;
+    const plotH = H - PAD_T - PAD_B;
 
-    for (const event of goalEvents) {
-      const x = ((event.date.getTime() - minDate) / range) * 380 + 10;
-      // Step before the jump
-      points.push({ x, y: (cumulativeGoals / Math.max(maxGoals, 1)) * 90 + 10 });
-      cumulativeGoals++;
-      // Step after the jump
-      points.push({ x, y: (cumulativeGoals / Math.max(maxGoals, 1)) * 90 + 10 });
+    const maxGoals = olderGoalCount + recentGoalEvents.length;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "olen-dreamboard-graph-svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+    // Build step line
+    let cumulative = olderGoalCount;
+    const yScale = (val: number) => PAD_T + plotH - (val / Math.max(maxGoals, 1)) * plotH;
+    const xScale = (t: number) => PAD_L + ((t - graphStart) / graphRange) * plotW;
+
+    const points: string[] = [];
+    // Start from left edge at the cumulative count from before the window
+    points.push(`M ${PAD_L} ${yScale(cumulative)}`);
+
+    for (const event of recentGoalEvents) {
+      const x = xScale(event.date.getTime());
+      // Flat line to this point
+      points.push(`L ${x} ${yScale(cumulative)}`);
+      cumulative++;
+      // Jump up
+      points.push(`L ${x} ${yScale(cumulative)}`);
     }
 
-    // Extend to current time
-    const endX = 390;
-    const endY = (cumulativeGoals / Math.max(maxGoals, 1)) * 90 + 10;
-    points.push({ x: endX, y: endY });
+    // Extend to right edge
+    points.push(`L ${PAD_L + plotW} ${yScale(cumulative)}`);
 
-    // Draw path (inverted Y since SVG Y goes down)
-    if (points.length > 1) {
-      const pathD = points
-        .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${110 - p.y}`)
-        .join(" ");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", points.join(" "));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "var(--accent-gold-bright, #e8c35a)");
+    path.setAttribute("stroke-width", "2.5");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
 
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", pathD);
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", "var(--text-primary, #f2ece0)");
-      path.setAttribute("stroke-width", "2.5");
-      path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke-linejoin", "round");
-      svg.appendChild(path);
-    }
+    // Draw goal markers with title + date labels
+    let markerCumulative = olderGoalCount;
+    for (const event of recentGoalEvents) {
+      markerCumulative++;
+      const x = xScale(event.date.getTime());
+      const y = yScale(markerCumulative);
 
-    // Draw goal markers (larger circles with labels)
-    let goalIdx = 0;
-    for (const event of goalEvents) {
-      goalIdx++;
-      const x = ((event.date.getTime() - minDate) / range) * 380 + 10;
-      const y = 110 - (goalIdx / Math.max(maxGoals, 1)) * 90 - 10;
-
+      // Marker circle
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       circle.setAttribute("cx", String(x));
       circle.setAttribute("cy", String(y));
-      circle.setAttribute("r", "4");
-      circle.setAttribute("fill", "var(--text-primary, #f2ece0)");
+      circle.setAttribute("r", "5");
+      circle.setAttribute("fill", "var(--accent-gold-bright, #e8c35a)");
       svg.appendChild(circle);
 
-      // Date label
-      const dateStr = event.date.toLocaleDateString("en-US", { month: "numeric", day: "numeric" });
-      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      label.setAttribute("x", String(x));
-      label.setAttribute("y", String(Math.max(y - 8, 10)));
-      label.setAttribute("text-anchor", "middle");
-      label.setAttribute("fill", "var(--text-muted, #7e7769)");
-      label.setAttribute("font-size", "8");
-      label.textContent = dateStr;
-      svg.appendChild(label);
+      // Goal title above the marker
+      const titleText = event.text.length > 20 ? event.text.slice(0, 18) + "..." : event.text;
+      const titleLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      titleLabel.setAttribute("x", String(x));
+      titleLabel.setAttribute("y", String(Math.max(y - 16, 8)));
+      titleLabel.setAttribute("text-anchor", "middle");
+      titleLabel.setAttribute("fill", "var(--accent-gold-bright, #e8c35a)");
+      titleLabel.setAttribute("font-size", "9");
+      titleLabel.setAttribute("font-weight", "600");
+      titleLabel.textContent = titleText;
+      svg.appendChild(titleLabel);
+
+      // Date below the title
+      const dateStr = `${event.date.getDate()}/${event.date.getMonth() + 1}`;
+      const dateLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      dateLabel.setAttribute("x", String(x));
+      dateLabel.setAttribute("y", String(Math.max(y - 7, 16)));
+      dateLabel.setAttribute("text-anchor", "middle");
+      dateLabel.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+      dateLabel.setAttribute("font-size", "8");
+      dateLabel.textContent = dateStr;
+      svg.appendChild(dateLabel);
     }
 
-    // Draw subgoal markers (smaller dots)
+    // Draw subgoal markers (smaller dots along the bottom)
     for (const event of subEvents) {
-      const x = ((event.date.getTime() - minDate) / range) * 380 + 10;
+      const x = xScale(event.date.getTime());
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       circle.setAttribute("cx", String(x));
-      circle.setAttribute("cy", "105");
-      circle.setAttribute("r", "2");
-      circle.setAttribute("fill", "var(--text-muted, #7e7769)");
+      circle.setAttribute("cy", String(H - 8));
+      circle.setAttribute("r", "2.5");
+      circle.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
       svg.appendChild(circle);
     }
+
+    // Year label at bottom-left
+    const yearLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    yearLabel.setAttribute("x", String(PAD_L));
+    yearLabel.setAttribute("y", String(H - 4));
+    yearLabel.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+    yearLabel.setAttribute("font-size", "9");
+    yearLabel.textContent = String(now.getFullYear());
+    svg.appendChild(yearLabel);
+
+    // "Last 30 days" label at bottom-right
+    const rangeLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rangeLabel.setAttribute("x", String(W - PAD_R));
+    rangeLabel.setAttribute("y", String(H - 4));
+    rangeLabel.setAttribute("text-anchor", "end");
+    rangeLabel.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+    rangeLabel.setAttribute("font-size", "9");
+    rangeLabel.textContent = "Last 30 days";
+    svg.appendChild(rangeLabel);
 
     graphCard.appendChild(svg);
 
@@ -844,29 +780,6 @@ export class DreamBoardView extends ItemView {
       attr: { type: "text", placeholder: "What do you aspire to?" },
     });
 
-    // Goal type
-    sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Type" });
-    const typeSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    typeSelect.createEl("option", { text: "Title (became)", attr: { value: "title" } });
-    typeSelect.createEl("option", { text: "Thing (got)", attr: { value: "thing" } });
-
-    // Goal category
-    sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Category" });
-    const catSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    for (const cat of ALL_GOAL_CATEGORIES) {
-      catSelect.createEl("option", { text: GOAL_CATEGORY_LABELS[cat], attr: { value: cat } });
-    }
-
-    // Custom category input (shown when "custom" is selected)
-    const customInput = sheet.createEl("input", {
-      cls: "olen-dreamboard-input",
-      attr: { type: "text", placeholder: "Custom category name..." },
-    });
-    customInput.style.display = "none";
-    catSelect.addEventListener("change", () => {
-      customInput.style.display = catSelect.value === "custom" ? "" : "none";
-    });
-
     const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
 
     const saveBtn = actions.createEl("button", {
@@ -881,9 +794,8 @@ export class DreamBoardView extends ItemView {
       const newGoal: Goal = {
         id: `goal-${Date.now()}`,
         text: val,
-        type: typeSelect.value as GoalType,
-        category: catSelect.value as GoalCategory,
-        customCategory: catSelect.value === "custom" ? customInput.value.trim() || "Custom" : undefined,
+        type: "title",
+        category: "personal-growth",
         completed: false,
         subgoals: [],
       };
@@ -917,31 +829,6 @@ export class DreamBoardView extends ItemView {
     });
     input.value = goal.text;
 
-    // Goal type
-    sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Type" });
-    const typeSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    typeSelect.createEl("option", { text: "Title (became)", attr: { value: "title" } });
-    typeSelect.createEl("option", { text: "Thing (got)", attr: { value: "thing" } });
-    typeSelect.value = goal.type;
-
-    // Goal category
-    sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Category" });
-    const catSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    for (const cat of ALL_GOAL_CATEGORIES) {
-      catSelect.createEl("option", { text: GOAL_CATEGORY_LABELS[cat], attr: { value: cat } });
-    }
-    catSelect.value = goal.category;
-
-    const customInput = sheet.createEl("input", {
-      cls: "olen-dreamboard-input",
-      attr: { type: "text", placeholder: "Custom category name..." },
-    });
-    customInput.value = goal.customCategory ?? "";
-    customInput.style.display = goal.category === "custom" ? "" : "none";
-    catSelect.addEventListener("change", () => {
-      customInput.style.display = catSelect.value === "custom" ? "" : "none";
-    });
-
     const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
 
     const saveBtn = actions.createEl("button", {
@@ -955,10 +842,6 @@ export class DreamBoardView extends ItemView {
       if (idx === -1) return;
 
       this.plugin.settings.goals[idx].text = val;
-      this.plugin.settings.goals[idx].type = typeSelect.value as GoalType;
-      this.plugin.settings.goals[idx].category = catSelect.value as GoalCategory;
-      this.plugin.settings.goals[idx].customCategory =
-        catSelect.value === "custom" ? customInput.value.trim() || "Custom" : undefined;
       await this.plugin.saveSettings();
       this.closeOverlay(overlay);
       await this.render();
@@ -986,13 +869,6 @@ export class DreamBoardView extends ItemView {
       attr: { type: "text", placeholder: "Subgoal description..." },
     });
 
-    // Type
-    sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Type" });
-    const typeSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    typeSelect.createEl("option", { text: "Title (became)", attr: { value: "title" } });
-    typeSelect.createEl("option", { text: "Thing (got)", attr: { value: "thing" } });
-    typeSelect.value = parentGoal.type; // inherit parent type
-
     const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
 
     const saveBtn = actions.createEl("button", {
@@ -1010,7 +886,7 @@ export class DreamBoardView extends ItemView {
       const newSub: SubGoal = {
         id: `sub-${Date.now()}`,
         text: val,
-        type: typeSelect.value as GoalType,
+        type: "title",
         completed: false,
       };
 
@@ -1043,13 +919,6 @@ export class DreamBoardView extends ItemView {
     });
     input.value = sub.text;
 
-    // Type
-    sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Type" });
-    const typeSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    typeSelect.createEl("option", { text: "Title (became)", attr: { value: "title" } });
-    typeSelect.createEl("option", { text: "Thing (got)", attr: { value: "thing" } });
-    typeSelect.value = sub.type;
-
     const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
 
     const saveBtn = actions.createEl("button", {
@@ -1063,7 +932,6 @@ export class DreamBoardView extends ItemView {
       if (!goal || !goal.subgoals[index]) return;
 
       goal.subgoals[index].text = val;
-      goal.subgoals[index].type = typeSelect.value as GoalType;
       await this.plugin.saveSettings();
       this.closeOverlay(overlay);
       await this.render();
@@ -1104,15 +972,10 @@ export class DreamBoardView extends ItemView {
     // Category
     const catLabel = sheet.createEl("label", { cls: "olen-dreamboard-label", text: "Category" });
     catLabel.style.marginTop = "12px";
-    const catSelect = sheet.createEl("select", { cls: "olen-dreamboard-select" });
-    const categories = [
-      { value: "dream", label: "Dream" },
-      { value: "motivation", label: "Motivation" },
-      { value: "goal", label: "Goal" },
-    ];
-    for (const cat of categories) {
-      catSelect.createEl("option", { text: cat.label, attr: { value: cat.value } });
-    }
+    const catInput = sheet.createEl("input", {
+      cls: "olen-dreamboard-input",
+      attr: { type: "text", placeholder: "e.g. Dream, Motivation, Goal..." },
+    });
 
     const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
 
@@ -1131,7 +994,7 @@ export class DreamBoardView extends ItemView {
         id: `dream-${Date.now()}`,
         src,
         caption: capInput.value.trim(),
-        category: catSelect.value as "dream" | "motivation" | "goal",
+        category: catInput.value.trim() || "dream",
         addedAt: new Date().toISOString(),
       };
 
