@@ -230,6 +230,54 @@ export interface PersonalStats {
   lastWeightLogDate: string | null; // YYYY-MM-DD
 }
 
+// --- Goals ---
+
+export type GoalType = "title" | "thing"; // "title" → "became", "thing" → "got"
+
+export type GoalCategory =
+  | "health-fitness"
+  | "financial-freedom"
+  | "career-business"
+  | "relationships-family"
+  | "personal-growth"
+  | "spiritual-mindfulness"
+  | "adventure-travel"
+  | "creative-expression"
+  | "contribution-giving"
+  | "custom";
+
+export const GOAL_CATEGORY_LABELS: Record<GoalCategory, string> = {
+  "health-fitness": "Health & Fitness",
+  "financial-freedom": "Financial Freedom",
+  "career-business": "Career & Business",
+  "relationships-family": "Relationships & Family",
+  "personal-growth": "Personal Growth & Learning",
+  "spiritual-mindfulness": "Spiritual & Mindfulness",
+  "adventure-travel": "Adventure & Travel",
+  "creative-expression": "Creative Expression & Hobbies",
+  "contribution-giving": "Contribution & Giving Back",
+  "custom": "Custom",
+};
+
+export interface SubGoal {
+  id: string;
+  text: string;
+  type: GoalType;
+  completed: boolean;
+  completedAt?: string; // ISO date
+}
+
+export interface Goal {
+  id: string;
+  text: string;
+  type: GoalType;
+  category: GoalCategory;
+  customCategory?: string; // when category is "custom"
+  completed: boolean;
+  completedAt?: string; // ISO date
+  subgoals: SubGoal[];
+}
+
 // --- Dream Board ---
 
 export interface DreamBoardImage {
@@ -331,7 +379,9 @@ export interface OlenSettings {
   // Profile
   userName: string;
   myWhy: string;
-  goals: string[];  // Multiple goals / aspirations accessible via dashboard modal
+  aphorism: string;  // User-chosen aphorism shown on hero card subtitle
+  goals: Goal[];     // Structured goals with categories, types, subgoals
+  completedGoals: Goal[]; // Goals moved here after completion
   scrollingBackground: string; // Background image that scrolls with the dashboard
   backgroundDarkness: number;  // 0-100, how dark the background overlay is (default 75)
   homepage: string; // vault file path to open when "Open homepage" is selected (e.g. "Home.md")

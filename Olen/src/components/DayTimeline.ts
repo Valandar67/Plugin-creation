@@ -157,10 +157,10 @@ function renderTimelineEntry(
         callbacks.onCalendarPostpone?.(entry);
       });
     } else {
-      // Activity entries: Begin/Done + Skip
+      // Activity entries: Begin + Skip
       const acceptBtn = actions.createEl("button", {
         cls: "olen-timeline-btn olen-timeline-btn-accept",
-        text: isCurrent ? "Begin" : "Done",
+        text: "Begin",
       });
       acceptBtn.addEventListener("click", (e) => {
         e.stopPropagation();

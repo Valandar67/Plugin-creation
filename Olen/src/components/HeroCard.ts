@@ -38,29 +38,22 @@ export function renderHeroCard(
     text: subtitle,
   });
 
-  // "My Why" — shown as a subtle italic line if set, tappable
-  const myWhy = settings.myWhy?.trim();
-  const goals = settings.goals?.filter((g) => g.trim().length > 0) ?? [];
-
-  if (myWhy || goals.length > 0 || callbacks?.onMyWhy) {
-    const whyArea = hero.createDiv({ cls: "olen-hero-why" });
-
-    if (myWhy) {
+  // "My Why" — tappable area to open dream board
+  if (callbacks?.onMyWhy) {
+    const whyArea = hero.createDiv({ cls: "olen-hero-why olen-clickable" });
+    const aphorism = settings.aphorism?.trim();
+    if (aphorism) {
       whyArea.createEl("div", {
         cls: "olen-hero-why-text",
-        text: `"${myWhy}"`,
+        text: `"${aphorism}"`,
       });
     } else {
       whyArea.createEl("div", {
         cls: "olen-hero-why-text olen-hero-why-placeholder",
-        text: "Tap to set your Why",
+        text: "Tap to set your aphorism",
       });
     }
-
-    if (callbacks?.onMyWhy) {
-      whyArea.addClass("olen-clickable");
-      whyArea.addEventListener("click", () => callbacks.onMyWhy?.());
-    }
+    whyArea.addEventListener("click", () => callbacks.onMyWhy?.());
   }
 }
 
@@ -78,9 +71,9 @@ function getGreeting(settings: OlenSettings): string {
 function getSubtitle(settings: OlenSettings, engine: OlenEngine): string {
   const bossEngine = new BossEngine(settings);
 
-  // Tartarus
+  // Tartarus — show user's aphorism if set, otherwise default
   if (settings.inTartarus) {
-    return "The underworld awaits your penance.";
+    return settings.aphorism?.trim() || "The underworld awaits your penance.";
   }
 
   // Boss danger zone

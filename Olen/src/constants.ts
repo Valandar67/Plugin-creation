@@ -286,7 +286,9 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   // Profile
   userName: "Warrior",
   myWhy: "",
+  aphorism: "",
   goals: [],
+  completedGoals: [],
   scrollingBackground: "",
   backgroundDarkness: 75,
   homepage: "",

@@ -500,8 +500,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  background: var(--card-border);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .olen-stat-dot-active {
@@ -2347,9 +2347,9 @@
   opacity: 0.4;
 }
 
-/* Slightly dimmer stat card backgrounds */
+/* Stat cards use the theme's card background */
 .olen-stat-card {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--card-bg);
 }
 
 /* ============================================================
@@ -3694,11 +3694,6 @@
    ============================================================ */
 
 .olen-dreamboard {
-  --bg-primary: #000000;
-  --text-primary: #f2ece0;
-  --text-muted: #7e7769;
-  --accent-gold: #d4a843;
-
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100%;
@@ -3715,7 +3710,7 @@
 .olen-dreamboard-back {
   background: none;
   border: none;
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
   padding: 6px 0;
@@ -3756,15 +3751,15 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: var(--accent-gold);
+  color: var(--text-primary);
   margin-bottom: 12px;
   padding: 0 4px;
 }
 
 .olen-dreamboard-add-inline {
   background: none;
-  border: 1px solid rgba(212, 168, 67, 0.3);
-  color: var(--accent-gold);
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -3820,7 +3815,7 @@
 }
 
 .olen-dreamboard-goal-bullet {
-  color: var(--accent-gold);
+  color: var(--text-primary);
   font-size: 8px;
   flex-shrink: 0;
 }
@@ -4032,5 +4027,302 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+}
+
+/* ── Dreamboard Tabs ── */
+
+.olen-dreamboard-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 16px;
+  background: var(--card-bg, rgba(0, 0, 0, 0.55));
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+}
+
+.olen-dreamboard-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.olen-dreamboard-tab-active {
+  background: var(--card-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary);
+}
+
+/* ── Category Filter Strip ── */
+
+.olen-dreamboard-filter-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 0 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.olen-dreamboard-filter-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.olen-dreamboard-filter-chip {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: none;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 16px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.olen-dreamboard-filter-active {
+  background: var(--card-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+/* ── Category Group ── */
+
+.olen-dreamboard-category-group {
+  margin-bottom: 16px;
+}
+
+.olen-dreamboard-category-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+/* ── Goal Row (updated for completion) ── */
+
+.olen-dreamboard-goal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.olen-dreamboard-goal-check {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--card-border, rgba(255, 255, 255, 0.12));
+  background: none;
+  color: transparent;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.olen-dreamboard-goal-check:hover {
+  border-color: var(--text-muted);
+}
+
+.olen-dreamboard-goal-check-done {
+  border-color: var(--success, #d49b0a);
+  background: var(--success, #d49b0a);
+  color: var(--bg-primary, #000);
+}
+
+.olen-dreamboard-goal-text-done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.olen-dreamboard-goal-completed {
+  opacity: 0.7;
+}
+
+.olen-dreamboard-goal-type-badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim, #4d473e);
+  padding: 1px 6px;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.olen-dreamboard-goal-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.olen-dreamboard-goal-expand {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.olen-dreamboard-goal-expand:hover {
+  color: var(--text-secondary);
+}
+
+/* ── Subgoals ── */
+
+.olen-dreamboard-subgoals {
+  margin-left: 28px;
+  padding-left: 12px;
+  border-left: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  margin-bottom: 8px;
+}
+
+.olen-dreamboard-subgoal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--card-bg, rgba(0, 0, 0, 0.3));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.04));
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.olen-dreamboard-subgoal-check {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.olen-dreamboard-add-subgoal {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  background: none;
+  border: 1px dashed var(--card-border, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  margin-top: 4px;
+  transition: all 0.2s;
+}
+
+.olen-dreamboard-add-subgoal:hover {
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+/* ── Completed Section Meta ── */
+
+.olen-dreamboard-goal-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.olen-dreamboard-goal-date {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.olen-dreamboard-goal-cat-badge {
+  font-size: 9px;
+  color: var(--text-dim);
+  padding: 1px 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+}
+
+.olen-dreamboard-goal-sub-count {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* ── Consistency Graph ── */
+
+.olen-dreamboard-graph-card {
+  background: var(--card-bg, rgba(0, 0, 0, 0.55));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.olen-dreamboard-graph-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.olen-dreamboard-graph-svg {
+  width: 100%;
+  height: 120px;
+}
+
+.olen-dreamboard-graph-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── Dialog Hint ── */
+
+.olen-dreamboard-dialog-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+/* ── Embeddable Widgets ── */
+
+.olen-widget {
+  margin: 8px 0;
+}
+
+.olen-widget .olen-dashboard {
+  padding: 0;
+  min-height: unset;
+  background: none;
+}
+
+.olen-widget .olen-section-title {
+  margin-bottom: 8px;
+}
+
+.olen-widget .olen-card {
+  animation: none;
+  opacity: 1;
+  transform: none;
 }
 

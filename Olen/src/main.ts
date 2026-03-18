@@ -14,6 +14,7 @@ import { DreamBoardView } from "./views/DreamBoardView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
 import { getTracker } from "./tracker-bridge";
+import { THEME_PRESETS } from "./data/themes";
 
 export default class OlenPlugin extends Plugin {
   settings!: OlenSettings;
@@ -61,6 +62,9 @@ export default class OlenPlugin extends Plugin {
 
     // Migrate legacy field names from session → workspace
     await this.migrateSessionToWorkspace();
+
+    // Migrate string[] goals to Goal[] format
+    await this.migrateGoalsFormat();
 
     // Initialize Template Engine
     this.templateEngine = new TemplateEngine(this.app, this);
@@ -171,6 +175,9 @@ export default class OlenPlugin extends Plugin {
 
     // --- Template Registry: Frontmatter-driven rendering ---
     this.registerTemplatePostProcessor();
+
+    // --- Embeddable Widgets ---
+    this.registerWidgets();
 
     // Invalidate template cache when template .js files are modified
     this.registerEvent(
@@ -382,6 +389,148 @@ export default class OlenPlugin extends Plugin {
 
     await targetLeaf.setViewState({ type: VIEW_TYPE_DREAMBOARD, active: true });
     await workspace.revealLeaf(targetLeaf);
+  }
+
+  // --- Embeddable Widgets (code block processors) ---
+
+  private registerWidgets(): void {
+    // ```olen-directive``` — renders the DirectiveCard on any note
+    this.registerMarkdownCodeBlockProcessor("olen-directive", async (_source, el) => {
+      el.addClass("olen-widget");
+      const root = el.createDiv({ cls: "olen-dashboard" });
+      this.applyWidgetTheme(root);
+
+      const { renderDirectiveCard } = await import("./components/DirectiveCard");
+      const { OlenEngine } = await import("./engines/OlenEngine");
+
+      const completionData = this.gatherCompletionDataForWidgets();
+      const now = this.settings.simulatedDate ? new Date(this.settings.simulatedDate) : new Date();
+      const engine = new OlenEngine(this.settings, completionData, now);
+
+      renderDirectiveCard(
+        root, this.settings, engine, 0,
+        () => this.activateDashboard(), // onEnterWorkspace
+        () => {},                        // onTempleComplete
+        () => {}                         // onLogWeight
+      );
+    });
+
+    // ```olen-day``` — renders the DayTimeline on any note
+    this.registerMarkdownCodeBlockProcessor("olen-day", async (_source, el) => {
+      el.addClass("olen-widget");
+      const root = el.createDiv({ cls: "olen-dashboard" });
+      this.applyWidgetTheme(root);
+
+      const { renderDayTimeline } = await import("./components/DayTimeline");
+      const { OlenEngine } = await import("./engines/OlenEngine");
+
+      const completionData = this.gatherCompletionDataForWidgets();
+      const now = this.settings.simulatedDate ? new Date(this.settings.simulatedDate) : new Date();
+      const engine = new OlenEngine(this.settings, completionData, now);
+
+      renderDayTimeline(root, this.settings, engine, 0, {
+        onAccept: () => this.activateDashboard(),
+        onSkip: () => this.activateDashboard(),
+      });
+    });
+
+    // ```olen-stats``` — renders the stat cards (Objectives, Streak, Consistency)
+    this.registerMarkdownCodeBlockProcessor("olen-stats", async (_source, el) => {
+      el.addClass("olen-widget");
+      const root = el.createDiv({ cls: "olen-dashboard" });
+      this.applyWidgetTheme(root);
+
+      const { renderEudaimoniaBar } = await import("./components/EudaimoniaBar");
+      const { OlenEngine } = await import("./engines/OlenEngine");
+
+      const completionData = this.gatherCompletionDataForWidgets();
+      const now = this.settings.simulatedDate ? new Date(this.settings.simulatedDate) : new Date();
+      const engine = new OlenEngine(this.settings, completionData, now);
+
+      renderEudaimoniaBar(root, this.settings, engine, 0);
+    });
+
+    // ```open-olen``` — renders a button that opens the Olen dashboard
+    this.registerMarkdownCodeBlockProcessor("open-olen", async (source, el) => {
+      el.addClass("olen-widget olen-widget-open-btn");
+
+      const root = el.createDiv({ cls: "olen-dashboard" });
+      this.applyWidgetTheme(root);
+
+      const btn = root.createEl("button", {
+        cls: "olen-btn-primary",
+        text: source.trim() || "Open Olen",
+      });
+      btn.style.width = "100%";
+      btn.addEventListener("click", () => {
+        this.activateDashboard();
+      });
+    });
+  }
+
+  private applyWidgetTheme(root: HTMLElement): void {
+    const mode = this.settings.themeMode ?? "dark";
+    const preset = THEME_PRESETS[mode];
+    const overrides = this.settings.themeOverrides ?? {};
+    const theme = { ...preset, ...overrides };
+
+    const cssMap: Record<string, string> = {
+      bgPrimary: "--bg-primary",
+      bgSecondary: "--bg-secondary",
+      cardBg: "--card-bg",
+      cardBgSolid: "--card-bg-solid",
+      cardBorder: "--card-border",
+      textPrimary: "--text-primary",
+      textSecondary: "--text-secondary",
+      textMuted: "--text-muted",
+      textDim: "--text-dim",
+      accentGold: "--accent-gold",
+      accentGoldBright: "--accent-gold-bright",
+      shadowCard: "--shadow-card",
+    };
+
+    for (const [key, cssVar] of Object.entries(cssMap)) {
+      const val = (theme as any)[key];
+      if (val) root.style.setProperty(cssVar, val);
+    }
+  }
+
+  /**
+   * Lightweight version of gatherCompletionData for widgets.
+   * Reads completion data from vault folders.
+   */
+  private gatherCompletionDataForWidgets(): Record<string, Array<{ date: string; completed: boolean }>> {
+    const data: Record<string, Array<{ date: string; completed: boolean }>> = {};
+
+    for (const activity of this.settings.activities) {
+      if (!activity.enabled || !activity.folder) continue;
+
+      const folder = this.app.vault.getAbstractFileByPath(activity.folder);
+      if (!folder) continue;
+
+      const completions: Array<{ date: string; completed: boolean }> = [];
+
+      // Get all files in the activity folder
+      const files = this.app.vault.getFiles().filter((f) =>
+        f.path.startsWith(activity.folder + "/") && f.extension === "md"
+      );
+
+      for (const file of files) {
+        const cache = this.app.metadataCache.getFileCache(file);
+        const fm = cache?.frontmatter;
+        if (!fm) continue;
+
+        const dateStr = fm.date as string | undefined;
+        const completed = fm[activity.property] as boolean | undefined;
+        if (dateStr) {
+          completions.push({ date: dateStr, completed: completed === true });
+        }
+      }
+
+      data[activity.id] = completions;
+    }
+
+    return data;
   }
 
   // --- Template Registry: Post-Processor ---
@@ -764,6 +913,40 @@ export default class OlenPlugin extends Plugin {
     }
 
     if (changed) {
+      await this.saveSettings();
+    }
+  }
+
+  /**
+   * Migrate goals from old string[] format to new Goal[] format.
+   */
+  private async migrateGoalsFormat(): Promise<void> {
+    const raw = this.settings as any;
+    if (!Array.isArray(raw.goals) || raw.goals.length === 0) {
+      if (!raw.completedGoals) {
+        raw.completedGoals = [];
+        await this.saveSettings();
+      }
+      return;
+    }
+
+    // Check if first element is a string (old format)
+    if (typeof raw.goals[0] === "string") {
+      raw.goals = (raw.goals as string[]).map((text: string, i: number) => ({
+        id: `goal-migrated-${Date.now()}-${i}`,
+        text,
+        type: "title",
+        category: "personal-growth",
+        completed: false,
+        subgoals: [],
+      }));
+      if (!raw.completedGoals) raw.completedGoals = [];
+      await this.saveSettings();
+    }
+
+    // Ensure completedGoals exists
+    if (!raw.completedGoals) {
+      raw.completedGoals = [];
       await this.saveSettings();
     }
   }
