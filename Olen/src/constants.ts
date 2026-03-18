@@ -366,6 +366,10 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   // Dream Board
   dreamBoardImages: [],
 
+  // Day Map
+  skippedToday: { date: "", activityIds: [] },
+  dayMapOrder: null,
+
   // Onboarding
   onboardingComplete: false,
 };

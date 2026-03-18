@@ -4326,3 +4326,182 @@
   transform: none;
 }
 
+/* ── Day Edit / Reorder ── */
+
+.olen-day-edit-btn {
+  background: none;
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+  color: var(--text-muted);
+  font-size: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.olen-day-edit-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-muted);
+  background: var(--card-bg, rgba(0, 0, 0, 0.2));
+}
+
+.olen-reorder-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.olen-reorder-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  background: var(--bg-primary, #1a1a2e);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+  border-radius: 14px;
+  padding: 20px;
+  width: min(360px, 90vw);
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.olen-reorder-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.olen-reorder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.olen-reorder-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--card-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 8px;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.olen-reorder-row.olen-reorder-dragging {
+  opacity: 0.4;
+}
+
+.olen-reorder-row.olen-reorder-over {
+  border-color: var(--accent-gold, #d49b0a);
+  background: rgba(212, 155, 10, 0.08);
+}
+
+.olen-reorder-handle {
+  font-size: 20px;
+  color: var(--text-dim, #4d473e);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.olen-reorder-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.olen-reorder-emoji {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.olen-reorder-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.olen-reorder-time {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.olen-reorder-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.olen-reorder-arrow {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.olen-reorder-arrow:hover {
+  color: var(--text-secondary);
+}
+
+.olen-reorder-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.olen-reorder-cancel,
+.olen-reorder-save {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.olen-reorder-cancel {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+}
+
+.olen-reorder-cancel:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-muted);
+}
+
+.olen-reorder-save {
+  background: var(--accent-gold, #d49b0a);
+  color: var(--bg-primary, #000);
+}
+
+.olen-reorder-save:hover {
+  filter: brightness(1.1);
+}
+

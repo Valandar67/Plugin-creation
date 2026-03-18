@@ -141,6 +141,7 @@ export class DashboardView extends ItemView {
             onCalendarDone: (entry) => this.handleCalendarTaskDone(entry),
             onCalendarPostpone: (entry) => this.handleCalendarTaskPostpone(entry),
             onCreateEvent: () => (this.plugin as any).showQuickTaskDialog(),
+            onReorder: (orderedIds) => this.handleReorderDayMap(orderedIds, engine),
           });
           break;
 
@@ -330,13 +331,27 @@ export class DashboardView extends ItemView {
   }
 
   private async handleSkipActivity(activityId: string, engine: OlenEngine): Promise<void> {
-    // Mark as skipped in the day map (engine state)
-    const dayMap = engine.getDayMap();
-    const entry = dayMap.find((e) => e.activityId === activityId);
-    if (entry) {
-      entry.status = "skipped";
+    const effectiveToday = engine.getEffectiveToday();
+    const settings = this.plugin.settings;
+
+    // Initialize or reset skippedToday for current date
+    if (!settings.skippedToday || settings.skippedToday.date !== effectiveToday) {
+      settings.skippedToday = { date: effectiveToday, activityIds: [] };
     }
-    new Notice("Skipped");
+
+    if (!settings.skippedToday.activityIds.includes(activityId)) {
+      settings.skippedToday.activityIds.push(activityId);
+    }
+
+    await this.plugin.saveSettings();
+    new Notice("Removed for today");
+    await this.render();
+  }
+
+  private async handleReorderDayMap(orderedIds: string[], engine: OlenEngine): Promise<void> {
+    const effectiveToday = engine.getEffectiveToday();
+    this.plugin.settings.dayMapOrder = { date: effectiveToday, order: orderedIds };
+    await this.plugin.saveSettings();
     await this.render();
   }
 

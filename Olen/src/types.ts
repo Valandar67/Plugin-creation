@@ -454,6 +454,10 @@ export interface OlenSettings {
   // Dream Board
   dreamBoardImages: DreamBoardImage[];
 
+  // Day Map
+  skippedToday: { date: string; activityIds: string[] };
+  dayMapOrder: { date: string; order: string[] } | null;
+
   // Onboarding
   onboardingComplete: boolean;
 }

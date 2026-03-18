@@ -17,14 +17,18 @@ export function renderDayTimeline(
     onCalendarDone?: (entry: DayMapEntry) => void;
     onCalendarPostpone?: (entry: DayMapEntry) => void;
     onCreateEvent?: () => void;
+    onReorder?: (orderedIds: string[]) => void;
   }
 ): void {
   const label = settings.devConfig.labels.daymap_title ?? "YOUR DAY";
   const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
 
-  // Section title
+  // Section title with edit button
   const titleEl = container.createDiv({ cls: "olen-section-title" });
+  titleEl.style.display = "flex";
+  titleEl.style.alignItems = "center";
+  titleEl.style.justifyContent = "space-between";
   titleEl.createEl("div", { cls: "olen-heading", text: label });
 
   // Timeline card
@@ -33,6 +37,18 @@ export function renderDayTimeline(
 
   // Get day map entries
   const entries = engine.getDayMap();
+
+  // Edit/reorder button (only if there are entries to reorder)
+  if (entries.length > 1 && callbacks.onReorder) {
+    const editBtn = titleEl.createEl("button", {
+      cls: "olen-day-edit-btn",
+      attr: { title: "Reorder schedule" },
+    });
+    editBtn.innerHTML = "&#9776;"; // ☰ hamburger icon
+    editBtn.addEventListener("click", () => {
+      showReorderModal(container, entries, settings, callbacks.onReorder!);
+    });
+  }
 
   if (entries.length === 0) {
     card.createEl("div", {
@@ -221,4 +237,121 @@ function formatHour(h: number): string {
   const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
   if (mins === 0) return `${displayHour}${period}`;
   return `${displayHour}:${String(mins).padStart(2, "0")}${period}`;
+}
+
+// ── Reorder Modal ──
+
+function showReorderModal(
+  anchor: HTMLElement,
+  entries: DayMapEntry[],
+  settings: OlenSettings,
+  onSave: (orderedIds: string[]) => void
+): void {
+  // Build ordered list of entry IDs
+  const orderedEntries = [...entries];
+  let dragIdx: number | null = null;
+
+  // Backdrop
+  const backdrop = document.createElement("div");
+  backdrop.className = "olen-reorder-backdrop";
+  document.body.appendChild(backdrop);
+
+  // Modal
+  const modal = document.createElement("div");
+  modal.className = "olen-reorder-modal";
+  document.body.appendChild(modal);
+
+  // Title
+  const title = modal.createEl("div", { cls: "olen-reorder-title", text: "Reorder Schedule" });
+
+  // List container
+  const list = modal.createDiv({ cls: "olen-reorder-list" });
+
+  function renderList() {
+    list.empty();
+    for (let i = 0; i < orderedEntries.length; i++) {
+      const entry = orderedEntries[i];
+      const row = list.createDiv({ cls: "olen-reorder-row" });
+      row.setAttribute("data-index", String(i));
+
+      // Drag handle
+      const handle = row.createEl("span", { cls: "olen-reorder-handle", text: "\u2261" }); // ≡
+      handle.style.cursor = "grab";
+
+      // Entry info
+      const info = row.createDiv({ cls: "olen-reorder-info" });
+      info.createEl("span", { cls: "olen-reorder-emoji", text: entry.emoji });
+      info.createEl("span", { cls: "olen-reorder-name", text: entry.activityName });
+      info.createEl("span", {
+        cls: "olen-reorder-time",
+        text: `${entry.estimatedDuration}m`,
+      });
+
+      // Move buttons as fallback for non-touch
+      const btnWrap = row.createDiv({ cls: "olen-reorder-btns" });
+      if (i > 0) {
+        const upBtn = btnWrap.createEl("button", { cls: "olen-reorder-arrow", text: "\u25B2" });
+        upBtn.addEventListener("click", () => {
+          [orderedEntries[i - 1], orderedEntries[i]] = [orderedEntries[i], orderedEntries[i - 1]];
+          renderList();
+        });
+      }
+      if (i < orderedEntries.length - 1) {
+        const downBtn = btnWrap.createEl("button", { cls: "olen-reorder-arrow", text: "\u25BC" });
+        downBtn.addEventListener("click", () => {
+          [orderedEntries[i], orderedEntries[i + 1]] = [orderedEntries[i + 1], orderedEntries[i]];
+          renderList();
+        });
+      }
+
+      // Drag events
+      row.draggable = true;
+      row.addEventListener("dragstart", (e) => {
+        dragIdx = i;
+        row.classList.add("olen-reorder-dragging");
+        e.dataTransfer?.setData("text/plain", String(i));
+      });
+      row.addEventListener("dragend", () => {
+        row.classList.remove("olen-reorder-dragging");
+        dragIdx = null;
+      });
+      row.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        row.classList.add("olen-reorder-over");
+      });
+      row.addEventListener("dragleave", () => {
+        row.classList.remove("olen-reorder-over");
+      });
+      row.addEventListener("drop", (e) => {
+        e.preventDefault();
+        row.classList.remove("olen-reorder-over");
+        if (dragIdx !== null && dragIdx !== i) {
+          const [moved] = orderedEntries.splice(dragIdx, 1);
+          orderedEntries.splice(i, 0, moved);
+          renderList();
+        }
+      });
+    }
+  }
+
+  renderList();
+
+  // Buttons
+  const footer = modal.createDiv({ cls: "olen-reorder-footer" });
+  const cancelBtn = footer.createEl("button", { cls: "olen-reorder-cancel", text: "Cancel" });
+  const saveBtn = footer.createEl("button", { cls: "olen-reorder-save", text: "Save" });
+
+  cancelBtn.addEventListener("click", close);
+  backdrop.addEventListener("click", close);
+
+  saveBtn.addEventListener("click", () => {
+    const ids = orderedEntries.map((e) => e.isCalendarTask ? (e.calendarTaskId ?? e.activityId) : e.activityId);
+    onSave(ids);
+    close();
+  });
+
+  function close() {
+    backdrop.remove();
+    modal.remove();
+  }
 }

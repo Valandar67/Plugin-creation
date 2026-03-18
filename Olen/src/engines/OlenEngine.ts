@@ -55,7 +55,7 @@ export class OlenEngine {
     return new Date(this.now.getTime() - this.settings.totalPausedTime);
   }
 
-  private getEffectiveToday(): string {
+  getEffectiveToday(): string {
     const d = this.getEffectiveNow();
     d.setHours(0, 0, 0, 0);
     return d.toISOString().slice(0, 10);
@@ -489,7 +489,11 @@ export class OlenEngine {
   }
 
   getDayMap(): DayMapEntry[] {
-    const activities = this.getEnabledActivities().filter((a) => !this.isDoneToday(a.id));
+    const effectiveToday = this.getEffectiveToday();
+    const skipped = this.settings.skippedToday?.date === effectiveToday
+      ? new Set(this.settings.skippedToday.activityIds)
+      : new Set<string>();
+    const activities = this.getEnabledActivities().filter((a) => !this.isDoneToday(a.id) && !skipped.has(a.id));
     const { morningStart, morningEnd, afternoonEnd, eveningEnd, bufferMinutes } = this.settings.devConfig;
 
     const timeSlots: { period: string; startHour: number; endHour: number }[] = [
@@ -575,6 +579,25 @@ export class OlenEngine {
     // Sort by start time
     entries.sort((a, b) => a.startHour - b.startHour);
 
+    // Apply custom day order if set for today
+    const dayOrder = this.settings.dayMapOrder;
+    if (dayOrder && dayOrder.date === effectiveToday && dayOrder.order.length > 0) {
+      const orderMap = new Map(dayOrder.order.map((id, i) => [id, i]));
+      entries.sort((a, b) => {
+        const ai = orderMap.has(a.activityId) ? orderMap.get(a.activityId)! : 9999;
+        const bi = orderMap.has(b.activityId) ? orderMap.get(b.activityId)! : 9999;
+        return ai - bi;
+      });
+      // Reassign time slots based on new order
+      let cursor = entries.length > 0 ? entries[0].startHour : this.settings.devConfig.morningStart;
+      for (const entry of entries) {
+        const dur = entry.estimatedDuration / 60;
+        entry.startHour = cursor;
+        entry.endHour = cursor + dur;
+        cursor = entry.endHour + this.settings.devConfig.bufferMinutes / 60;
+      }
+    }
+
     // Mark done activities (only for non-calendar entries)
     for (const entry of entries) {
       if (!entry.isCalendarTask && this.isDoneToday(entry.activityId)) {
@@ -582,7 +605,13 @@ export class OlenEngine {
       }
     }
 
-    return entries;
+    // Also filter out skipped calendar entries
+    const filteredEntries = entries.filter((e) => {
+      if (e.isCalendarTask && e.calendarTaskId && skipped.has(e.calendarTaskId)) return false;
+      return true;
+    });
+
+    return filteredEntries;
   }
 
   private findSlotForActivity(

@@ -64,7 +64,7 @@ function getSubtitle(settings: OlenSettings, engine: OlenEngine): string {
   // Show user's aphorism if set
   const aphorism = settings.aphorism?.trim();
   if (aphorism) {
-    return `"${aphorism}"`;
+    return aphorism;
   }
 
   const bossEngine = new BossEngine(settings);
