@@ -154,7 +154,9 @@ export class DashboardView extends ItemView {
           break;
 
         case "boss":
-          renderBossStatusCard(root, settings, staggerIdx++);
+          if (settings.enableTartarus !== false) {
+            renderBossStatusCard(root, settings, staggerIdx++);
+          }
           break;
 
         case "weekly":

@@ -70,7 +70,7 @@ function getSubtitle(settings: OlenSettings, engine: OlenEngine): string {
   const bossEngine = new BossEngine(settings);
 
   // Tartarus
-  if (settings.inTartarus) {
+  if (settings.inTartarus && settings.enableTartarus !== false) {
     return "The underworld awaits your penance.";
   }
 

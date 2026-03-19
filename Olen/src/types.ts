@@ -469,6 +469,9 @@ export interface OlenSettings {
 
   // Onboarding
   onboardingComplete: boolean;
+
+  // Tartarus integration toggle
+  enableTartarus: boolean;
 }
 
 // --- TrackHabitRank data.json shape (for migration) ---

@@ -285,7 +285,7 @@ export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
 
 export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   // Profile
-  userName: "Warrior",
+  userName: "User",
   myWhy: "",
   aphorism: "",
   goals: [],
@@ -373,4 +373,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
 
   // Onboarding
   onboardingComplete: false,
+
+  // Tartarus
+  enableTartarus: true,
 };

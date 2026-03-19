@@ -990,6 +990,27 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(body)
+      .setName("Re-run Setup Wizard")
+      .setDesc("Open the 9-screen setup wizard to reconfigure Olen")
+      .addButton((btn) =>
+        btn.setButtonText("Open Wizard").onClick(async () => {
+          await this.plugin.activateOnboarding();
+        })
+      );
+
+    new Setting(body)
+      .setName("Enable Tartarus system")
+      .setDesc("When off, boss/Tartarus features are hidden from the dashboard")
+      .addToggle((t) =>
+        t
+          .setValue(this.plugin.settings.enableTartarus !== false)
+          .onChange(async (v) => {
+            this.plugin.settings.enableTartarus = v;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
       .setName("Re-run migration")
       .setDesc("Re-import data from the Mythological Habit Tracker plugin")
       .addButton((btn) =>

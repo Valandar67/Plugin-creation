@@ -305,7 +305,7 @@ export class OlenEngine {
     };
 
     // 1. DEATH CHECK
-    if (this.settings.inTartarus) {
+    if (this.settings.inTartarus && this.settings.enableTartarus !== false) {
       const neglected = this.getNeglectedActivitiesSorted(activities);
       const targets = neglected.length > 0 ? neglected : [...activities].sort((a, b) => b.priority - a.priority);
       for (const t of targets) {

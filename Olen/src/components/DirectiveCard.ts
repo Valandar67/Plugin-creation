@@ -227,7 +227,7 @@ function buildCommandQueue(settings: OlenSettings, engine: OlenEngine): OlenComm
 
   // ── Tartarus Mode ──
   // When in Tartarus, show the actual penance tasks first
-  if (settings.inTartarus) {
+  if (settings.inTartarus && settings.enableTartarus !== false) {
     const penanceTasks = (settings.tartarusPenanceTasks ?? []).filter((t) => !t.completed);
 
     // Penance tasks first — these are the real tasks to escape Tartarus

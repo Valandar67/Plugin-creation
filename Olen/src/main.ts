@@ -131,6 +131,12 @@ export default class OlenPlugin extends Plugin {
       callback: () => this.showQuickTaskDialog(),
     });
 
+    this.addCommand({
+      id: "reopen-olen-wizard",
+      name: "Re-run Setup Wizard",
+      callback: () => this.activateOnboarding(),
+    });
+
     // Calendar plugin integration — inject Olen metadata into Calendar plugin
     this.registerCalendarPluginSource();
 
