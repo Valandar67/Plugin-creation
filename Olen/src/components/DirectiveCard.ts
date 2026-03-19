@@ -19,8 +19,6 @@ interface OlenCommand {
   olenSpeaks: string;
   activityId?: string;
   templeTask?: TempleTask;
-  penanceTask?: TartarusPenanceTask;
-  isTartarus?: boolean;
 }
 
 export function renderDirectiveCard(
@@ -30,8 +28,7 @@ export function renderDirectiveCard(
   staggerIndex: number,
   onEnterWorkspace?: (activityId: string) => void,
   onTempleComplete?: (taskId: string) => void,
-  onLogWeight?: () => void,
-  onPenanceComplete?: (taskId: string) => void
+  onLogWeight?: () => void
 ): void {
   // ── Sleep Lock Check ──
   if (isSleepTime(settings)) {
@@ -129,8 +126,8 @@ export function renderDirectiveCard(
   }
 
   function handleAccept(command: OlenCommand): void {
-    if (command.type === "penance" && command.penanceTask) {
-      onPenanceComplete?.(command.penanceTask.id);
+    if (command.type === "penance") {
+      // Just acknowledge the reminder — don't mark as done
       dismissed.add(currentIndex);
       currentIndex++;
       renderCurrent();
@@ -241,8 +238,6 @@ function buildCommandQueue(settings: OlenSettings, engine: OlenEngine): OlenComm
         name: task.description,
         emoji: "\u26D3\uFE0F", // ⛓️
         olenSpeaks: getTartarusPenanceNarrative(task, settings),
-        penanceTask: task,
-        isTartarus: true,
       });
     }
 

@@ -150,7 +150,6 @@ export class DashboardView extends ItemView {
             (activityId) => this.handleEnterWorkspace(activityId),
             (taskId) => this.handleTempleComplete(taskId),
             () => this.handleLogWeight(),
-            (penanceId) => this.handlePenanceComplete(penanceId),
           );
           break;
 
@@ -524,29 +523,6 @@ export class DashboardView extends ItemView {
     new Notice(`${task.emoji} ${task.name} completed!`);
 
     // Re-render
-    await this.render();
-  }
-
-  private async handlePenanceComplete(penanceId: string): Promise<void> {
-    const task = this.plugin.settings.tartarusPenanceTasks?.find((t) => t.id === penanceId);
-    if (!task) return;
-
-    task.completed = true;
-    await this.plugin.saveSettings();
-    new Notice(`\u26D3\uFE0F Penance task completed!`);
-
-    // Sync back to TrackHabitRank if available
-    try {
-      const tracker = (this.app as any).plugins?.plugins?.["mythological-habit-tracker"];
-      if (tracker?.settings) {
-        const trackerTask = tracker.settings.tartarusPenanceTasks?.find((t: any) => t.id === penanceId);
-        if (trackerTask) {
-          trackerTask.completed = true;
-          await tracker.saveData(tracker.settings);
-        }
-      }
-    } catch { /* tracker not available */ }
-
     await this.render();
   }
 
