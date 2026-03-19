@@ -1,6 +1,8 @@
 // ============================================================
 // Olen — Directive Card Component
 // Conversational style: "Olen suggests…" / "Olen: it's time for…"
+// Sleep lock: after bedtime, the card is locked with chains.
+// Tartarus mode: penance tasks surfaced with urgency messaging.
 // Weight logging as top priority override when due.
 // Accept / Skip buttons (no outlines, transparent design)
 // ============================================================
@@ -17,6 +19,7 @@ interface OlenCommand {
   olenSpeaks: string;
   activityId?: string;
   templeTask?: TempleTask;
+  isTartarus?: boolean;
 }
 
 export function renderDirectiveCard(
@@ -28,6 +31,12 @@ export function renderDirectiveCard(
   onTempleComplete?: (taskId: string) => void,
   onLogWeight?: () => void
 ): void {
+  // ── Sleep Lock Check ──
+  if (isSleepTime(settings)) {
+    renderSleepLock(container, settings, staggerIndex);
+    return;
+  }
+
   const commands = buildCommandQueue(settings, engine);
 
   if (commands.length === 0) {
@@ -58,8 +67,13 @@ export function renderDirectiveCard(
       return;
     }
 
+    const isTartarus = command.isTartarus === true;
+
     // Transparent card with increased height
-    const card = wrapper.createDiv({ cls: "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded" });
+    const cardCls = isTartarus
+      ? "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded olen-directive-tartarus"
+      : "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded";
+    const card = wrapper.createDiv({ cls: cardCls });
 
     // Olen speaks — conversational style
     card.createEl("div", {
@@ -72,19 +86,26 @@ export function renderDirectiveCard(
     activityEl.createEl("span", { cls: "olen-directive-emoji", text: command.emoji });
     activityEl.createEl("span", { text: command.name });
 
-    // Tag for temple or weight
-    if (command.type === "temple") {
+    // Tag for temple, weight, or tartarus
+    if (isTartarus) {
+      card.createEl("div", { cls: "olen-directive-temple-tag olen-directive-tartarus-tag", text: "TARTARUS" });
+    } else if (command.type === "temple") {
       card.createEl("div", { cls: "olen-directive-temple-tag", text: "TEMPLE" });
     } else if (command.type === "weight") {
       card.createEl("div", { cls: "olen-directive-temple-tag olen-directive-weight-tag", text: "HEALTH" });
     }
 
-    // Action buttons — no outlines, minimal, transparent design
+    // Action buttons
     const actions = card.createDiv({ cls: "olen-directive-actions-v2" });
+
+    // Accept button text depends on context
+    let acceptText = "Begin";
+    if (command.type === "weight") acceptText = "Log now";
+    else if (isTartarus) acceptText = "OK";
 
     const acceptBtn = actions.createEl("button", {
       cls: "olen-directive-btn olen-directive-btn-accept",
-      text: command.type === "weight" ? "Log now" : "Begin",
+      text: acceptText,
     });
     acceptBtn.addEventListener("click", () => handleAccept(command));
 
@@ -124,6 +145,66 @@ export function renderDirectiveCard(
   renderCurrent();
 }
 
+// ── Sleep Lock ──
+
+function isSleepTime(settings: OlenSettings): boolean {
+  const sleepTime = settings.personalStats?.sleepTime;
+  if (!sleepTime || sleepTime <= 0) return false;
+
+  const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+  const currentHour = now.getHours() + now.getMinutes() / 60;
+
+  // Sleep time is typically late night (e.g. 23 = 11pm)
+  // Consider sleep time active from sleepTime until morningStart (next day)
+  const morningStart = settings.devConfig.morningStart ?? 6;
+
+  if (sleepTime > morningStart) {
+    // Normal case: sleep at 23, wake at 6
+    return currentHour >= sleepTime || currentHour < morningStart;
+  } else {
+    // Edge case: sleep at 1am, wake at 6am
+    return currentHour >= sleepTime && currentHour < morningStart;
+  }
+}
+
+const SLEEP_MESSAGES = [
+  "The day is done. Rest now.",
+  "Time to rest. Tomorrow awaits.",
+  "Close your eyes. You've earned it.",
+  "Sleep well. Olen will be here tomorrow.",
+];
+
+function renderSleepLock(container: HTMLElement, settings: OlenSettings, staggerIndex: number): void {
+  const wrapper = container.createDiv({ cls: "olen-directive-wrapper" });
+  wrapper.style.setProperty("--i", String(staggerIndex));
+
+  const card = wrapper.createDiv({ cls: "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded olen-directive-sleep" });
+
+  // Chain icon
+  card.createEl("div", {
+    cls: "olen-directive-sleep-chains",
+    text: "\uD83D\uDD17", // 🔗
+  });
+
+  // Sleep message
+  const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+  const seed = now.getDate() + now.getMonth() + now.getFullYear();
+  const message = SLEEP_MESSAGES[seed % SLEEP_MESSAGES.length];
+
+  card.createEl("div", {
+    cls: "olen-directive-oracle olen-directive-conversational olen-directive-sleep-text",
+    text: message,
+  });
+
+  // "Go to sleep" locked button
+  const actions = card.createDiv({ cls: "olen-directive-actions-v2" });
+  const btn = actions.createEl("button", {
+    cls: "olen-directive-btn olen-directive-btn-sleep",
+    text: "Go to sleep",
+    attr: { disabled: "true" },
+  });
+}
+
 // ── Build the command queue ──
 
 function buildCommandQueue(settings: OlenSettings, engine: OlenEngine): OlenCommand[] {
@@ -140,17 +221,52 @@ function buildCommandQueue(settings: OlenSettings, engine: OlenEngine): OlenComm
     });
   }
 
-  // Activity suggestions from the engine
-  const suggestions = engine.getAllSuggestions();
-  for (const s of suggestions) {
-    commands.push({
-      type: "activity",
-      id: s.activityId,
-      name: s.activityName,
-      emoji: s.emoji,
-      olenSpeaks: getOlenNarrative(s, settings),
-      activityId: s.activityId,
-    });
+  // ── Tartarus Mode ──
+  // When in Tartarus, surface penance-related suggestions first with urgency
+  if (settings.inTartarus) {
+    const suggestions = engine.getAllSuggestions();
+    // In Tartarus, all "death" reason suggestions are penance tasks
+    const penanceSuggestions = suggestions.filter((s) => s.reason === "death");
+    const otherSuggestions = suggestions.filter((s) => s.reason !== "death");
+
+    // Penance tasks first with Tartarus messaging
+    for (const s of penanceSuggestions) {
+      commands.push({
+        type: "activity",
+        id: s.activityId,
+        name: s.activityName,
+        emoji: s.emoji,
+        olenSpeaks: getTartarusNarrative(s, settings),
+        activityId: s.activityId,
+        isTartarus: true,
+      });
+    }
+
+    // Then the rest (still shown, but after penance tasks)
+    for (const s of otherSuggestions) {
+      commands.push({
+        type: "activity",
+        id: s.activityId,
+        name: s.activityName,
+        emoji: s.emoji,
+        olenSpeaks: getTartarusNarrative(s, settings),
+        activityId: s.activityId,
+        isTartarus: true,
+      });
+    }
+  } else {
+    // Normal mode — activity suggestions from the engine
+    const suggestions = engine.getAllSuggestions();
+    for (const s of suggestions) {
+      commands.push({
+        type: "activity",
+        id: s.activityId,
+        name: s.activityName,
+        emoji: s.emoji,
+        olenSpeaks: getOlenNarrative(s, settings),
+        activityId: s.activityId,
+      });
+    }
   }
 
   // Due temple tasks as fallback
@@ -263,6 +379,23 @@ function getOlenNarrative(suggestion: DirectiveSuggestion, settings: OlenSetting
   const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
   const seed = suggestion.activityId.length + now.getDate() + now.getMonth();
   const template = pool[seed % pool.length];
+  return template.replace(/\{name\}/g, suggestion.activityName);
+}
+
+// ── Tartarus voice — urgent, penance-focused ──
+
+const TARTARUS_NARRATIVES = [
+  "Olen suggests you do {name} to escape Tartarus.",
+  "You have to do {name} today.",
+  "Olen: {name}. This is your way out of Tartarus.",
+  "Olen suggests you complete {name}. Escape is within reach.",
+  "Do {name}. The chains won't break themselves.",
+];
+
+function getTartarusNarrative(suggestion: DirectiveSuggestion, settings: OlenSettings): string {
+  const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+  const seed = suggestion.activityId.length + now.getDate() + now.getMonth();
+  const template = TARTARUS_NARRATIVES[seed % TARTARUS_NARRATIVES.length];
   return template.replace(/\{name\}/g, suggestion.activityName);
 }
 

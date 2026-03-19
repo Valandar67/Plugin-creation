@@ -239,6 +239,7 @@ export const DEFAULT_PERSONAL_STATS: PersonalStats = {
   weightLogFrequency: "every-week",
   weightLogCustomDays: 7,
   lastWeightLogDate: null,
+  sleepTime: 23, // 11pm default
 };
 
 // --- Muscle Group Definitions ---

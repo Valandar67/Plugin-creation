@@ -228,6 +228,7 @@ export interface PersonalStats {
   weightLogFrequency: WeightLogFrequency;
   weightLogCustomDays: number;   // used when frequency is "custom"
   lastWeightLogDate: string | null; // YYYY-MM-DD
+  sleepTime: number;         // hour in 24h format (e.g. 22.5 = 10:30pm), 0 = disabled
 }
 
 // --- Goals ---
