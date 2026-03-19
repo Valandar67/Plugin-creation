@@ -326,6 +326,14 @@ export interface ElysianTheme {
 
 export type OlenThemeMode = "dark" | "glass" | "steamy";
 
+// --- Tartarus Penance Task ---
+
+export interface TartarusPenanceTask {
+  id: string;
+  description: string;
+  completed: boolean;
+}
+
 // --- Reward (synced from TrackHabitRank) ---
 
 export interface RewardOption {
@@ -410,7 +418,7 @@ export interface OlenSettings {
   bossMaxHP: number;
   bossCurrentHP: number;
   inTartarus: boolean;
-  tartarusPenanceTasks: unknown[];
+  tartarusPenanceTasks: TartarusPenanceTask[];
   tartarusStartDate: string | null;
   failedThresholdDays: number;
   consecutivePerfectWeeks: number;
@@ -486,7 +494,7 @@ export interface TrackHabitRankData {
   bossCurrentHP: number;
   consecutivePerfectWeeks: number;
   inTartarus: boolean;
-  tartarusPenanceTasks: unknown[];
+  tartarusPenanceTasks: TartarusPenanceTask[];
   tartarusStartDate: string | null;
   failedThresholdDays: number;
   templeTasks: TempleTask[];

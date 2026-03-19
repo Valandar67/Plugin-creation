@@ -7,18 +7,19 @@
 // Accept / Skip buttons (no outlines, transparent design)
 // ============================================================
 
-import type { OlenSettings, PriorityReason, DirectiveSuggestion, TempleTask, WeightLogFrequency } from "../types";
+import type { OlenSettings, PriorityReason, DirectiveSuggestion, TempleTask, WeightLogFrequency, TartarusPenanceTask } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
 
 /** A unified item that Olen can command. */
 interface OlenCommand {
-  type: "activity" | "temple" | "weight";
+  type: "activity" | "temple" | "weight" | "penance";
   id: string;
   name: string;
   emoji: string;
   olenSpeaks: string;
   activityId?: string;
   templeTask?: TempleTask;
+  penanceTask?: TartarusPenanceTask;
   isTartarus?: boolean;
 }
 
@@ -29,7 +30,8 @@ export function renderDirectiveCard(
   staggerIndex: number,
   onEnterWorkspace?: (activityId: string) => void,
   onTempleComplete?: (taskId: string) => void,
-  onLogWeight?: () => void
+  onLogWeight?: () => void,
+  onPenanceComplete?: (taskId: string) => void
 ): void {
   // ── Sleep Lock Check ──
   if (isSleepTime(settings)) {
@@ -67,10 +69,10 @@ export function renderDirectiveCard(
       return;
     }
 
-    const isTartarus = command.isTartarus === true;
+    const isPenance = command.type === "penance";
 
     // Transparent card with increased height
-    const cardCls = isTartarus
+    const cardCls = isPenance
       ? "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded olen-directive-tartarus"
       : "olen-card olen-card-transparent olen-directive-v2 olen-directive-expanded";
     const card = wrapper.createDiv({ cls: cardCls });
@@ -86,8 +88,8 @@ export function renderDirectiveCard(
     activityEl.createEl("span", { cls: "olen-directive-emoji", text: command.emoji });
     activityEl.createEl("span", { text: command.name });
 
-    // Tag for temple, weight, or tartarus
-    if (isTartarus) {
+    // Tag for penance, temple, or weight
+    if (command.type === "penance") {
       card.createEl("div", { cls: "olen-directive-temple-tag olen-directive-tartarus-tag", text: "TARTARUS" });
     } else if (command.type === "temple") {
       card.createEl("div", { cls: "olen-directive-temple-tag", text: "TEMPLE" });
@@ -101,7 +103,7 @@ export function renderDirectiveCard(
     // Accept button text depends on context
     let acceptText = "Begin";
     if (command.type === "weight") acceptText = "Log now";
-    else if (isTartarus) acceptText = "OK";
+    else if (command.type === "penance") acceptText = "OK";
 
     const acceptBtn = actions.createEl("button", {
       cls: "olen-directive-btn olen-directive-btn-accept",
@@ -127,7 +129,12 @@ export function renderDirectiveCard(
   }
 
   function handleAccept(command: OlenCommand): void {
-    if (command.type === "activity" && command.activityId) {
+    if (command.type === "penance" && command.penanceTask) {
+      onPenanceComplete?.(command.penanceTask.id);
+      dismissed.add(currentIndex);
+      currentIndex++;
+      renderCurrent();
+    } else if (command.type === "activity" && command.activityId) {
       onEnterWorkspace?.(command.activityId);
     } else if (command.type === "temple" && command.templeTask) {
       onTempleComplete?.(command.templeTask.id);
@@ -222,36 +229,33 @@ function buildCommandQueue(settings: OlenSettings, engine: OlenEngine): OlenComm
   }
 
   // ── Tartarus Mode ──
-  // When in Tartarus, surface penance-related suggestions first with urgency
+  // When in Tartarus, show the actual penance tasks first
   if (settings.inTartarus) {
-    const suggestions = engine.getAllSuggestions();
-    // In Tartarus, all "death" reason suggestions are penance tasks
-    const penanceSuggestions = suggestions.filter((s) => s.reason === "death");
-    const otherSuggestions = suggestions.filter((s) => s.reason !== "death");
+    const penanceTasks = (settings.tartarusPenanceTasks ?? []).filter((t) => !t.completed);
 
-    // Penance tasks first with Tartarus messaging
-    for (const s of penanceSuggestions) {
+    // Penance tasks first — these are the real tasks to escape Tartarus
+    for (const task of penanceTasks) {
       commands.push({
-        type: "activity",
-        id: s.activityId,
-        name: s.activityName,
-        emoji: s.emoji,
-        olenSpeaks: getTartarusNarrative(s, settings),
-        activityId: s.activityId,
+        type: "penance",
+        id: task.id,
+        name: task.description,
+        emoji: "\u26D3\uFE0F", // ⛓️
+        olenSpeaks: getTartarusPenanceNarrative(task, settings),
+        penanceTask: task,
         isTartarus: true,
       });
     }
 
-    // Then the rest (still shown, but after penance tasks)
-    for (const s of otherSuggestions) {
+    // Then regular activity suggestions (still available, but after penance)
+    const suggestions = engine.getAllSuggestions();
+    for (const s of suggestions) {
       commands.push({
         type: "activity",
         id: s.activityId,
         name: s.activityName,
         emoji: s.emoji,
-        olenSpeaks: getTartarusNarrative(s, settings),
+        olenSpeaks: getOlenNarrative(s, settings),
         activityId: s.activityId,
-        isTartarus: true,
       });
     }
   } else {
@@ -382,21 +386,21 @@ function getOlenNarrative(suggestion: DirectiveSuggestion, settings: OlenSetting
   return template.replace(/\{name\}/g, suggestion.activityName);
 }
 
-// ── Tartarus voice — urgent, penance-focused ──
+// ── Tartarus voice — penance tasks ──
 
-const TARTARUS_NARRATIVES = [
-  "Olen suggests you do {name} to escape Tartarus.",
-  "You have to do {name} today.",
-  "Olen: {name}. This is your way out of Tartarus.",
-  "Olen suggests you complete {name}. Escape is within reach.",
-  "Do {name}. The chains won't break themselves.",
+const TARTARUS_PENANCE_NARRATIVES = [
+  "Olen suggests you to: {name}",
+  "You have to do this today: {name}",
+  "Olen: to escape Tartarus, {name}",
+  "This is your penance: {name}",
+  "Complete this to break free: {name}",
 ];
 
-function getTartarusNarrative(suggestion: DirectiveSuggestion, settings: OlenSettings): string {
+function getTartarusPenanceNarrative(task: TartarusPenanceTask, settings: OlenSettings): string {
   const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
-  const seed = suggestion.activityId.length + now.getDate() + now.getMonth();
-  const template = TARTARUS_NARRATIVES[seed % TARTARUS_NARRATIVES.length];
-  return template.replace(/\{name\}/g, suggestion.activityName);
+  const seed = task.id.length + now.getDate() + now.getMonth();
+  const template = TARTARUS_PENANCE_NARRATIVES[seed % TARTARUS_PENANCE_NARRATIVES.length];
+  return template.replace(/\{name\}/g, task.description);
 }
 
 function getTempleNarrative(task: TempleTask, now: Date): string {
