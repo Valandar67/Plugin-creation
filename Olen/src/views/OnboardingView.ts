@@ -1,11 +1,10 @@
 // ============================================================
 // Olen — Onboarding Wizard (9-screen flow)
-// Screens 0-2 implemented; 3-8 placeholder stubs
 // ============================================================
 
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { Category, Goal, WeightLogFrequency, OlenThemeMode, TempleTask, PreferredTime } from "../types";
+import type { Category, WeightLogFrequency, OlenThemeMode, PreferredTime } from "../types";
 import { VIEW_TYPE_ONBOARDING } from "../constants";
 import { ONBOARDING_ACTIVITIES, buildActivityConfig, CATEGORY_META } from "../data/defaultActivities";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
@@ -19,6 +18,7 @@ const TOTAL_SCREENS = SCREEN_LABELS.length;
 export class OnboardingView extends ItemView {
   plugin: OlenPlugin;
   private currentScreen = 0;
+  private activeTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
@@ -53,6 +53,10 @@ export class OnboardingView extends ItemView {
   }
 
   private renderScreen(): void {
+    // Clear any pending timeouts (e.g. from Screen 7 animation)
+    this.activeTimeouts.forEach(clearTimeout);
+    this.activeTimeouts = [];
+
     this.contentEl.empty();
     const root = this.contentEl.createDiv({ cls: "olen-dashboard olen-onboarding" });
 
@@ -451,7 +455,7 @@ export class OnboardingView extends ItemView {
     });
   }
 
-  // ── Screens 3-8: Stubs (to be implemented) ──────────────
+  // ── Screen 3: "Arm Your Activities" ──────────────────────
 
   private renderScreen3_Activities(root: HTMLElement): void {
     const content = root.createDiv({ cls: "olen-onboarding-screen" });
@@ -571,20 +575,22 @@ export class OnboardingView extends ItemView {
           activity.preferredTime = timeSelect.value as PreferredTime;
         };
 
+        let addedToSettings = !!existing;
         toggle.addEventListener("change", () => {
-          if (existing) {
-            existing.enabled = toggle.checked;
+          if (addedToSettings) {
+            activity.enabled = toggle.checked;
           } else if (toggle.checked) {
             applyConfig();
             activity.enabled = true;
             this.plugin.settings.activities.push(activity);
+            addedToSettings = true;
           }
         });
 
-        // Save config when panel inputs change (for existing activities)
+        // Save config when panel inputs change
         for (const input of [folderInput, propInput, durInput, timeSelect, targetRange]) {
           input.addEventListener("change", () => {
-            if (existing) applyConfig();
+            if (addedToSettings) applyConfig();
           });
         }
       }
@@ -848,8 +854,17 @@ export class OnboardingView extends ItemView {
     ];
 
     let selectedBg = this.plugin.settings.scrollingBackground;
-    const bgGrid = content.createDiv({ attr: { style: "display: flex; gap: 8px; margin-bottom: 12px;" } });
+    const bgGrid = content.createDiv({ attr: { style: "display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;" } });
     const bgBtns: HTMLElement[] = [];
+
+    const updateBgButtons = () => {
+      bgBtns.forEach((b, idx) => {
+        if (idx < bgImages.length) {
+          b.className = "olen-btn " + (bgImages[idx].path === selectedBg ? "olen-btn-primary" : "olen-btn-secondary");
+        }
+      });
+      noneBtn.className = "olen-btn " + (!selectedBg ? "olen-btn-primary" : "olen-btn-secondary");
+    };
 
     for (const bg of bgImages) {
       const btn = bgGrid.createEl("button", {
@@ -861,9 +876,7 @@ export class OnboardingView extends ItemView {
 
       btn.addEventListener("click", () => {
         selectedBg = bg.path;
-        bgBtns.forEach((b, idx) => {
-          b.className = "olen-btn " + (bgImages[idx].path === selectedBg ? "olen-btn-primary" : "olen-btn-secondary");
-        });
+        updateBgButtons();
         customBgInput.value = "";
       });
     }
@@ -874,11 +887,9 @@ export class OnboardingView extends ItemView {
       text: "None",
       attr: { style: "font-size: 12px; padding: 6px 12px;" },
     });
-    bgBtns.push(noneBtn);
     noneBtn.addEventListener("click", () => {
       selectedBg = "";
-      bgBtns.forEach((b) => { b.className = "olen-btn olen-btn-secondary"; });
-      noneBtn.className = "olen-btn olen-btn-primary";
+      updateBgButtons();
       customBgInput.value = "";
     });
 
@@ -891,7 +902,7 @@ export class OnboardingView extends ItemView {
       const v = customBgInput.value.trim();
       if (v) {
         selectedBg = v;
-        bgBtns.forEach((b) => { b.className = "olen-btn olen-btn-secondary"; });
+        updateBgButtons();
       }
     });
 
@@ -1058,8 +1069,6 @@ export class OnboardingView extends ItemView {
       attr: { style: "text-align: center; opacity: 0; transition: opacity 0.6s ease;" },
     });
 
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-
     // Animate through messages
     let i = 0;
     const step = () => {
@@ -1067,7 +1076,7 @@ export class OnboardingView extends ItemView {
         statusEl.setText(messages[i]);
         barInner.style.width = `${((i + 1) / messages.length) * 100}%`;
         i++;
-        timeouts.push(setTimeout(step, 1200));
+        this.activeTimeouts.push(setTimeout(step, 1200));
       } else {
         // Record-scratch moment
         statusEl.setText("");
@@ -1096,29 +1105,19 @@ export class OnboardingView extends ItemView {
         });
 
         // Auto-advance after a short pause
-        timeouts.push(setTimeout(() => this.goto(8), 3000));
+        this.activeTimeouts.push(setTimeout(() => this.goto(8), 3000));
 
         // Or let them click to skip
         const skipBtn = punchline.createEl("button", {
           cls: "olen-btn olen-btn-primary olen-btn-large",
           text: "CONTINUE \u2192",
         });
-        skipBtn.addEventListener("click", () => {
-          timeouts.forEach(clearTimeout);
-          this.goto(8);
-        });
+        skipBtn.addEventListener("click", () => this.goto(8));
       }
     };
 
     // Start the sequence
-    timeouts.push(setTimeout(step, 500));
-
-    // Clean up timeouts if user navigates away via back
-    const origOnClose = this.onClose.bind(this);
-    this.onClose = async () => {
-      timeouts.forEach(clearTimeout);
-      return origOnClose();
-    };
+    this.activeTimeouts.push(setTimeout(step, 500));
   }
 
   private renderScreen8_Launch(root: HTMLElement): void {
@@ -1175,26 +1174,4 @@ export class OnboardingView extends ItemView {
     });
   }
 
-  /** Generic stub for screens not yet implemented */
-  private renderStubScreen(
-    root: HTMLElement,
-    title: string,
-    subtitle: string,
-    back: number,
-    next: number,
-  ): void {
-    const content = root.createDiv({ cls: "olen-onboarding-screen" });
-    content.createEl("div", {
-      cls: "olen-display",
-      text: title,
-      attr: { style: "text-align: center; margin-bottom: 12px;" },
-    });
-    content.createEl("div", {
-      cls: "olen-body-italic",
-      text: subtitle,
-      attr: { style: "text-align: center; margin-bottom: 32px; opacity: 0.5;" },
-    });
-
-    this.renderNav(content, { back, skip: next, next });
-  }
 }
