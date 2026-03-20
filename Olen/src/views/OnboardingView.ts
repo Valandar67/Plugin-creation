@@ -935,11 +935,190 @@ export class OnboardingView extends ItemView {
   }
 
   private renderScreen6_Calendar(root: HTMLElement): void {
-    this.renderStubScreen(root, "Calendar", "Coming next \u2014 calendar integration.", 5, 7);
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+    const cal = this.plugin.settings.calendar;
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "Calendar",
+      attr: { style: "text-align: center; margin-bottom: 12px;" },
+    });
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Connect your task sources to the daily schedule.",
+      attr: { style: "text-align: center; margin-bottom: 24px;" },
+    });
+
+    const cardsGrid = content.createDiv({ cls: "olen-onboarding-domains" });
+
+    // --- Daily Notes card ---
+    const dnCard = cardsGrid.createDiv({
+      cls: "olen-onboarding-domain-card" + (cal.enableDailyNotes ? " olen-onboarding-domain-active" : ""),
+      attr: { style: "cursor: pointer;" },
+    });
+    dnCard.createEl("div", { cls: "olen-onboarding-domain-icon", text: "\uD83D\uDDD3\uFE0F" });
+    dnCard.createEl("div", { cls: "olen-onboarding-domain-label", text: "Daily Notes" });
+    if (!cal.enableDailyNotes) dnCard.style.opacity = "0.4";
+
+    // Daily notes config (shown below grid)
+    const dnConfig = content.createDiv({ attr: { style: cal.enableDailyNotes ? "margin-top: 16px;" : "display: none; margin-top: 16px;" } });
+    const dnFolderField = dnConfig.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+    dnFolderField.createEl("label", { cls: "olen-data-sm", text: "Daily notes folder" });
+    const dnFolderInput = dnFolderField.createEl("input", {
+      cls: "olen-onboarding-input",
+      attr: { type: "text", placeholder: "e.g. Daily Notes/", value: cal.dailyNotesFolder, style: "font-size: 12px; padding: 6px 10px;" },
+    });
+    const dnFormatField = dnConfig.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+    dnFormatField.createEl("label", { cls: "olen-data-sm", text: "Filename format" });
+    const dnFormatInput = dnFormatField.createEl("input", {
+      cls: "olen-onboarding-input",
+      attr: { type: "text", placeholder: "YYYY-MM-DD", value: cal.dailyNotesFormat, style: "font-size: 12px; padding: 6px 10px;" },
+    });
+
+    dnCard.addEventListener("click", () => {
+      cal.enableDailyNotes = !cal.enableDailyNotes;
+      dnCard.classList.toggle("olen-onboarding-domain-active", cal.enableDailyNotes);
+      dnCard.style.opacity = cal.enableDailyNotes ? "1" : "0.4";
+      dnConfig.style.display = cal.enableDailyNotes ? "block" : "none";
+    });
+
+    // --- Tasks Plugin card ---
+    const tpCard = cardsGrid.createDiv({
+      cls: "olen-onboarding-domain-card" + (cal.enableTasksPlugin ? " olen-onboarding-domain-active" : ""),
+      attr: { style: "cursor: pointer;" },
+    });
+    tpCard.createEl("div", { cls: "olen-onboarding-domain-icon", text: "\u2705" });
+    tpCard.createEl("div", { cls: "olen-onboarding-domain-label", text: "Tasks Plugin" });
+    tpCard.createEl("div", { cls: "olen-data-sm", text: "Obsidian Tasks integration", attr: { style: "opacity: 0.6;" } });
+    if (!cal.enableTasksPlugin) tpCard.style.opacity = "0.4";
+
+    tpCard.addEventListener("click", () => {
+      cal.enableTasksPlugin = !cal.enableTasksPlugin;
+      tpCard.classList.toggle("olen-onboarding-domain-active", cal.enableTasksPlugin);
+      tpCard.style.opacity = cal.enableTasksPlugin ? "1" : "0.4";
+    });
+
+    // --- Quick Tasks card ---
+    const qtCard = cardsGrid.createDiv({
+      cls: "olen-onboarding-domain-card" + (cal.enableQuickTasks ? " olen-onboarding-domain-active" : ""),
+      attr: { style: "cursor: pointer;" },
+    });
+    qtCard.createEl("div", { cls: "olen-onboarding-domain-icon", text: "\u26A1" });
+    qtCard.createEl("div", { cls: "olen-onboarding-domain-label", text: "Quick Tasks" });
+    qtCard.createEl("div", { cls: "olen-data-sm", text: "Inline quick-add tasks", attr: { style: "opacity: 0.6;" } });
+    if (!cal.enableQuickTasks) qtCard.style.opacity = "0.4";
+
+    qtCard.addEventListener("click", () => {
+      cal.enableQuickTasks = !cal.enableQuickTasks;
+      qtCard.classList.toggle("olen-onboarding-domain-active", cal.enableQuickTasks);
+      qtCard.style.opacity = cal.enableQuickTasks ? "1" : "0.4";
+    });
+
+    // Navigation
+    this.renderNav(content, {
+      back: 5,
+      skip: 7,
+      next: 7,
+      onNext: () => {
+        cal.dailyNotesFolder = dnFolderInput.value.trim();
+        cal.dailyNotesFormat = dnFormatInput.value.trim() || "YYYY-MM-DD";
+        this.plugin.saveSettings();
+      },
+    });
   }
 
   private renderScreen7_Personalizing(root: HTMLElement): void {
-    this.renderStubScreen(root, "Personalizing...", "Coming next \u2014 the fun part.", 6, 8);
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+    content.setAttribute("style", "display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;");
+
+    const messages = [
+      "Calibrating your discipline matrix...",
+      "Synergizing your paradigms...",
+      "Optimizing serotonin delivery pipeline...",
+      "Monetizing your attention span...",
+      "Injecting motivational nanobots...",
+      "Deploying paywall in 3... 2...",
+    ];
+
+    const statusEl = content.createEl("div", {
+      cls: "olen-body",
+      attr: { style: "text-align: center; margin-bottom: 16px; min-height: 24px;" },
+    });
+
+    // Progress bar container
+    const barOuter = content.createDiv({
+      attr: { style: "width: 280px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 24px;" },
+    });
+    const barInner = barOuter.createDiv({
+      attr: { style: "width: 0%; height: 100%; border-radius: 4px; background: var(--olen-accent-gold, #d4a843); transition: width 1.2s ease;" },
+    });
+
+    // Punchline area (hidden initially)
+    const punchline = content.createDiv({
+      attr: { style: "text-align: center; opacity: 0; transition: opacity 0.6s ease;" },
+    });
+
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    // Animate through messages
+    let i = 0;
+    const step = () => {
+      if (i < messages.length) {
+        statusEl.setText(messages[i]);
+        barInner.style.width = `${((i + 1) / messages.length) * 100}%`;
+        i++;
+        timeouts.push(setTimeout(step, 1200));
+      } else {
+        // Record-scratch moment
+        statusEl.setText("");
+        barOuter.style.display = "none";
+        punchline.style.opacity = "1";
+
+        punchline.createEl("div", {
+          cls: "olen-display",
+          text: "Just kidding.",
+          attr: { style: "font-size: 28px; margin-bottom: 12px;" },
+        });
+        punchline.createEl("div", {
+          cls: "olen-body",
+          text: "We actually saved your preferences. All of them. For free.",
+          attr: { style: "margin-bottom: 4px;" },
+        });
+        punchline.createEl("div", {
+          cls: "olen-body-italic",
+          text: "Wild concept, right?",
+          attr: { style: "margin-bottom: 24px; opacity: 0.6;" },
+        });
+        punchline.createEl("div", {
+          cls: "olen-body",
+          text: `You're good to go, ${this.plugin.settings.userName}.`,
+          attr: { style: "font-weight: 600; margin-bottom: 24px;" },
+        });
+
+        // Auto-advance after a short pause
+        timeouts.push(setTimeout(() => this.goto(8), 3000));
+
+        // Or let them click to skip
+        const skipBtn = punchline.createEl("button", {
+          cls: "olen-btn olen-btn-primary olen-btn-large",
+          text: "CONTINUE \u2192",
+        });
+        skipBtn.addEventListener("click", () => {
+          timeouts.forEach(clearTimeout);
+          this.goto(8);
+        });
+      }
+    };
+
+    // Start the sequence
+    timeouts.push(setTimeout(step, 500));
+
+    // Clean up timeouts if user navigates away via back
+    const origOnClose = this.onClose.bind(this);
+    this.onClose = async () => {
+      timeouts.forEach(clearTimeout);
+      return origOnClose();
+    };
   }
 
   private renderScreen8_Launch(root: HTMLElement): void {
