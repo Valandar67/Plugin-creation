@@ -5,9 +5,10 @@
 
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { Category, Goal, WeightLogFrequency } from "../types";
+import type { Category, Goal, WeightLogFrequency, OlenThemeMode, TempleTask, PreferredTime } from "../types";
 import { VIEW_TYPE_ONBOARDING } from "../constants";
 import { ONBOARDING_ACTIVITIES, buildActivityConfig, CATEGORY_META } from "../data/defaultActivities";
+import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 
 const SCREEN_LABELS = [
   "Identity", "Stats", "Domains", "Activities",
@@ -453,15 +454,484 @@ export class OnboardingView extends ItemView {
   // ── Screens 3-8: Stubs (to be implemented) ──────────────
 
   private renderScreen3_Activities(root: HTMLElement): void {
-    this.renderStubScreen(root, "Arm Your Activities", "Coming next \u2014 activity configuration.", 2, 4);
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "Arm Your Activities",
+      attr: { style: "text-align: center; margin-bottom: 12px;" },
+    });
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Toggle activities on or off. Expand to configure.",
+      attr: { style: "text-align: center; margin-bottom: 24px;" },
+    });
+
+    const activitiesEl = content.createDiv({ cls: "olen-onboarding-activities" });
+
+    for (const group of ONBOARDING_ACTIVITIES) {
+      const meta = CATEGORY_META[group.category];
+      const groupEl = activitiesEl.createDiv({ cls: "olen-onboarding-activity-group" });
+      groupEl.createEl("div", {
+        cls: "olen-heading",
+        text: `${meta.icon} ${meta.label}`,
+        attr: { style: `color: ${meta.color}` },
+      });
+
+      for (const template of group.activities) {
+        const existing = this.plugin.settings.activities.find((a) => a.id === template.id);
+        const isEnabled = existing ? existing.enabled : false;
+
+        const row = groupEl.createDiv({ cls: "olen-onboarding-activity-row" });
+
+        const toggle = row.createEl("input", {
+          cls: "olen-onboarding-toggle",
+          attr: { type: "checkbox" },
+        }) as HTMLInputElement;
+        toggle.checked = isEnabled;
+
+        row.createEl("span", { text: `${template.emoji} ${template.name}` });
+        row.createEl("span", {
+          cls: "olen-data-sm",
+          text: ` \u00B7 ${template.defaultWeeklyTarget}x/week \u00B7 ${template.defaultDuration}m`,
+        });
+
+        // Configure button
+        const configBtn = row.createEl("button", {
+          cls: "olen-btn olen-btn-ghost",
+          text: "Configure",
+          attr: { style: "margin-left: auto; font-size: 11px; padding: 2px 8px;" },
+        });
+
+        // Inline config panel (hidden by default)
+        const configPanel = groupEl.createDiv({
+          cls: "olen-onboarding-activity-config",
+          attr: { style: "display: none; padding: 8px 0 16px 28px;" },
+        });
+
+        const activity = existing ?? buildActivityConfig(template, group.category);
+
+        // Folder
+        const folderRow = configPanel.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+        folderRow.createEl("label", { cls: "olen-data-sm", text: "Folder" });
+        const folderInput = folderRow.createEl("input", {
+          cls: "olen-onboarding-input",
+          attr: { type: "text", value: activity.folder, style: "font-size: 12px; padding: 6px 10px;" },
+        });
+
+        // Property
+        const propRow = configPanel.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+        propRow.createEl("label", { cls: "olen-data-sm", text: "Property" });
+        const propInput = propRow.createEl("input", {
+          cls: "olen-onboarding-input",
+          attr: { type: "text", value: activity.property, style: "font-size: 12px; padding: 6px 10px;" },
+        });
+
+        // Weekly target (range 1-7)
+        const targetRow = configPanel.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+        const targetLabel = targetRow.createDiv({ cls: "olen-data-sm" });
+        targetLabel.setText(`Weekly target: ${activity.weeklyTarget}`);
+        const targetRange = targetRow.createEl("input", {
+          attr: { type: "range", min: "1", max: "7", value: String(activity.weeklyTarget), style: "width: 100%;" },
+        }) as HTMLInputElement;
+        targetRange.addEventListener("input", () => {
+          targetLabel.setText(`Weekly target: ${targetRange.value}`);
+        });
+
+        // Duration
+        const durRow = configPanel.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+        durRow.createEl("label", { cls: "olen-data-sm", text: "Duration (min)" });
+        const durInput = durRow.createEl("input", {
+          cls: "olen-onboarding-input",
+          attr: { type: "number", value: String(activity.estimatedDuration), style: "font-size: 12px; padding: 6px 10px;" },
+        });
+
+        // Preferred time
+        const timeRow = configPanel.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+        timeRow.createEl("label", { cls: "olen-data-sm", text: "Preferred time" });
+        const timeSelect = timeRow.createEl("select", { cls: "olen-onboarding-input", attr: { style: "font-size: 12px; padding: 6px 10px;" } });
+        for (const t of ["morning", "afternoon", "evening", "anytime"] as PreferredTime[]) {
+          const opt = timeSelect.createEl("option", { text: t.charAt(0).toUpperCase() + t.slice(1), attr: { value: t } });
+          if (activity.preferredTime === t) opt.selected = true;
+        }
+
+        configBtn.addEventListener("click", () => {
+          const visible = configPanel.style.display !== "none";
+          configPanel.style.display = visible ? "none" : "block";
+          configBtn.setText(visible ? "Configure" : "Hide");
+        });
+
+        // Apply config changes on toggle
+        const applyConfig = () => {
+          activity.folder = folderInput.value.trim();
+          activity.property = propInput.value.trim();
+          activity.weeklyTarget = parseInt(targetRange.value);
+          const dur = parseInt(durInput.value);
+          if (!isNaN(dur) && dur > 0) activity.estimatedDuration = dur;
+          activity.preferredTime = timeSelect.value as PreferredTime;
+        };
+
+        toggle.addEventListener("change", () => {
+          if (existing) {
+            existing.enabled = toggle.checked;
+          } else if (toggle.checked) {
+            applyConfig();
+            activity.enabled = true;
+            this.plugin.settings.activities.push(activity);
+          }
+        });
+
+        // Save config when panel inputs change (for existing activities)
+        for (const input of [folderInput, propInput, durInput, timeSelect, targetRange]) {
+          input.addEventListener("change", () => {
+            if (existing) applyConfig();
+          });
+        }
+      }
+    }
+
+    // --- Custom activity creation ---
+    const addSection = content.createDiv({ attr: { style: "margin-top: 16px;" } });
+    const addBtn = addSection.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      text: "+ Create custom activity",
+    });
+
+    const customForm = addSection.createDiv({
+      cls: "olen-onboarding-activity-config",
+      attr: { style: "display: none; padding: 12px 0;" },
+    });
+
+    const makeField = (label: string, placeholder: string, type = "text") => {
+      const f = customForm.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+      f.createEl("label", { cls: "olen-data-sm", text: label });
+      return f.createEl("input", {
+        cls: "olen-onboarding-input",
+        attr: { type, placeholder, style: "font-size: 12px; padding: 6px 10px;" },
+      });
+    };
+
+    const cName = makeField("Name", "e.g. Yoga");
+    const cEmoji = makeField("Emoji", "e.g. \uD83E\uDDD8");
+    const cCatField = customForm.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
+    cCatField.createEl("label", { cls: "olen-data-sm", text: "Category" });
+    const cCat = cCatField.createEl("select", { cls: "olen-onboarding-input", attr: { style: "font-size: 12px; padding: 6px 10px;" } });
+    for (const c of ["body", "mind", "spirit"] as Category[]) {
+      cCat.createEl("option", { text: c.charAt(0).toUpperCase() + c.slice(1), attr: { value: c } });
+    }
+    const cFolder = makeField("Folder", "Personal Life/Yoga");
+    const cProp = makeField("Property", "Yoga");
+    const cTarget = makeField("Weekly target", "3", "number");
+    const cDur = makeField("Duration (min)", "30", "number");
+
+    const saveCustomBtn = customForm.createEl("button", {
+      cls: "olen-btn olen-btn-primary",
+      text: "Add Activity",
+      attr: { style: "margin-top: 8px;" },
+    });
+
+    addBtn.addEventListener("click", () => {
+      customForm.style.display = customForm.style.display === "none" ? "block" : "none";
+    });
+
+    saveCustomBtn.addEventListener("click", () => {
+      const name = cName.value.trim();
+      if (!name) { new Notice("Activity name is required"); return; }
+      const id = name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
+      this.plugin.settings.activities.push({
+        id,
+        name,
+        emoji: cEmoji.value.trim() || "\u2B50",
+        category: cCat.value as Category,
+        enabled: true,
+        folder: cFolder.value.trim() || `Personal Life/${name}`,
+        property: cProp.value.trim() || name,
+        damagePerCompletion: 1,
+        weeklyTarget: parseInt(cTarget.value) || 3,
+        trackingMode: "daily",
+        hasWorkspace: true,
+        priority: 5,
+        neglectThreshold: 3,
+        preferredTime: "anytime",
+        estimatedDuration: parseInt(cDur.value) || 30,
+      });
+      new Notice(`Added ${name}`);
+      // Reset form
+      cName.value = ""; cEmoji.value = ""; cFolder.value = ""; cProp.value = "";
+      cTarget.value = ""; cDur.value = "";
+      customForm.style.display = "none";
+    });
+
+    // Navigation
+    this.renderNav(content, {
+      back: 2,
+      skip: 4,
+      next: 4,
+      onNext: () => {
+        this.plugin.saveSettings();
+      },
+    });
   }
 
   private renderScreen4_Routines(root: HTMLElement): void {
-    this.renderStubScreen(root, "Routines", "Coming next \u2014 routine task setup.", 3, 5);
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "Routines",
+      attr: { style: "text-align: center; margin-bottom: 12px;" },
+    });
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Routine tasks track personal upkeep \u2014 grooming, hygiene, recurring maintenance.",
+      attr: { style: "text-align: center; margin-bottom: 24px;" },
+    });
+
+    const listEl = content.createDiv({ cls: "olen-onboarding-routines" });
+
+    const renderRoutineList = () => {
+      listEl.empty();
+      const tasks = this.plugin.settings.templeTasks;
+
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        const row = listEl.createDiv({
+          cls: "olen-onboarding-activity-row",
+          attr: { style: "align-items: center;" },
+        });
+
+        // Emoji input
+        const emojiInput = row.createEl("input", {
+          cls: "olen-onboarding-input",
+          attr: { type: "text", value: task.emoji, style: "width: 40px; text-align: center; font-size: 12px; padding: 6px;" },
+        });
+        emojiInput.addEventListener("change", () => { task.emoji = emojiInput.value.trim(); });
+
+        // Name input
+        const nameInput = row.createEl("input", {
+          cls: "olen-onboarding-input",
+          attr: { type: "text", value: task.name, style: "flex: 1; font-size: 12px; padding: 6px 10px; margin: 0 8px;" },
+        });
+        nameInput.addEventListener("change", () => { task.name = nameInput.value.trim(); });
+
+        // Interval
+        row.createEl("span", { cls: "olen-data-sm", text: "every", attr: { style: "margin-right: 4px;" } });
+        const intervalInput = row.createEl("input", {
+          cls: "olen-onboarding-input",
+          attr: { type: "number", value: String(task.intervalDays), min: "1", style: "width: 50px; font-size: 12px; padding: 6px; text-align: center;" },
+        });
+        row.createEl("span", { cls: "olen-data-sm", text: "days", attr: { style: "margin-left: 4px;" } });
+        intervalInput.addEventListener("change", () => {
+          const v = parseInt(intervalInput.value);
+          if (!isNaN(v) && v > 0) task.intervalDays = v;
+        });
+
+        // Remove button
+        const removeBtn = row.createEl("button", {
+          cls: "olen-btn olen-btn-ghost",
+          text: "\u2715",
+          attr: { style: "margin-left: 8px; font-size: 14px; padding: 2px 6px; color: var(--olen-danger);" },
+        });
+        removeBtn.addEventListener("click", () => {
+          tasks.splice(i, 1);
+          renderRoutineList();
+        });
+      }
+    };
+
+    renderRoutineList();
+
+    // Add routine button
+    const addBtn = content.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      text: "+ Add routine",
+      attr: { style: "margin-top: 12px;" },
+    });
+    addBtn.addEventListener("click", () => {
+      this.plugin.settings.templeTasks.push({
+        id: "routine-" + Date.now(),
+        name: "New routine",
+        lastCompleted: null,
+        intervalDays: 7,
+        emoji: "\u2705",
+      });
+      renderRoutineList();
+    });
+
+    // Navigation
+    this.renderNav(content, {
+      back: 3,
+      skip: 5,
+      next: 5,
+      onNext: () => {
+        this.plugin.saveSettings();
+      },
+    });
   }
 
   private renderScreen5_Theme(root: HTMLElement): void {
-    this.renderStubScreen(root, "Choose Your Theme", "Coming next \u2014 theme selection.", 4, 6);
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "Choose Your Theme",
+      attr: { style: "text-align: center; margin-bottom: 12px;" },
+    });
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Pick a visual style for your dashboard.",
+      attr: { style: "text-align: center; margin-bottom: 24px;" },
+    });
+
+    let selectedTheme: OlenThemeMode = this.plugin.settings.themeMode;
+
+    // Theme cards
+    const themeGrid = content.createDiv({ cls: "olen-onboarding-domains" });
+    const themeCards: HTMLElement[] = [];
+
+    const themes: { mode: OlenThemeMode; subtitle: string }[] = [
+      { mode: "dark", subtitle: "Pure black, warm amber glow" },
+      { mode: "glass", subtitle: "Cool grey frosted glass" },
+      { mode: "steamy", subtitle: "Luminous white, warm steam" },
+    ];
+
+    for (const { mode, subtitle } of themes) {
+      const preset = THEME_PRESETS[mode];
+      const card = themeGrid.createDiv({
+        cls: "olen-onboarding-domain-card" + (selectedTheme === mode ? " olen-onboarding-domain-active" : ""),
+        attr: { style: `border-color: ${preset.accentGold}; cursor: pointer;` },
+      });
+
+      card.createEl("div", {
+        cls: "olen-onboarding-domain-label",
+        text: THEME_LABELS[mode],
+        attr: { style: "font-weight: 600; margin-bottom: 4px;" },
+      });
+      card.createEl("div", {
+        cls: "olen-data-sm",
+        text: subtitle,
+        attr: { style: "margin-bottom: 8px;" },
+      });
+
+      // Color swatches
+      const swatches = card.createDiv({ attr: { style: "display: flex; gap: 4px; justify-content: center;" } });
+      for (const color of [preset.bgPrimary, preset.accentGold, preset.bodyColor, preset.mindColor, preset.spiritColor]) {
+        swatches.createEl("div", {
+          attr: { style: `width: 16px; height: 16px; border-radius: 50%; background: ${color}; border: 1px solid rgba(128,128,128,0.3);` },
+        });
+      }
+
+      if (selectedTheme !== mode) card.style.opacity = "0.5";
+      themeCards.push(card);
+
+      card.addEventListener("click", () => {
+        selectedTheme = mode;
+        themeCards.forEach((c, idx) => {
+          const isActive = themes[idx].mode === mode;
+          c.classList.toggle("olen-onboarding-domain-active", isActive);
+          c.style.opacity = isActive ? "1" : "0.5";
+        });
+      });
+    }
+
+    // Background image selection
+    content.createEl("div", {
+      cls: "olen-heading",
+      text: "BACKGROUND IMAGE",
+      attr: { style: "margin-top: 24px; margin-bottom: 8px;" },
+    });
+
+    const bgImages = [
+      { path: "Olen/src/images/Background-1.png", label: "Background 1" },
+      { path: "Olen/src/images/Background-2.png", label: "Background 2" },
+      { path: "Olen/src/images/Background-3.jpg", label: "Background 3" },
+    ];
+
+    let selectedBg = this.plugin.settings.scrollingBackground;
+    const bgGrid = content.createDiv({ attr: { style: "display: flex; gap: 8px; margin-bottom: 12px;" } });
+    const bgBtns: HTMLElement[] = [];
+
+    for (const bg of bgImages) {
+      const btn = bgGrid.createEl("button", {
+        cls: "olen-btn " + (selectedBg === bg.path ? "olen-btn-primary" : "olen-btn-secondary"),
+        text: bg.label,
+        attr: { style: "font-size: 12px; padding: 6px 12px;" },
+      });
+      bgBtns.push(btn);
+
+      btn.addEventListener("click", () => {
+        selectedBg = bg.path;
+        bgBtns.forEach((b, idx) => {
+          b.className = "olen-btn " + (bgImages[idx].path === selectedBg ? "olen-btn-primary" : "olen-btn-secondary");
+        });
+        customBgInput.value = "";
+      });
+    }
+
+    // None button
+    const noneBtn = bgGrid.createEl("button", {
+      cls: "olen-btn " + (!selectedBg ? "olen-btn-primary" : "olen-btn-secondary"),
+      text: "None",
+      attr: { style: "font-size: 12px; padding: 6px 12px;" },
+    });
+    bgBtns.push(noneBtn);
+    noneBtn.addEventListener("click", () => {
+      selectedBg = "";
+      bgBtns.forEach((b) => { b.className = "olen-btn olen-btn-secondary"; });
+      noneBtn.className = "olen-btn olen-btn-primary";
+      customBgInput.value = "";
+    });
+
+    // Custom path input
+    const customBgInput = content.createEl("input", {
+      cls: "olen-onboarding-input",
+      attr: { type: "text", placeholder: "Or enter a custom vault path...", value: bgImages.some((b) => b.path === selectedBg) ? "" : selectedBg, style: "font-size: 12px; margin-bottom: 12px;" },
+    });
+    customBgInput.addEventListener("input", () => {
+      const v = customBgInput.value.trim();
+      if (v) {
+        selectedBg = v;
+        bgBtns.forEach((b) => { b.className = "olen-btn olen-btn-secondary"; });
+      }
+    });
+
+    // Darkness slider
+    const darknessField = content.createDiv({ cls: "olen-onboarding-field" });
+    const darknessLabel = darknessField.createDiv({ cls: "olen-heading" });
+    darknessLabel.setText(`BACKGROUND DARKNESS: ${this.plugin.settings.backgroundDarkness}%`);
+    const darknessSlider = darknessField.createEl("input", {
+      attr: { type: "range", min: "0", max: "100", value: String(this.plugin.settings.backgroundDarkness), style: "width: 100%;" },
+    }) as HTMLInputElement;
+    darknessSlider.addEventListener("input", () => {
+      darknessLabel.setText(`BACKGROUND DARKNESS: ${darknessSlider.value}%`);
+    });
+
+    // Quote folder
+    const quoteField = content.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-top: 12px;" } });
+    quoteField.createEl("label", { cls: "olen-heading", text: "QUOTE FOLDER" });
+    quoteField.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Vault folder with .md quote files for the workspace completion screen.",
+      attr: { style: "margin-bottom: 4px; font-size: 11px;" },
+    });
+    const quoteInput = quoteField.createEl("input", {
+      cls: "olen-onboarding-input",
+      attr: { type: "text", placeholder: "e.g. Quotes/", value: this.plugin.settings.quoteFolderPath ?? "", style: "font-size: 12px;" },
+    });
+
+    // Navigation
+    this.renderNav(content, {
+      back: 4,
+      skip: 6,
+      next: 6,
+      onNext: () => {
+        this.plugin.settings.themeMode = selectedTheme;
+        this.plugin.settings.scrollingBackground = selectedBg;
+        this.plugin.settings.backgroundDarkness = parseInt(darknessSlider.value);
+        this.plugin.settings.quoteFolderPath = quoteInput.value.trim();
+        this.plugin.saveSettings();
+      },
+    });
   }
 
   private renderScreen6_Calendar(root: HTMLElement): void {
