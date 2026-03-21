@@ -8,6 +8,7 @@ import type OlenPlugin from "../main";
 import type { CompletionMap, Completion, CalendarTask } from "../types";
 import { VIEW_TYPE_OLEN } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
+import { applyAccentColor } from "../utils/accentColor";
 import { OlenEngine } from "../engines/OlenEngine";
 import { CalendarEngine } from "../engines/CalendarEngine";
 import { renderHeroCard } from "../components/HeroCard";
@@ -574,6 +575,11 @@ export class DashboardView extends ItemView {
     for (const [key, prop] of Object.entries(cssMap)) {
       const val = (theme as any)[key];
       if (val) root.style.setProperty(prop, val);
+    }
+
+    // Override with Obsidian accent color
+    if (this.plugin.obsidianAccentColor) {
+      applyAccentColor(root, this.plugin.obsidianAccentColor);
     }
 
     // Scrolling background image

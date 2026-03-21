@@ -66,6 +66,7 @@ export function renderStrengthHeatmap(
 
   // Gather muscle intensity data from workout completions
   const muscleData = gatherMuscleIntensity(engine, completionData, settings);
+  const accent = getResolvedAccent(container);
 
   // Try to load actual SVG file, then render figure
   const svgFileName = gender === "female" ? "Muscle Woman.svg" : "Muscle Man.svg";
@@ -143,7 +144,7 @@ function renderSvgFigureWithOverlay(
     if (!bounds) continue;
 
     const intensity = muscleData.get(region.id) ?? 0;
-    const color = getIntensityColor(intensity);
+    const color = getIntensityColor(intensity, accent.gold, accent.bright);
 
     const hs = overlay.createDiv();
     hs.style.cssText = `position:absolute;top:${bounds.y}%;left:${bounds.x}%;width:${bounds.w}%;height:${bounds.h}%;cursor:pointer;border-radius:4px;transition:background 0.15s;background:${intensity > 0 ? color + "30" : "transparent"};border:1px solid ${intensity > 0 ? color + "20" : "transparent"};`;
@@ -215,7 +216,7 @@ function renderMuscleFigure(
     rect.setAttribute("height", String(h));
     rect.setAttribute("rx", "6");
     rect.setAttribute("ry", "6");
-    rect.setAttribute("fill", getIntensityColor(intensity));
+    rect.setAttribute("fill", getIntensityColor(intensity, accent.gold, accent.bright));
     rect.setAttribute("opacity", intensity > 0 ? "0.7" : "0.15");
     rect.setAttribute("class", "olen-heatmap-muscle");
     rect.setAttribute("data-muscle", region.id);
@@ -242,7 +243,7 @@ function renderMuscleFigure(
       mirror.setAttribute("height", String(h));
       mirror.setAttribute("rx", "6");
       mirror.setAttribute("ry", "6");
-      mirror.setAttribute("fill", getIntensityColor(intensity));
+      mirror.setAttribute("fill", getIntensityColor(intensity, accent.gold, accent.bright));
       mirror.setAttribute("opacity", intensity > 0 ? "0.7" : "0.15");
       mirror.setAttribute("class", "olen-heatmap-muscle");
       mirror.setAttribute("data-muscle", region.id);
@@ -374,12 +375,24 @@ function gatherMuscleIntensity(
 
 // --- Color Mapping ---
 
-function getIntensityColor(intensity: number): string {
+function getIntensityColor(intensity: number, accentGold = "#d4a843", accentBright = "#e8c35a"): string {
   if (intensity <= 0) return "rgba(242, 236, 224, 0.06)";
   if (intensity < 0.3) return "#2d4a1e";  // cool green
   if (intensity < 0.6) return "#5a8a2e";  // medium green
-  if (intensity < 0.8) return "#d4a843";  // warm gold
-  return "#e8c35a";                         // bright gold
+  if (intensity < 0.8) return accentGold;  // warm accent
+  return accentBright;                      // bright accent
+}
+
+/** Read resolved accent colors from a container's CSS variables */
+function getResolvedAccent(el: HTMLElement): { gold: string; bright: string; amber: string } {
+  const dashboard = el.closest(".olen-dashboard") as HTMLElement | null;
+  if (!dashboard) return { gold: "#d4a843", bright: "#e8c35a", amber: "#c48820" };
+  const cs = getComputedStyle(dashboard);
+  return {
+    gold: cs.getPropertyValue("--accent-gold").trim() || "#d4a843",
+    bright: cs.getPropertyValue("--accent-gold-bright").trim() || "#e8c35a",
+    amber: cs.getPropertyValue("--accent-amber").trim() || "#c48820",
+  };
 }
 
 // --- Muscle Progress Popup ---
@@ -562,7 +575,8 @@ function renderSimpleBarChart(
     }
   }
 
-  drawLineChart(container, labels, values, "#d4a843");
+    const accentGold = getComputedStyle(container).getPropertyValue("--accent-gold").trim() || "#d4a843";
+  drawLineChart(container, labels, values, accentGold);
 }
 
 function renderOverallStrengthChart(
@@ -616,7 +630,8 @@ function renderOverallStrengthChart(
     }
   }
 
-  drawLineChart(container, labels, values, "#d4a843");
+    const accentGold = getComputedStyle(container).getPropertyValue("--accent-gold").trim() || "#d4a843";
+  drawLineChart(container, labels, values, accentGold);
 }
 
 function renderMuscleBreakdownChart(
@@ -633,7 +648,8 @@ function renderMuscleBreakdownChart(
   }
 
   const now = new Date();
-  const colors = ["#d4a843", "#e8c35a", "#7b9de0", "#928d85", "#5e9a7a", "#c48820"];
+  const cs = getComputedStyle(container);
+  const colors = [cs.getPropertyValue("--accent-gold").trim() || "#d4a843", cs.getPropertyValue("--accent-gold-bright").trim() || "#e8c35a", "#7b9de0", "#928d85", "#5e9a7a", cs.getPropertyValue("--accent-amber").trim() || "#c48820"];
 
   const svgNS = "http://www.w3.org/2000/svg";
   const width = 280;
@@ -952,7 +968,8 @@ export function showMuscleSelector(
     for (const [id, rectList] of rects) {
       const isSelected = selected.has(id);
       for (const r of rectList) {
-        r.setAttribute("fill", isSelected ? "rgba(212, 168, 67, 0.5)" : "rgba(242, 236, 224, 0.06)");
+        const resolvedAccent = getResolvedAccent(r as unknown as HTMLElement);
+        r.setAttribute("fill", isSelected ? resolvedAccent.gold + "80" : "rgba(242, 236, 224, 0.06)");
       }
     }
 

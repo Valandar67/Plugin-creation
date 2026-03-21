@@ -15,10 +15,12 @@ import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
 import { getTracker } from "./tracker-bridge";
 import { THEME_PRESETS } from "./data/themes";
+import { readObsidianAccentColor, applyAccentColor } from "./utils/accentColor";
 
 export default class OlenPlugin extends Plugin {
   settings!: OlenSettings;
   templateEngine!: TemplateEngine;
+  obsidianAccentColor: string | null = null;
 
   async onload(): Promise<void> {
     // Load settings with defaults
@@ -73,6 +75,9 @@ export default class OlenPlugin extends Plugin {
     if (!this.settings.migrated) {
       await this.migrateFromTrackHabitRank();
     }
+
+    // Read Obsidian accent color
+    this.obsidianAccentColor = await readObsidianAccentColor(this.app);
 
     // Sync state from TrackHabitRank (Mythological Habit Tracker)
     this.syncFromTracker();
@@ -538,6 +543,11 @@ export default class OlenPlugin extends Plugin {
     for (const [key, cssVar] of Object.entries(cssMap)) {
       const val = (theme as any)[key];
       if (val) root.style.setProperty(cssVar, val);
+    }
+
+    // Override with Obsidian accent color
+    if (this.obsidianAccentColor) {
+      applyAccentColor(root, this.obsidianAccentColor);
     }
   }
 

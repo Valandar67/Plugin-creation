@@ -9,6 +9,7 @@ import type { Category, WeightLogFrequency, OlenThemeMode, PreferredTime } from 
 import { VIEW_TYPE_ONBOARDING } from "../constants";
 import { ONBOARDING_ACTIVITIES, buildActivityConfig, CATEGORY_META } from "../data/defaultActivities";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
+import { applyAccentColor } from "../utils/accentColor";
 
 const SCREEN_LABELS = [
   "Welcome", "How It Works", "Tartarus",
@@ -55,6 +56,11 @@ export class OnboardingView extends ItemView {
   private renderScreen(): void {
     this.contentEl.empty();
     const root = this.contentEl.createDiv({ cls: "olen-dashboard olen-onboarding" });
+
+    // Apply user's Obsidian accent color
+    if (this.plugin.obsidianAccentColor) {
+      applyAccentColor(root, this.plugin.obsidianAccentColor);
+    }
 
     this.renderProgressDots(root);
 
@@ -1225,7 +1231,7 @@ export class OnboardingView extends ItemView {
       attr: { style: "width: 280px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 24px;" },
     });
     const barInner = barOuter.createDiv({
-      attr: { style: "width: 0%; height: 100%; border-radius: 4px; background: var(--olen-accent-gold, #d4a843); transition: width 1.2s ease;" },
+      attr: { style: "width: 0%; height: 100%; border-radius: 4px; background: var(--accent-gold, #d4a843); transition: width 1.2s ease;" },
     });
 
     // Punchline area (hidden initially)

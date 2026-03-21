@@ -13,6 +13,7 @@ import type {
 } from "../types";
 import { VIEW_TYPE_DREAMBOARD } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
+import { applyAccentColor } from "../utils/accentColor";
 
 export class DreamBoardView extends ItemView {
   plugin: OlenPlugin;
@@ -453,6 +454,10 @@ export class DreamBoardView extends ItemView {
 
     const maxGoals = olderGoalCount + recentGoalEvents.length;
 
+    // Resolve accent color from CSS custom properties (SVG attributes can't use var())
+    const accentBright = getComputedStyle(graphCard).getPropertyValue("--accent-gold-bright").trim() || "#e8c35a";
+    const textSecondary = getComputedStyle(graphCard).getPropertyValue("--text-secondary").trim() || "#c8c0b2";
+
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "olen-dreamboard-graph-svg");
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -481,7 +486,7 @@ export class DreamBoardView extends ItemView {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", points.join(" "));
     path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "var(--accent-gold-bright, #e8c35a)");
+    path.setAttribute("stroke", accentBright);
     path.setAttribute("stroke-width", "2.5");
     path.setAttribute("stroke-linecap", "round");
     path.setAttribute("stroke-linejoin", "round");
@@ -499,7 +504,7 @@ export class DreamBoardView extends ItemView {
       circle.setAttribute("cx", String(x));
       circle.setAttribute("cy", String(y));
       circle.setAttribute("r", "5");
-      circle.setAttribute("fill", "var(--accent-gold-bright, #e8c35a)");
+      circle.setAttribute("fill", accentBright);
       svg.appendChild(circle);
 
       // Goal title above the marker
@@ -508,7 +513,7 @@ export class DreamBoardView extends ItemView {
       titleLabel.setAttribute("x", String(x));
       titleLabel.setAttribute("y", String(Math.max(y - 16, 8)));
       titleLabel.setAttribute("text-anchor", "middle");
-      titleLabel.setAttribute("fill", "var(--accent-gold-bright, #e8c35a)");
+      titleLabel.setAttribute("fill", accentBright);
       titleLabel.setAttribute("font-size", "9");
       titleLabel.setAttribute("font-weight", "600");
       titleLabel.textContent = titleText;
@@ -520,7 +525,7 @@ export class DreamBoardView extends ItemView {
       dateLabel.setAttribute("x", String(x));
       dateLabel.setAttribute("y", String(Math.max(y - 7, 16)));
       dateLabel.setAttribute("text-anchor", "middle");
-      dateLabel.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+      dateLabel.setAttribute("fill", textSecondary);
       dateLabel.setAttribute("font-size", "8");
       dateLabel.textContent = dateStr;
       svg.appendChild(dateLabel);
@@ -533,7 +538,7 @@ export class DreamBoardView extends ItemView {
       circle.setAttribute("cx", String(x));
       circle.setAttribute("cy", String(H - 8));
       circle.setAttribute("r", "2.5");
-      circle.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+      circle.setAttribute("fill", textSecondary);
       svg.appendChild(circle);
     }
 
@@ -541,7 +546,7 @@ export class DreamBoardView extends ItemView {
     const yearLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
     yearLabel.setAttribute("x", String(PAD_L));
     yearLabel.setAttribute("y", String(H - 4));
-    yearLabel.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+    yearLabel.setAttribute("fill", textSecondary);
     yearLabel.setAttribute("font-size", "9");
     yearLabel.textContent = String(now.getFullYear());
     svg.appendChild(yearLabel);
@@ -551,7 +556,7 @@ export class DreamBoardView extends ItemView {
     rangeLabel.setAttribute("x", String(W - PAD_R));
     rangeLabel.setAttribute("y", String(H - 4));
     rangeLabel.setAttribute("text-anchor", "end");
-    rangeLabel.setAttribute("fill", "var(--text-secondary, #c8c0b2)");
+    rangeLabel.setAttribute("fill", textSecondary);
     rangeLabel.setAttribute("font-size", "9");
     rangeLabel.textContent = "Last 30 days";
     svg.appendChild(rangeLabel);
@@ -1085,5 +1090,10 @@ export class DreamBoardView extends ItemView {
     if (theme.shadowCard) root.style.setProperty("--shadow-card", theme.shadowCard);
     if (theme.danger) root.style.setProperty("--danger", theme.danger);
     if (theme.success) root.style.setProperty("--success", theme.success);
+
+    // Override with Obsidian accent color
+    if (this.plugin.obsidianAccentColor) {
+      applyAccentColor(root, this.plugin.obsidianAccentColor);
+    }
   }
 }

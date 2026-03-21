@@ -10,6 +10,7 @@ import type OlenPlugin from "../main";
 import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult } from "../types";
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
+import { applyAccentColor } from "../utils/accentColor";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -266,6 +267,11 @@ export class WorkspaceView extends ItemView {
     for (const [key, prop] of Object.entries(cssMap)) {
       const val = (theme as any)[key];
       if (val) root.style.setProperty(prop, val);
+    }
+
+    // Override with Obsidian accent color
+    if (this.plugin.obsidianAccentColor) {
+      applyAccentColor(root, this.plugin.obsidianAccentColor);
     }
   }
 

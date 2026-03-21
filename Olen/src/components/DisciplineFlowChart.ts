@@ -46,10 +46,17 @@ export function renderDisciplineFlowChart(
   svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
   svg.classList.add("olen-disc-flow-donut");
 
+  // Resolve CSS custom properties for SVG attributes (which can't use var())
+  const cs = getComputedStyle(card);
+  const resolvedSpiritColor = cs.getPropertyValue("--spirit-color").trim() || "#928d85";
+  const resolvedAccentGold = cs.getPropertyValue("--accent-gold").trim() || "#d4a843";
+  const resolvedDanger = cs.getPropertyValue("--danger").trim() || "#a83240";
+  const resolvedTextPrimary = cs.getPropertyValue("--text-primary").trim() || "#f2ece0";
+
   const segments = [
-    { count: counts.discipline, color: "var(--spirit-color)", label: "Discipline" },
-    { count: counts.flow, color: "var(--accent-gold)", label: "Flow" },
-    { count: counts.skipped, color: "var(--danger)", label: "Skipped" },
+    { count: counts.discipline, color: resolvedSpiritColor, label: "Discipline" },
+    { count: counts.flow, color: resolvedAccentGold, label: "Flow" },
+    { count: counts.skipped, color: resolvedDanger, label: "Skipped" },
   ];
 
   let currentOffset = 0;
@@ -78,7 +85,7 @@ export function renderDisciplineFlowChart(
   text.setAttribute("x", String(size / 2));
   text.setAttribute("y", String(size / 2 + 4));
   text.setAttribute("text-anchor", "middle");
-  text.setAttribute("fill", "var(--text-primary)");
+  text.setAttribute("fill", resolvedTextPrimary);
   text.setAttribute("font-size", "14");
   text.setAttribute("font-family", "SF Mono, Courier New, monospace");
   text.textContent = String(counts.total);
