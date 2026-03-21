@@ -1,5 +1,6 @@
 // ============================================================
-// Olen — Onboarding Wizard (9-screen flow)
+// Olen — Onboarding Wizard (12-screen flow)
+// 3 intro screens + 9 configuration screens
 // ============================================================
 
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
@@ -10,6 +11,7 @@ import { ONBOARDING_ACTIVITIES, buildActivityConfig, CATEGORY_META } from "../da
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 
 const SCREEN_LABELS = [
+  "Welcome", "How It Works", "Tartarus",
   "Identity", "Stats", "Domains", "Activities",
   "Routines", "Theme", "Calendar", "Personalizing", "Launch",
 ];
@@ -57,15 +59,18 @@ export class OnboardingView extends ItemView {
     this.renderProgressDots(root);
 
     switch (this.currentScreen) {
-      case 0: this.renderScreen0_Identity(root); break;
-      case 1: this.renderScreen1_Stats(root); break;
-      case 2: this.renderScreen2_Domains(root); break;
-      case 3: this.renderScreen3_Activities(root); break;
-      case 4: this.renderScreen4_Routines(root); break;
-      case 5: this.renderScreen5_Theme(root); break;
-      case 6: this.renderScreen6_Calendar(root); break;
-      case 7: this.renderScreen7_Personalizing(root); break;
-      case 8: this.renderScreen8_Launch(root); break;
+      case 0: this.renderIntro0_Welcome(root); break;
+      case 1: this.renderIntro1_HowItWorks(root); break;
+      case 2: this.renderIntro2_Tartarus(root); break;
+      case 3: this.renderScreen0_Identity(root); break;
+      case 4: this.renderScreen1_Stats(root); break;
+      case 5: this.renderScreen2_Domains(root); break;
+      case 6: this.renderScreen3_Activities(root); break;
+      case 7: this.renderScreen4_Routines(root); break;
+      case 8: this.renderScreen5_Theme(root); break;
+      case 9: this.renderScreen6_Calendar(root); break;
+      case 10: this.renderScreen7_Personalizing(root); break;
+      case 11: this.renderScreen8_Launch(root); break;
     }
   }
 
@@ -121,6 +126,163 @@ export class OnboardingView extends ItemView {
         this.goto(opts.next!);
       });
     }
+  }
+
+  // ── Intro 0: "Welcome to Olen" ───────────────────────────
+
+  private renderIntro0_Welcome(root: HTMLElement): void {
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+    content.setAttribute("style", "display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 450px; text-align: center;");
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "Welcome to Olen",
+      attr: { style: "margin-bottom: 12px; font-size: 42px;" },
+    });
+
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "A mythological life-operating system",
+      attr: { style: "margin-bottom: 32px; font-size: 16px; opacity: 0.7;" },
+    });
+
+    content.createEl("div", {
+      cls: "olen-body",
+      text: "Olen helps you build discipline through habit tracking, daily planning, and progress visualization — all inside Obsidian.",
+      attr: { style: "max-width: 400px; margin-bottom: 12px; line-height: 1.7;" },
+    });
+
+    content.createEl("div", {
+      cls: "olen-body",
+      text: "This wizard will walk you through setting up your activities, routines, theme, and more. You can always change these later in Settings.",
+      attr: { style: "max-width: 400px; margin-bottom: 40px; line-height: 1.7; opacity: 0.6;" },
+    });
+
+    const btn = content.createEl("button", {
+      cls: "olen-btn olen-btn-primary olen-btn-large",
+      text: "LET'S GO \u2192",
+      attr: { style: "min-width: 200px;" },
+    });
+    btn.addEventListener("click", () => this.goto(1));
+  }
+
+  // ── Intro 1: "How It Works" ────────────────────────────
+
+  private renderIntro1_HowItWorks(root: HTMLElement): void {
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "How It Works",
+      attr: { style: "text-align: center; margin-bottom: 12px;" },
+    });
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Four pillars that power your daily system.",
+      attr: { style: "text-align: center; margin-bottom: 32px;" },
+    });
+
+    const pillars = [
+      { icon: "\u2694\uFE0F", title: "Activities", desc: "Track habits across Body, Mind, and Spirit domains. Set weekly targets and watch your consistency grow." },
+      { icon: "\u{1F4C5}", title: "YOUR DAY", desc: "A daily schedule built from your activities and calendar. Know exactly what to do and when." },
+      { icon: "\u{1F3AF}", title: "Workspaces", desc: "Focused sessions with timers and completion tracking. Enter a workspace, do the work, log the result." },
+      { icon: "\u{1F4C8}", title: "Progress", desc: "XP, streaks, weekly rhythm, and analytics. See your discipline visualized over time." },
+    ];
+
+    const grid = content.createDiv({ cls: "olen-onboarding-domains", attr: { style: "grid-template-columns: repeat(2, 1fr);" } });
+
+    for (const p of pillars) {
+      const card = grid.createDiv({ cls: "olen-onboarding-domain-card olen-onboarding-domain-active" });
+      card.style.cursor = "default";
+      card.createEl("div", { cls: "olen-onboarding-domain-icon", text: p.icon });
+      card.createEl("div", { cls: "olen-onboarding-domain-label", text: p.title, attr: { style: "font-weight: 600; margin-bottom: 6px;" } });
+      card.createEl("div", { cls: "olen-data-sm", text: p.desc, attr: { style: "opacity: 0.7; line-height: 1.5;" } });
+    }
+
+    this.renderNav(content, {
+      back: 0,
+      next: 2,
+    });
+  }
+
+  // ── Intro 2: "The Tartarus System" ─────────────────────
+
+  private renderIntro2_Tartarus(root: HTMLElement): void {
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+
+    content.createEl("div", {
+      cls: "olen-display",
+      text: "The Tartarus System",
+      attr: { style: "text-align: center; margin-bottom: 12px;" },
+    });
+    content.createEl("div", {
+      cls: "olen-body-italic",
+      text: "An RPG layer from the same developer — built to work alongside Olen.",
+      attr: { style: "text-align: center; margin-bottom: 24px;" },
+    });
+
+    // Explanation card
+    const card = content.createDiv({ cls: "olen-card", attr: { style: "padding: 20px; margin-bottom: 24px;" } });
+    card.style.setProperty("--i", "0");
+
+    card.createEl("div", {
+      cls: "olen-body",
+      text: "Tartarus turns your real discipline into a mythological RPG. Your habits deal damage to bosses, your consistency earns you ranks, and neglecting activities lets darkness creep back in.",
+      attr: { style: "margin-bottom: 16px; line-height: 1.7;" },
+    });
+    card.createEl("div", {
+      cls: "olen-body",
+      text: "Olen tracks your discipline. Tartarus turns it into a game. They complete each other.",
+      attr: { style: "font-weight: 600; margin-bottom: 16px;" },
+    });
+
+    // Feature list
+    const features = [
+      "\u2694\uFE0F Boss fights tied to your weekly targets",
+      "\u{1F3C6} 13 mythological ranks to climb",
+      "\u{1F525} Neglect penalties and Tartarus penance mode",
+      "\u{1F4A0} Dynamic titles based on your category balance",
+    ];
+    const featureList = card.createDiv({ attr: { style: "padding-left: 4px;" } });
+    for (const f of features) {
+      featureList.createEl("div", {
+        cls: "olen-body",
+        text: f,
+        attr: { style: "margin-bottom: 8px; opacity: 0.8;" },
+      });
+    }
+
+    // Toggle
+    const toggleRow = content.createDiv({
+      attr: { style: "display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);" },
+    });
+
+    const toggleInfo = toggleRow.createDiv();
+    toggleInfo.createEl("div", {
+      cls: "olen-heading",
+      text: "ENABLE TARTARUS",
+    });
+    toggleInfo.createEl("div", {
+      cls: "olen-data-sm",
+      text: "Turn off for a simpler experience without bosses or ranks.",
+      attr: { style: "opacity: 0.6; margin-top: 4px;" },
+    });
+
+    const toggle = toggleRow.createEl("input", {
+      attr: { type: "checkbox", style: "width: 20px; height: 20px; accent-color: var(--accent-gold, #d4a843); cursor: pointer; flex-shrink: 0; margin-left: 16px;" },
+    }) as HTMLInputElement;
+    toggle.checked = this.plugin.settings.enableTartarus !== false;
+    toggle.addEventListener("change", () => {
+      this.plugin.settings.enableTartarus = toggle.checked;
+    });
+
+    this.renderNav(content, {
+      back: 1,
+      next: 3,
+      onNext: () => {
+        this.plugin.saveSettings();
+      },
+    });
   }
 
   // ── Screen 0: "Who Are You Becoming?" (Identity) ────────
@@ -209,10 +371,11 @@ export class OnboardingView extends ItemView {
       },
     });
 
-    // Navigation (screen 0: no back)
+    // Navigation
     this.renderNav(content, {
-      skip: 1,
-      next: 1,
+      back: 2,
+      skip: 4,
+      next: 4,
       onNext: () => {
         const name = nameInput.value.trim();
         if (name) this.plugin.settings.userName = name;
@@ -354,9 +517,9 @@ export class OnboardingView extends ItemView {
 
     // Navigation
     this.renderNav(content, {
-      back: 0,
-      skip: 2,
-      next: 2,
+      back: 3,
+      skip: 5,
+      next: 5,
       onNext: () => {
         const h = parseInt(heightInput.value);
         if (!isNaN(h) && h > 0) stats.height = h;
@@ -431,9 +594,9 @@ export class OnboardingView extends ItemView {
 
     // Navigation
     this.renderNav(content, {
-      back: 1,
-      skip: 3,
-      next: 3,
+      back: 4,
+      skip: 6,
+      next: 6,
       onNext: () => {
         if (enabledCategories.size === 0) {
           new Notice("Select at least one domain");
@@ -660,9 +823,9 @@ export class OnboardingView extends ItemView {
 
     // Navigation
     this.renderNav(content, {
-      back: 2,
-      skip: 4,
-      next: 4,
+      back: 5,
+      skip: 7,
+      next: 7,
       onNext: () => {
         this.plugin.saveSettings();
       },
@@ -756,9 +919,9 @@ export class OnboardingView extends ItemView {
 
     // Navigation
     this.renderNav(content, {
-      back: 3,
-      skip: 5,
-      next: 5,
+      back: 6,
+      skip: 8,
+      next: 8,
       onNext: () => {
         this.plugin.saveSettings();
       },
@@ -924,9 +1087,9 @@ export class OnboardingView extends ItemView {
 
     // Navigation
     this.renderNav(content, {
-      back: 4,
-      skip: 6,
-      next: 6,
+      back: 7,
+      skip: 9,
+      next: 9,
       onNext: () => {
         this.plugin.settings.themeMode = selectedTheme;
         this.plugin.settings.scrollingBackground = selectedBg;
@@ -1019,9 +1182,9 @@ export class OnboardingView extends ItemView {
 
     // Navigation
     this.renderNav(content, {
-      back: 5,
-      skip: 7,
-      next: 7,
+      back: 8,
+      skip: 10,
+      next: 10,
       onNext: () => {
         cal.dailyNotesFolder = dnFolderInput.value.trim();
         cal.dailyNotesFormat = dnFormatInput.value.trim() || "YYYY-MM-DD";
@@ -1123,7 +1286,7 @@ export class OnboardingView extends ItemView {
         });
         nextBtn.addEventListener("click", () => {
           timeouts.forEach(clearTimeout);
-          this.goto(8);
+          this.goto(11);
         });
       }
     };
@@ -1171,7 +1334,7 @@ export class OnboardingView extends ItemView {
       cls: "olen-btn olen-btn-secondary",
       text: "\u2190 BACK",
     });
-    backBtn.addEventListener("click", () => this.goto(7));
+    backBtn.addEventListener("click", () => this.goto(10));
 
     const enterBtn = actions.createEl("button", {
       cls: "olen-btn olen-btn-primary olen-btn-large",
