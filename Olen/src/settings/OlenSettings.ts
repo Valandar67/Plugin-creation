@@ -36,6 +36,9 @@ export class OlenSettingTab extends PluginSettingTab {
     // Quick status bar
     this.renderStatusBar(containerEl);
 
+    // Wizard actions
+    this.renderWizardActions(containerEl);
+
     // Sections
     this.renderProfileSection(containerEl);
     this.renderPersonalStatsSection(containerEl);
@@ -145,6 +148,44 @@ export class OlenSettingTab extends PluginSettingTab {
       text: this.plugin.settings.migrated ? "Migrated" : "Not migrated",
       attr: { style: "font-style: italic;" },
     });
+  }
+
+  // --- Wizard Actions ---
+
+  private renderWizardActions(container: HTMLElement): void {
+    const row = container.createDiv({
+      attr: {
+        style: `
+          display: flex; gap: 8px; margin-bottom: 16px;
+        `,
+      },
+    });
+
+    // Resume Wizard
+    new Setting(row)
+      .setName("Resume Wizard")
+      .setDesc("Continue the setup wizard where you left off")
+      .addButton((btn) => {
+        btn
+          .setButtonText("Resume Wizard")
+          .setCta()
+          .onClick(() => {
+            this.plugin.activateOnboarding();
+          });
+      });
+
+    // Start Wizard (reset)
+    new Setting(row)
+      .setName("Start Wizard")
+      .setDesc("Reset all settings and start over")
+      .addButton((btn) => {
+        btn
+          .setButtonText("Reset & Start Wizard")
+          .setWarning()
+          .onClick(() => {
+            this.plugin.confirmAndResetWizard();
+          });
+      });
   }
 
   // --- Profile ---

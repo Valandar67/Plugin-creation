@@ -335,7 +335,7 @@ export default class OlenPlugin extends Plugin {
   }
 
   /** Show a warning modal, then reset all settings and launch the wizard from screen 0 */
-  private confirmAndResetWizard(): void {
+  confirmAndResetWizard(): void {
     const modal = new Modal(this.app);
     modal.titleEl.setText("Reset All Settings?");
 
