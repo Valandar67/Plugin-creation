@@ -11,15 +11,13 @@ import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 
 const SCREEN_LABELS = [
   "Identity", "Stats", "Domains", "Activities",
-  "Routines", "Theme", "Calendar", "...", "Launch",
+  "Routines", "Theme", "Calendar", "Launch",
 ];
 const TOTAL_SCREENS = SCREEN_LABELS.length;
 
 export class OnboardingView extends ItemView {
   plugin: OlenPlugin;
   private currentScreen = 0;
-  private activeTimeouts: ReturnType<typeof setTimeout>[] = [];
-
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
     this.plugin = plugin;
@@ -53,10 +51,6 @@ export class OnboardingView extends ItemView {
   }
 
   private renderScreen(): void {
-    // Clear any pending timeouts (e.g. from Screen 7 animation)
-    this.activeTimeouts.forEach(clearTimeout);
-    this.activeTimeouts = [];
-
     this.contentEl.empty();
     const root = this.contentEl.createDiv({ cls: "olen-dashboard olen-onboarding" });
 
@@ -70,8 +64,7 @@ export class OnboardingView extends ItemView {
       case 4: this.renderScreen4_Routines(root); break;
       case 5: this.renderScreen5_Theme(root); break;
       case 6: this.renderScreen6_Calendar(root); break;
-      case 7: this.renderScreen7_Personalizing(root); break;
-      case 8: this.renderScreen8_Launch(root); break;
+      case 7: this.renderScreen7_Launch(root); break;
     }
   }
 
@@ -117,7 +110,7 @@ export class OnboardingView extends ItemView {
     if (opts.next !== undefined) {
       const nextBtn = actions.createEl("button", {
         cls: "olen-btn olen-btn-primary olen-btn-large",
-        text: opts.nextLabel ?? "CONTINUE \u2192",
+        text: opts.nextLabel ?? "NEXT \u2192",
       });
       nextBtn.addEventListener("click", () => {
         if (opts.onNext) {
@@ -193,7 +186,7 @@ export class OnboardingView extends ItemView {
     });
     const goalsInput = goalsField.createEl("textarea", {
       cls: "olen-onboarding-textarea",
-      attr: { placeholder: "Run a marathon\nRead 30 books\nLearn Spanish", rows: "4" },
+      attr: { placeholder: "Get stronger\nLearn a new skill\nBuild a habit", rows: "4" },
     });
     // Pre-fill from existing goals
     goalsInput.value = this.plugin.settings.goals.map((g) => g.text).join("\n");
@@ -272,7 +265,7 @@ export class OnboardingView extends ItemView {
     heightField.createEl("label", { cls: "olen-heading", text: "HEIGHT (CM)" });
     const heightInput = heightField.createEl("input", {
       cls: "olen-onboarding-input",
-      attr: { type: "number", placeholder: "175", value: stats.height ? String(stats.height) : "" },
+      attr: { type: "number", placeholder: "e.g. 170", value: stats.height ? String(stats.height) : "" },
     });
 
     // Birthdate
@@ -310,7 +303,7 @@ export class OnboardingView extends ItemView {
     weightField.createEl("label", { cls: "olen-heading", text: "CURRENT WEIGHT (KG)" });
     const weightInput = weightField.createEl("input", {
       cls: "olen-onboarding-input",
-      attr: { type: "number", placeholder: "75", value: stats.currentWeight ? String(stats.currentWeight) : "" },
+      attr: { type: "number", placeholder: "e.g. 70", value: stats.currentWeight ? String(stats.currentWeight) : "" },
     });
 
     // Weight Log Frequency
@@ -394,14 +387,15 @@ export class OnboardingView extends ItemView {
     });
 
     const categories: Category[] = ["body", "mind", "spirit"];
-    const enabledCategories = new Set<Category>(categories);
+    const enabledCategories = new Set<Category>();
 
     const grid = content.createDiv({ cls: "olen-onboarding-domains" });
 
     for (const cat of categories) {
       const meta = CATEGORY_META[cat];
-      const card = grid.createDiv({ cls: "olen-onboarding-domain-card olen-onboarding-domain-active" });
+      const card = grid.createDiv({ cls: "olen-onboarding-domain-card" });
       card.style.borderColor = meta.color;
+      card.style.opacity = "0.4";
 
       card.createEl("div", { cls: "olen-onboarding-domain-icon", text: meta.icon });
       card.createEl("div", { cls: "olen-onboarding-domain-label", text: meta.label });
@@ -484,7 +478,14 @@ export class OnboardingView extends ItemView {
 
       for (const template of group.activities) {
         const existing = this.plugin.settings.activities.find((a) => a.id === template.id);
-        const isEnabled = existing ? existing.enabled : false;
+        const isEnabled = existing ? existing.enabled : true;
+
+        // If not yet in settings, add it as enabled by default
+        if (!existing) {
+          const newActivity = buildActivityConfig(template, group.category);
+          newActivity.enabled = true;
+          this.plugin.settings.activities.push(newActivity);
+        }
 
         const row = groupEl.createDiv({ cls: "olen-onboarding-activity-row" });
 
@@ -513,7 +514,7 @@ export class OnboardingView extends ItemView {
           attr: { style: "display: none; padding: 8px 0 16px 28px;" },
         });
 
-        const activity = existing ?? buildActivityConfig(template, group.category);
+        const activity = this.plugin.settings.activities.find((a) => a.id === template.id)!;
 
         // Folder
         const folderRow = configPanel.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-bottom: 8px;" } });
@@ -575,23 +576,13 @@ export class OnboardingView extends ItemView {
           activity.preferredTime = timeSelect.value as PreferredTime;
         };
 
-        let addedToSettings = !!existing;
         toggle.addEventListener("change", () => {
-          if (addedToSettings) {
-            activity.enabled = toggle.checked;
-          } else if (toggle.checked) {
-            applyConfig();
-            activity.enabled = true;
-            this.plugin.settings.activities.push(activity);
-            addedToSettings = true;
-          }
+          activity.enabled = toggle.checked;
         });
 
         // Save config when panel inputs change
         for (const input of [folderInput, propInput, durInput, timeSelect, targetRange]) {
-          input.addEventListener("change", () => {
-            if (addedToSettings) applyConfig();
-          });
+          input.addEventListener("change", () => applyConfig());
         }
       }
     }
@@ -662,10 +653,8 @@ export class OnboardingView extends ItemView {
         estimatedDuration: parseInt(cDur.value) || 30,
       });
       new Notice(`Added ${name}`);
-      // Reset form
-      cName.value = ""; cEmoji.value = ""; cFolder.value = ""; cProp.value = "";
-      cTarget.value = ""; cDur.value = "";
-      customForm.style.display = "none";
+      // Re-render to show the new activity
+      this.renderScreen();
     });
 
     // Navigation
@@ -709,24 +698,24 @@ export class OnboardingView extends ItemView {
         // Emoji input
         const emojiInput = row.createEl("input", {
           cls: "olen-onboarding-input",
-          attr: { type: "text", value: task.emoji, style: "width: 40px; text-align: center; font-size: 12px; padding: 6px;" },
+          attr: { type: "text", value: task.emoji, style: "width: 44px; min-width: 44px; text-align: center; font-size: 16px; padding: 6px 4px; flex-shrink: 0;" },
         });
         emojiInput.addEventListener("change", () => { task.emoji = emojiInput.value.trim(); });
 
         // Name input
         const nameInput = row.createEl("input", {
           cls: "olen-onboarding-input",
-          attr: { type: "text", value: task.name, style: "flex: 1; font-size: 12px; padding: 6px 10px; margin: 0 8px;" },
+          attr: { type: "text", value: task.name, style: "flex: 1; min-width: 80px; font-size: 13px; padding: 6px 10px;" },
         });
         nameInput.addEventListener("change", () => { task.name = nameInput.value.trim(); });
 
         // Interval
-        row.createEl("span", { cls: "olen-data-sm", text: "every", attr: { style: "margin-right: 4px;" } });
+        row.createEl("span", { cls: "olen-data-sm", text: "every", attr: { style: "margin: 0 4px; flex-shrink: 0;" } });
         const intervalInput = row.createEl("input", {
           cls: "olen-onboarding-input",
-          attr: { type: "number", value: String(task.intervalDays), min: "1", style: "width: 50px; font-size: 12px; padding: 6px; text-align: center;" },
+          attr: { type: "number", value: String(task.intervalDays), min: "1", style: "width: 50px; min-width: 50px; font-size: 13px; padding: 6px; text-align: center; flex-shrink: 0;" },
         });
-        row.createEl("span", { cls: "olen-data-sm", text: "days", attr: { style: "margin-left: 4px;" } });
+        row.createEl("span", { cls: "olen-data-sm", text: "d", attr: { style: "margin-left: 2px; flex-shrink: 0;" } });
         intervalInput.addEventListener("change", () => {
           const v = parseInt(intervalInput.value);
           if (!isNaN(v) && v > 0) task.intervalDays = v;
@@ -847,10 +836,12 @@ export class OnboardingView extends ItemView {
       attr: { style: "margin-top: 24px; margin-bottom: 8px;" },
     });
 
+    // Images are copied to the plugin's install directory during build
+    const pluginDir = this.plugin.manifest.dir ?? "";
     const bgImages = [
-      { path: "Olen/src/images/Background-1.png", label: "Background 1" },
-      { path: "Olen/src/images/Background-2.png", label: "Background 2" },
-      { path: "Olen/src/images/Background-3.jpg", label: "Background 3" },
+      { path: `${pluginDir}/Background-1.png`, label: "Background 1" },
+      { path: `${pluginDir}/Background-2.png`, label: "Background 2" },
+      { path: `${pluginDir}/Background-3.jpg`, label: "Background 3" },
     ];
 
     let selectedBg = this.plugin.settings.scrollingBackground;
@@ -1038,89 +1029,7 @@ export class OnboardingView extends ItemView {
     });
   }
 
-  private renderScreen7_Personalizing(root: HTMLElement): void {
-    const content = root.createDiv({ cls: "olen-onboarding-screen" });
-    content.setAttribute("style", "display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;");
-
-    const messages = [
-      "Calibrating your discipline matrix...",
-      "Synergizing your paradigms...",
-      "Optimizing serotonin delivery pipeline...",
-      "Monetizing your attention span...",
-      "Injecting motivational nanobots...",
-      "Deploying paywall in 3... 2...",
-    ];
-
-    const statusEl = content.createEl("div", {
-      cls: "olen-body",
-      attr: { style: "text-align: center; margin-bottom: 16px; min-height: 24px;" },
-    });
-
-    // Progress bar container
-    const barOuter = content.createDiv({
-      attr: { style: "width: 280px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 24px;" },
-    });
-    const barInner = barOuter.createDiv({
-      attr: { style: "width: 0%; height: 100%; border-radius: 4px; background: var(--olen-accent-gold, #d4a843); transition: width 1.2s ease;" },
-    });
-
-    // Punchline area (hidden initially)
-    const punchline = content.createDiv({
-      attr: { style: "text-align: center; opacity: 0; transition: opacity 0.6s ease;" },
-    });
-
-    // Animate through messages
-    let i = 0;
-    const step = () => {
-      if (i < messages.length) {
-        statusEl.setText(messages[i]);
-        barInner.style.width = `${((i + 1) / messages.length) * 100}%`;
-        i++;
-        this.activeTimeouts.push(setTimeout(step, 1200));
-      } else {
-        // Record-scratch moment
-        statusEl.setText("");
-        barOuter.style.display = "none";
-        punchline.style.opacity = "1";
-
-        punchline.createEl("div", {
-          cls: "olen-display",
-          text: "Just kidding.",
-          attr: { style: "font-size: 28px; margin-bottom: 12px;" },
-        });
-        punchline.createEl("div", {
-          cls: "olen-body",
-          text: "We actually saved your preferences. All of them. For free.",
-          attr: { style: "margin-bottom: 4px;" },
-        });
-        punchline.createEl("div", {
-          cls: "olen-body-italic",
-          text: "Wild concept, right?",
-          attr: { style: "margin-bottom: 24px; opacity: 0.6;" },
-        });
-        punchline.createEl("div", {
-          cls: "olen-body",
-          text: `You're good to go, ${this.plugin.settings.userName}.`,
-          attr: { style: "font-weight: 600; margin-bottom: 24px;" },
-        });
-
-        // Auto-advance after a short pause
-        this.activeTimeouts.push(setTimeout(() => this.goto(8), 3000));
-
-        // Or let them click to skip
-        const skipBtn = punchline.createEl("button", {
-          cls: "olen-btn olen-btn-primary olen-btn-large",
-          text: "CONTINUE \u2192",
-        });
-        skipBtn.addEventListener("click", () => this.goto(8));
-      }
-    };
-
-    // Start the sequence
-    this.activeTimeouts.push(setTimeout(step, 500));
-  }
-
-  private renderScreen8_Launch(root: HTMLElement): void {
+  private renderScreen7_Launch(root: HTMLElement): void {
     const content = root.createDiv({ cls: "olen-onboarding-screen olen-onboarding-final" });
 
     content.createEl("div", {
@@ -1148,7 +1057,7 @@ export class OnboardingView extends ItemView {
     const enabledCount = this.plugin.settings.activities.filter((a) => a.enabled).length;
     content.createEl("div", {
       cls: "olen-body",
-      text: `${enabledCount} activities armed. The arena awaits.`,
+      text: `${enabledCount} activities armed. Olen awaits.`,
       attr: { style: "text-align: center; margin: 24px 0;" },
     });
 
@@ -1159,11 +1068,11 @@ export class OnboardingView extends ItemView {
       cls: "olen-btn olen-btn-secondary",
       text: "\u2190 BACK",
     });
-    backBtn.addEventListener("click", () => this.goto(7));
+    backBtn.addEventListener("click", () => this.goto(6));
 
     const enterBtn = actions.createEl("button", {
       cls: "olen-btn olen-btn-primary olen-btn-large",
-      text: "ENTER THE ARENA",
+      text: "BEGIN",
     });
     enterBtn.addEventListener("click", async () => {
       this.plugin.settings.onboardingComplete = true;

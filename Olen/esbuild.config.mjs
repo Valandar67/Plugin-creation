@@ -1,7 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
-import { copyFileSync } from "fs";
+import { copyFileSync, mkdirSync, readdirSync } from "fs";
 
 const prod = process.argv[2] === "production";
 const watch = process.argv.includes("--watch");
@@ -48,4 +48,17 @@ try {
   console.log("Copied styles.css to plugin root");
 } catch (e) {
   console.warn("Could not copy styles.css:", e.message);
+}
+
+// Copy background images to plugin root
+try {
+  const imgDir = "src/images";
+  for (const file of readdirSync(imgDir)) {
+    if (/^Background-\d+\.(png|jpg|jpeg)$/i.test(file)) {
+      copyFileSync(`${imgDir}/${file}`, file);
+      console.log(`Copied ${file} to plugin root`);
+    }
+  }
+} catch (e) {
+  console.warn("Could not copy background images:", e.message);
 }

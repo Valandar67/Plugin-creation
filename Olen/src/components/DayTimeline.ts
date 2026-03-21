@@ -261,6 +261,24 @@ function showReorderModal(
   modal.className = "olen-reorder-modal";
   document.body.appendChild(modal);
 
+  // Copy theme CSS variables from .olen-dashboard so modal inherits theme colors
+  const dashboard = document.querySelector(".olen-dashboard") as HTMLElement | null;
+  if (dashboard) {
+    const cs = getComputedStyle(dashboard);
+    const vars = [
+      "--bg-primary", "--bg-secondary", "--card-bg", "--card-bg-solid",
+      "--card-border", "--card-border-hover", "--text-primary", "--text-secondary",
+      "--text-muted", "--text-dim", "--accent-gold", "--accent-gold-bright",
+      "--accent-gold-dim", "--accent-amber", "--accent-warm", "--danger",
+      "--danger-dim", "--success", "--success-dim", "--shadow-card", "--shadow-deep",
+    ];
+    for (const v of vars) {
+      const val = cs.getPropertyValue(v);
+      if (val) modal.style.setProperty(v, val);
+    }
+    backdrop.style.setProperty("--bg-primary", cs.getPropertyValue("--bg-primary"));
+  }
+
   // Title
   const title = modal.createEl("div", { cls: "olen-reorder-title", text: "Reorder Schedule" });
 

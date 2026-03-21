@@ -36,9 +36,6 @@ export class OlenSettingTab extends PluginSettingTab {
     // Quick status bar
     this.renderStatusBar(containerEl);
 
-    // Wizard actions
-    this.renderWizardActions(containerEl);
-
     // Sections
     this.renderProfileSection(containerEl);
     this.renderPersonalStatsSection(containerEl);
@@ -151,32 +148,6 @@ export class OlenSettingTab extends PluginSettingTab {
   }
 
   // --- Wizard Actions ---
-
-  private renderWizardActions(container: HTMLElement): void {
-    new Setting(container)
-      .setName("Resume Wizard")
-      .setDesc("Continue the setup wizard where you left off")
-      .addButton((btn) => {
-        btn
-          .setButtonText("Resume Wizard")
-          .setCta()
-          .onClick(() => {
-            this.plugin.activateOnboarding();
-          });
-      });
-
-    new Setting(container)
-      .setName("Reset & Start Wizard")
-      .setDesc("Delete all settings and start from scratch")
-      .addButton((btn) => {
-        btn
-          .setButtonText("Reset & Start")
-          .setWarning()
-          .onClick(() => {
-            this.plugin.confirmAndResetWizard();
-          });
-      });
-  }
 
   // --- Profile ---
 
@@ -1021,13 +992,28 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(body)
-      .setName("Re-run Setup Wizard")
-      .setDesc("Open the 9-screen setup wizard to reconfigure Olen")
-      .addButton((btn) =>
-        btn.setButtonText("Open Wizard").onClick(async () => {
-          await this.plugin.activateOnboarding();
-        })
-      );
+      .setName("Resume Wizard")
+      .setDesc("Continue the setup wizard where you left off")
+      .addButton((btn) => {
+        btn
+          .setButtonText("Resume Wizard")
+          .setCta()
+          .onClick(() => {
+            this.plugin.activateOnboarding();
+          });
+      });
+
+    new Setting(body)
+      .setName("Reset & Start Wizard")
+      .setDesc("Delete all settings and start from scratch")
+      .addButton((btn) => {
+        btn
+          .setButtonText("Reset & Start")
+          .setWarning()
+          .onClick(() => {
+            this.plugin.confirmAndResetWizard();
+          });
+      });
 
     new Setting(body)
       .setName("Enable Tartarus system")

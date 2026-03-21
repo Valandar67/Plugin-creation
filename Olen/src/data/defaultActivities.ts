@@ -51,7 +51,7 @@ export const ONBOARDING_ACTIVITIES: Array<{
     category: "spirit",
     activities: [
       { id: "drawing", name: "Drawing", emoji: "🎨", defaultFolder: "Personal Life/07 Drawing", defaultProperty: "Drawing", defaultWeeklyTarget: 4, defaultDuration: 60, defaultPreferredTime: "afternoon" },
-      { id: "drumming", name: "Drumming", emoji: "🥁", defaultFolder: "Personal Life/04 Drumming", defaultProperty: "Drumming", defaultWeeklyTarget: 6, defaultDuration: 45, defaultPreferredTime: "afternoon" },
+      { id: "music", name: "Music", emoji: "🎵", defaultFolder: "Personal Life/04 Music", defaultProperty: "Music", defaultWeeklyTarget: 6, defaultDuration: 45, defaultPreferredTime: "afternoon" },
       { id: "meditation", name: "Meditation", emoji: "🧘‍♂️", defaultFolder: "Personal Life/Meditation", defaultProperty: "Meditation", defaultWeeklyTarget: 7, defaultDuration: 15, defaultPreferredTime: "morning" },
       { id: "social", name: "Social", emoji: "🤝", defaultFolder: "Personal Life/06 Social", defaultProperty: "Social", defaultWeeklyTarget: 2, defaultDuration: 60, defaultPreferredTime: "evening" },
     ],
