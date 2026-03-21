@@ -3,7 +3,7 @@
 // Registers views, commands, ribbon icon, settings migration
 // ============================================================
 
-import { Plugin, debounce, TFile, Notice, MarkdownView } from "obsidian";
+import { Plugin, debounce, TFile, Notice, MarkdownView, Modal } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
 import { DashboardView } from "./views/DashboardView";
@@ -132,8 +132,14 @@ export default class OlenPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: "reopen-olen-wizard",
-      name: "Re-run Setup Wizard",
+      id: "start-olen-wizard",
+      name: "Start Wizard (Reset All Settings)",
+      callback: () => this.confirmAndResetWizard(),
+    });
+
+    this.addCommand({
+      id: "resume-olen-wizard",
+      name: "Resume Wizard",
       callback: () => this.activateOnboarding(),
     });
 
@@ -326,6 +332,40 @@ export default class OlenPlugin extends Plugin {
     if (!leaf) return;
     await leaf.setViewState({ type: VIEW_TYPE_ONBOARDING, active: true });
     await workspace.revealLeaf(leaf);
+  }
+
+  /** Show a warning modal, then reset all settings and launch the wizard from screen 0 */
+  private confirmAndResetWizard(): void {
+    const modal = new Modal(this.app);
+    modal.titleEl.setText("Reset All Settings?");
+
+    modal.contentEl.createEl("p", {
+      text: "This will delete ALL your preferences, activities, goals, stats, and theme choices. You will start the setup wizard from scratch.",
+      attr: { style: "margin-bottom: 12px;" },
+    });
+    modal.contentEl.createEl("p", {
+      text: "This action cannot be undone.",
+      attr: { style: "font-weight: 600; color: var(--text-error, #e03e3e); margin-bottom: 16px;" },
+    });
+
+    const btnRow = modal.contentEl.createDiv({ attr: { style: "display: flex; gap: 8px; justify-content: flex-end;" } });
+
+    const cancelBtn = btnRow.createEl("button", { text: "Cancel" });
+    cancelBtn.addEventListener("click", () => modal.close());
+
+    const confirmBtn = btnRow.createEl("button", {
+      text: "Reset & Start Wizard",
+      cls: "mod-warning",
+    });
+    confirmBtn.addEventListener("click", async () => {
+      modal.close();
+      // Reset to defaults
+      Object.assign(this.settings, structuredClone(DEFAULT_OLEN_SETTINGS));
+      this.settings.onboardingComplete = false;
+      await this.saveSettings();
+      new Notice("Settings reset. Starting wizard...");
+      await this.activateOnboarding();
+    });
   }
 
   async activateActivityDashboard(activityId: string): Promise<void> {
