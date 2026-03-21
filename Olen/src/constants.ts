@@ -64,7 +64,7 @@ export const CHAPTER_NAMES: Record<number, string> = {
 // --- Dynamic Title Tables ---
 
 export const SINGLE_DOMINANT_TITLES: Record<string, Record<string, string>> = {
-  body:   { light: "Athlete",   mid: "Warrior",  heavy: "Titan" },
+  body:   { light: "Athlete",   mid: "Champion", heavy: "Titan" },
   mind:   { light: "Student",   mid: "Scholar",  heavy: "Polymath" },
   spirit: { light: "Seeker",    mid: "Sage",     heavy: "Oracle" },
 };

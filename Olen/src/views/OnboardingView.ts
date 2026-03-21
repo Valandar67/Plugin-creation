@@ -142,7 +142,7 @@ export class OnboardingView extends ItemView {
       attr: {
         type: "text",
         placeholder: "What should I call you?",
-        value: this.plugin.settings.userName !== "User" ? this.plugin.settings.userName : "",
+        value: (this.plugin.settings.userName && this.plugin.settings.userName !== "User" && this.plugin.settings.userName !== "Warrior") ? this.plugin.settings.userName : "",
       },
     });
 
@@ -1042,12 +1042,19 @@ export class OnboardingView extends ItemView {
       "Optimizing serotonin delivery pipeline...",
       "Monetizing your attention span...",
       "Injecting motivational nanobots...",
-      "Deploying paywall in 3... 2...",
+      "Deploying paywall in...",
     ];
+    const TOTAL_STEPS = messages.length + 3; // +3 for the "3", "2", "1" countdown
 
     const statusEl = content.createEl("div", {
       cls: "olen-body",
       attr: { style: "text-align: center; margin-bottom: 16px; min-height: 24px;" },
+    });
+
+    // Countdown number (hidden initially)
+    const countdownEl = content.createEl("div", {
+      cls: "olen-display",
+      attr: { style: "text-align: center; font-size: 48px; margin-bottom: 16px; opacity: 0; transition: opacity 0.3s ease;" },
     });
 
     // Progress bar container
@@ -1065,17 +1072,26 @@ export class OnboardingView extends ItemView {
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
-    // Animate through messages
+    // Animate through messages then countdown
     let i = 0;
     const step = () => {
       if (i < messages.length) {
         statusEl.setText(messages[i]);
-        barInner.style.width = `${((i + 1) / messages.length) * 100}%`;
+        barInner.style.width = `${((i + 1) / TOTAL_STEPS) * 100}%`;
         i++;
         timeouts.push(setTimeout(step, 1200));
+      } else if (i < messages.length + 3) {
+        // Countdown: 3, 2, 1
+        const num = messages.length + 3 - i; // 3, 2, 1
+        countdownEl.style.opacity = "1";
+        countdownEl.setText(String(num));
+        barInner.style.width = `${((i + 1) / TOTAL_STEPS) * 100}%`;
+        i++;
+        timeouts.push(setTimeout(step, 800));
       } else {
         // Record-scratch moment
         statusEl.setText("");
+        countdownEl.style.display = "none";
         barOuter.style.display = "none";
         punchline.style.opacity = "1";
 
@@ -1086,7 +1102,7 @@ export class OnboardingView extends ItemView {
         });
         punchline.createEl("div", {
           cls: "olen-body",
-          text: "We actually saved your preferences. All of them. For free.",
+          text: "I actually saved your preferences. All of them. For free.",
           attr: { style: "margin-bottom: 4px;" },
         });
         punchline.createEl("div", {

@@ -724,8 +724,8 @@
 }
 
 .olen-btn-primary {
-  background: linear-gradient(180deg, var(--accent-gold-bright), var(--accent-amber));
-  color: var(--bg-primary);
+  background: linear-gradient(180deg, var(--accent-gold-bright, #e8c35a), var(--accent-amber, #c48820));
+  color: #1a1000 !important;
   box-shadow: 0 2px 16px rgba(212, 168, 67, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
