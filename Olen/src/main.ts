@@ -133,13 +133,13 @@ export default class OlenPlugin extends Plugin {
 
     this.addCommand({
       id: "start-olen-wizard",
-      name: "Start Wizard (Reset All Settings)",
+      name: "Olen: Start Wizard (Reset All Settings)",
       callback: () => this.confirmAndResetWizard(),
     });
 
     this.addCommand({
       id: "resume-olen-wizard",
-      name: "Resume Wizard",
+      name: "Olen: Resume Wizard",
       callback: () => this.activateOnboarding(),
     });
 
