@@ -11,14 +11,14 @@ const { container, getData, setData, setMultipleData, app, moment, notice,
 // SETTINGS
 // ==========================================
 const SETTINGS = {
-  sessionFolder: "Home/Starts/Drawing/Sessions",
+  sessionFolder: _actConfig?.folder ? `${_actConfig.folder}/Sessions` : "Activities/Drawing/Sessions",
 };
 
 // Get activity config for skill folder
 const _activityId = getData("activity");
 const _activities = ctx.plugin?.settings?.activities;
 const _actConfig = _activities?.find(a => a.id === _activityId);
-const SKILL_FOLDER = _actConfig?.skillFolder || "Home/Starts/Drawing/Skill tree";
+const SKILL_FOLDER = _actConfig?.skillFolder || "Activities/Drawing/Skill tree";
 
 // ==========================================
 // THEME — Black & White Constellation

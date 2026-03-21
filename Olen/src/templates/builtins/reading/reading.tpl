@@ -11,8 +11,8 @@ const { container, getData, setData, setMultipleData, app, moment, notice,
 // SETTINGS
 // ==========================================
 const SETTINGS = {
-  booksFolder: "Library/Books",
-  logFile: "Personal Life/03 Reading/Reading Log.md",
+  booksFolder: "Books",
+  logFile: ((ctx.plugin?.settings?.activities?.find(a => a.id === "reading")?.folder) || "Activities/Reading") + "/Reading Log.md",
 };
 
 // Theme — Sage Green

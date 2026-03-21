@@ -334,7 +334,7 @@ export class OlenEngine {
     for (const n of neglected) {
       if (used.has(n.id)) continue;
       const days = this.getDaysSinceLastDone(n.id);
-      const lore = NEGLECT_LORE[n.id] ?? `${days} days since you last practiced. The skill atrophies.`;
+      const lore = NEGLECT_LORE[n.id] ?? NEGLECT_LORE[n.category] ?? `${days} days since you last practiced. The skill atrophies.`;
       addIfNew(this.buildSuggestion(n, "neglect", lore));
     }
 

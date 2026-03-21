@@ -14,18 +14,18 @@ const { container, getData, setData, setMultipleData, app, moment, notice,
 // ============================================================
 const SETTINGS = {
   // Where daily workout notes are stored
-  workoutFolder: "Personal Life/01 Workout",
+  workoutFolder: (ctx.plugin?.settings?.activities?.find(a => a.id === "workout")?.folder) || "Activities/Workout",
   // Folder containing exercise standard .md files (e.g. "Bench Press.md")
-  exerciseDbFolder: "Home/Activities/Exercises database",
+  exerciseDbFolder: "Exercises",
 };
 
 // Read personal stats from plugin settings (set in Olen Settings > Personal Stats)
 const _pluginStats = ctx.plugin?.settings?.personalStats || {};
 const PERSONAL = {
-  weight: _pluginStats.currentWeight || 61,
-  height: _pluginStats.height || 175,
-  birthdate: _pluginStats.birthdate || "2005-11-29",
-  gender: _pluginStats.gender || "male",
+  weight: _pluginStats.currentWeight || 0,
+  height: _pluginStats.height || 0,
+  birthdate: _pluginStats.birthdate || "",
+  gender: _pluginStats.gender || "",
 };
 
 // Muscle groups available for selection, with optional subgroups

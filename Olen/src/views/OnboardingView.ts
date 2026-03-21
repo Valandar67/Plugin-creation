@@ -11,7 +11,7 @@ import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 
 const SCREEN_LABELS = [
   "Identity", "Stats", "Domains", "Activities",
-  "Routines", "Theme", "Calendar", "Launch",
+  "Routines", "Theme", "Calendar", "Personalizing", "Launch",
 ];
 const TOTAL_SCREENS = SCREEN_LABELS.length;
 
@@ -64,7 +64,8 @@ export class OnboardingView extends ItemView {
       case 4: this.renderScreen4_Routines(root); break;
       case 5: this.renderScreen5_Theme(root); break;
       case 6: this.renderScreen6_Calendar(root); break;
-      case 7: this.renderScreen7_Launch(root); break;
+      case 7: this.renderScreen7_Personalizing(root); break;
+      case 8: this.renderScreen8_Launch(root); break;
     }
   }
 
@@ -616,7 +617,7 @@ export class OnboardingView extends ItemView {
     for (const c of ["body", "mind", "spirit"] as Category[]) {
       cCat.createEl("option", { text: c.charAt(0).toUpperCase() + c.slice(1), attr: { value: c } });
     }
-    const cFolder = makeField("Folder", "Personal Life/Yoga");
+    const cFolder = makeField("Folder", "Activities/Yoga");
     const cProp = makeField("Property", "Yoga");
     const cTarget = makeField("Weekly target", "3", "number");
     const cDur = makeField("Duration (min)", "30", "number");
@@ -641,7 +642,7 @@ export class OnboardingView extends ItemView {
         emoji: cEmoji.value.trim() || "\u2B50",
         category: cCat.value as Category,
         enabled: true,
-        folder: cFolder.value.trim() || `Personal Life/${name}`,
+        folder: cFolder.value.trim() || `Activities/${name}`,
         property: cProp.value.trim() || name,
         damagePerCompletion: 1,
         weeklyTarget: parseInt(cTarget.value) || 3,
@@ -705,7 +706,7 @@ export class OnboardingView extends ItemView {
         // Name input
         const nameInput = row.createEl("input", {
           cls: "olen-onboarding-input",
-          attr: { type: "text", value: task.name, style: "flex: 1; min-width: 80px; font-size: 13px; padding: 6px 10px;" },
+          attr: { type: "text", value: task.name, style: "flex: 1; min-width: 100px; font-size: 13px; padding: 6px 10px;" },
         });
         nameInput.addEventListener("change", () => { task.name = nameInput.value.trim(); });
 
@@ -1029,7 +1030,93 @@ export class OnboardingView extends ItemView {
     });
   }
 
-  private renderScreen7_Launch(root: HTMLElement): void {
+  // ── Screen 7: "Personalizing" (Funny fake loading) ──────
+
+  private renderScreen7_Personalizing(root: HTMLElement): void {
+    const content = root.createDiv({ cls: "olen-onboarding-screen" });
+    content.setAttribute("style", "display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;");
+
+    const messages = [
+      "Calibrating your discipline matrix...",
+      "Synergizing your paradigms...",
+      "Optimizing serotonin delivery pipeline...",
+      "Monetizing your attention span...",
+      "Injecting motivational nanobots...",
+      "Deploying paywall in 3... 2...",
+    ];
+
+    const statusEl = content.createEl("div", {
+      cls: "olen-body",
+      attr: { style: "text-align: center; margin-bottom: 16px; min-height: 24px;" },
+    });
+
+    // Progress bar container
+    const barOuter = content.createDiv({
+      attr: { style: "width: 280px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 24px;" },
+    });
+    const barInner = barOuter.createDiv({
+      attr: { style: "width: 0%; height: 100%; border-radius: 4px; background: var(--olen-accent-gold, #d4a843); transition: width 1.2s ease;" },
+    });
+
+    // Punchline area (hidden initially)
+    const punchline = content.createDiv({
+      attr: { style: "text-align: center; opacity: 0; transition: opacity 0.6s ease;" },
+    });
+
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    // Animate through messages
+    let i = 0;
+    const step = () => {
+      if (i < messages.length) {
+        statusEl.setText(messages[i]);
+        barInner.style.width = `${((i + 1) / messages.length) * 100}%`;
+        i++;
+        timeouts.push(setTimeout(step, 1200));
+      } else {
+        // Record-scratch moment
+        statusEl.setText("");
+        barOuter.style.display = "none";
+        punchline.style.opacity = "1";
+
+        punchline.createEl("div", {
+          cls: "olen-display",
+          text: "Just kidding.",
+          attr: { style: "font-size: 28px; margin-bottom: 12px;" },
+        });
+        punchline.createEl("div", {
+          cls: "olen-body",
+          text: "We actually saved your preferences. All of them. For free.",
+          attr: { style: "margin-bottom: 4px;" },
+        });
+        punchline.createEl("div", {
+          cls: "olen-body-italic",
+          text: "Wild concept, right?",
+          attr: { style: "margin-bottom: 24px; opacity: 0.6;" },
+        });
+        punchline.createEl("div", {
+          cls: "olen-body",
+          text: `You're good to go, ${this.plugin.settings.userName}.`,
+          attr: { style: "font-weight: 600; margin-bottom: 24px;" },
+        });
+
+        // Manual advance only — no auto-timeout
+        const nextBtn = punchline.createEl("button", {
+          cls: "olen-btn olen-btn-primary olen-btn-large",
+          text: "NEXT \u2192",
+        });
+        nextBtn.addEventListener("click", () => {
+          timeouts.forEach(clearTimeout);
+          this.goto(8);
+        });
+      }
+    };
+
+    // Start the sequence
+    timeouts.push(setTimeout(step, 500));
+  }
+
+  private renderScreen8_Launch(root: HTMLElement): void {
     const content = root.createDiv({ cls: "olen-onboarding-screen olen-onboarding-final" });
 
     content.createEl("div", {
@@ -1068,7 +1155,7 @@ export class OnboardingView extends ItemView {
       cls: "olen-btn olen-btn-secondary",
       text: "\u2190 BACK",
     });
-    backBtn.addEventListener("click", () => this.goto(6));
+    backBtn.addEventListener("click", () => this.goto(7));
 
     const enterBtn = actions.createEl("button", {
       cls: "olen-btn olen-btn-primary olen-btn-large",

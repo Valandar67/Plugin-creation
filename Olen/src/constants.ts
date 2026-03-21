@@ -83,72 +83,15 @@ export const BALANCED_TITLES: Record<string, string> = {
 
 // --- Default Activities ---
 
-export const DEFAULT_ACTIVITIES: ActivityConfig[] = [
-  {
-    id: "workout", name: "Workout", emoji: "\u{1F4AA}", category: "body",
-    enabled: true, folder: "Personal Life/01 Workout", property: "Workout",
-    damagePerCompletion: 1, weeklyTarget: 7, trackingMode: "daily",
-    hasWorkspace: true, workspaceTemplate: "workout",
-    priority: 8, neglectThreshold: 2,
-    preferredTime: "morning", estimatedDuration: 60,
-  },
-  {
-    id: "cardio", name: "Cardio", emoji: "\u{1F3C3}", category: "body",
-    enabled: true, folder: "Personal Life/02 Cardio", property: "Cardio",
-    damagePerCompletion: 1, weeklyTarget: 4, trackingMode: "daily",
-    hasWorkspace: true, priority: 7, neglectThreshold: 3,
-    preferredTime: "morning", estimatedDuration: 30,
-    alternatesWith: "workout",
-  },
-  {
-    id: "reading", name: "Reading", emoji: "\u{1F4D6}", category: "mind",
-    enabled: true, folder: "Personal Life/03 Reading", property: "Reading",
-    damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
-    hasWorkspace: true, priority: 6, neglectThreshold: 3,
-    preferredTime: "evening", estimatedDuration: 45,
-  },
-  {
-    id: "drumming", name: "Drumming", emoji: "\u{1F941}", category: "spirit",
-    enabled: true, folder: "Personal Life/04 Drumming", property: "Drumming",
-    damagePerCompletion: 1, weeklyTarget: 6, trackingMode: "daily",
-    hasWorkspace: true, priority: 6, neglectThreshold: 3,
-    preferredTime: "afternoon", estimatedDuration: 45,
-  },
-  {
-    id: "health-study", name: "Health Study", emoji: "\u{1F9EC}", category: "mind",
-    enabled: true, folder: "Personal Life/05 Health Study", property: "Health Study",
-    damagePerCompletion: 1, weeklyTarget: 3, trackingMode: "daily",
-    hasWorkspace: true, priority: 4, neglectThreshold: 4,
-    preferredTime: "afternoon", estimatedDuration: 30,
-  },
-  {
-    id: "social", name: "Social", emoji: "\u{1F91D}", category: "spirit",
-    enabled: true, folder: "Personal Life/06 Social", property: "Social",
-    damagePerCompletion: 1, weeklyTarget: 2, trackingMode: "daily",
-    hasWorkspace: true, priority: 5, neglectThreshold: 5,
-    preferredTime: "evening", estimatedDuration: 60,
-  },
-  {
-    id: "drawing", name: "Drawing", emoji: "\u{1F3A8}", category: "spirit",
-    enabled: true, folder: "Personal Life/07 Drawing", property: "Drawing",
-    damagePerCompletion: 1, weeklyTarget: 4, trackingMode: "daily",
-    hasWorkspace: true, workspaceTemplate: "drawing",
-    skillFolder: "Home/Starts/Drawing/Skill tree",
-    priority: 7, neglectThreshold: 3,
-    preferredTime: "afternoon", estimatedDuration: 60,
-  },
-];
+export const DEFAULT_ACTIVITIES: ActivityConfig[] = [];
 
 // --- Directive Lore Templates ---
 
+/** Category-level neglect lore — used when no activity-specific lore exists */
 export const NEGLECT_LORE: Record<string, string> = {
-  workout: "Your muscles forget what they once knew. The body craves discipline — answer it.",
-  cardio: "The heart grows sluggish without the pounding rhythm of effort.",
-  reading: "The mind starves on distraction. Feed it with pages, not pixels.",
-  drumming: "Silence is not rest — it is the death of rhythm. Pick up the sticks.",
-  "health-study": "Knowledge of the body is power over it. Neglect invites ignorance.",
-  social: "Even warriors need fellowship. Isolation breeds stagnation.",
-  drawing: "The beast within you grows weak without the discipline of line and form.",
+  body: "The body craves discipline — answer it. Stagnation is decay.",
+  mind: "The mind starves on distraction. Feed it with purpose, not pixels.",
+  spirit: "The soul grows dim without expression. Create, connect, be present.",
 };
 
 // --- Fallback Quotes ---
@@ -231,15 +174,15 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
 // --- Default Personal Stats ---
 
 export const DEFAULT_PERSONAL_STATS: PersonalStats = {
-  gender: "male",
-  height: 175,
+  gender: "" as any,
+  height: 0,
   birthdate: "",
   currentWeight: 0,
   weightLog: [],
   weightLogFrequency: "every-week",
   weightLogCustomDays: 7,
   lastWeightLogDate: null,
-  sleepTime: 23, // 11pm default
+  sleepTime: 0,
 };
 
 // --- Muscle Group Definitions ---
