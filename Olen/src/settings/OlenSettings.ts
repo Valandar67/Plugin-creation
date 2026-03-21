@@ -153,16 +153,7 @@ export class OlenSettingTab extends PluginSettingTab {
   // --- Wizard Actions ---
 
   private renderWizardActions(container: HTMLElement): void {
-    const row = container.createDiv({
-      attr: {
-        style: `
-          display: flex; gap: 8px; margin-bottom: 16px;
-        `,
-      },
-    });
-
-    // Resume Wizard
-    new Setting(row)
+    new Setting(container)
       .setName("Resume Wizard")
       .setDesc("Continue the setup wizard where you left off")
       .addButton((btn) => {
@@ -174,13 +165,12 @@ export class OlenSettingTab extends PluginSettingTab {
           });
       });
 
-    // Start Wizard (reset)
-    new Setting(row)
-      .setName("Start Wizard")
-      .setDesc("Reset all settings and start over")
+    new Setting(container)
+      .setName("Reset & Start Wizard")
+      .setDesc("Delete all settings and start from scratch")
       .addButton((btn) => {
         btn
-          .setButtonText("Reset & Start Wizard")
+          .setButtonText("Reset & Start")
           .setWarning()
           .onClick(() => {
             this.plugin.confirmAndResetWizard();

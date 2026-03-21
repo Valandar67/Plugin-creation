@@ -4571,3 +4571,684 @@
   filter: brightness(1.1);
 }
 
+/* ============================================================
+   SETUP WIZARD — 9-screen onboarding flow
+   ============================================================ */
+
+/* ── Progress Dots ── */
+
+.olen-wizard-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0 24px;
+}
+
+.olen-wizard-progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--card-border, rgba(255, 255, 255, 0.08));
+  transition: all 0.3s ease;
+}
+
+.olen-wizard-progress-dot-active {
+  background: var(--accent-gold, #d4a843);
+  box-shadow: 0 0 8px rgba(212, 168, 67, 0.4);
+  transform: scale(1.2);
+}
+
+.olen-wizard-progress-dot-done {
+  background: var(--text-muted, #7e7769);
+}
+
+/* ── Screen Titles ── */
+
+.olen-wizard-screen-title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.olen-wizard-screen-subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  font-style: italic;
+}
+
+/* ── Field Groups ── */
+
+.olen-wizard-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.olen-wizard-field-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.olen-wizard-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.olen-wizard-field-row .olen-onboarding-input,
+.olen-wizard-field-row select {
+  flex: 1;
+}
+
+.olen-wizard-age-display {
+  font-size: 13px;
+  color: var(--accent-gold, #d4a843);
+  min-width: 60px;
+}
+
+.olen-wizard-time-display {
+  font-size: 13px;
+  color: var(--text-muted);
+  min-width: 60px;
+}
+
+/* ── Wizard Select ── */
+
+.olen-wizard-select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--card-bg, rgba(0, 0, 0, 0.3));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-xs, 10px);
+  color: var(--text-primary);
+  font-size: 14px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.olen-wizard-select:focus {
+  border-color: var(--accent-gold, #d4a843);
+  outline: none;
+}
+
+/* ── Wizard Slider ── */
+
+.olen-wizard-slider {
+  width: 100%;
+  accent-color: var(--accent-gold, #d4a843);
+  height: 6px;
+}
+
+.olen-wizard-slider-value {
+  font-size: 13px;
+  color: var(--accent-gold, #d4a843);
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* ── Domain Cards (enhanced) ── */
+
+.olen-wizard-domain-preview {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Activity Inline Config ── */
+
+.olen-wizard-inline-config {
+  padding: 12px 16px;
+  margin: 4px 0 8px 26px;
+  background: var(--card-bg, rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.04));
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.olen-wizard-config-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.olen-wizard-config-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 80px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.olen-wizard-config-input {
+  flex: 1;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.olen-wizard-config-input:focus {
+  border-color: var(--accent-gold, #d4a843);
+  outline: none;
+}
+
+.olen-wizard-config-select {
+  flex: 1;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  appearance: none;
+}
+
+.olen-wizard-configure-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--text-dim);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.olen-wizard-configure-btn:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-muted);
+}
+
+/* ── Custom Activity Form ── */
+
+.olen-wizard-custom-form {
+  padding: 16px;
+  margin-top: 12px;
+  background: var(--card-bg, rgba(0, 0, 0, 0.3));
+  border: 1px dashed var(--card-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.olen-wizard-custom-form-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+/* ── Routine Rows ── */
+
+.olen-wizard-routine-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.olen-wizard-routine-emoji {
+  width: 36px;
+  padding: 4px;
+  text-align: center;
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.olen-wizard-routine-name {
+  flex: 1;
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.olen-wizard-routine-interval {
+  width: 50px;
+  padding: 6px;
+  text-align: center;
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.olen-wizard-routine-unit {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.olen-wizard-routine-remove {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.olen-wizard-routine-remove:hover {
+  opacity: 1;
+  color: var(--danger, #a83240);
+}
+
+/* ── Add Button (dashed) ── */
+
+.olen-wizard-add-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 1px dashed var(--card-border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.olen-wizard-add-btn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+/* ── Theme Preview Cards ── */
+
+.olen-wizard-theme-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.olen-wizard-theme-card {
+  padding: 16px 20px;
+  border: 2px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.olen-wizard-theme-card:hover {
+  border-color: var(--text-muted);
+}
+
+.olen-wizard-theme-card-active {
+  border-color: var(--accent-gold, #d4a843) !important;
+  box-shadow: 0 0 16px rgba(212, 168, 67, 0.15);
+}
+
+.olen-wizard-theme-swatches {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.olen-wizard-theme-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.olen-wizard-theme-info {
+  flex: 1;
+}
+
+.olen-wizard-theme-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.olen-wizard-theme-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Background Image Thumbnails ── */
+
+.olen-wizard-bg-grid {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.olen-wizard-bg-thumb {
+  width: 80px;
+  height: 50px;
+  border-radius: 8px;
+  border: 2px solid var(--card-border);
+  cursor: pointer;
+  object-fit: cover;
+  transition: border-color 0.2s;
+  opacity: 0.7;
+}
+
+.olen-wizard-bg-thumb:hover {
+  opacity: 1;
+}
+
+.olen-wizard-bg-thumb-active {
+  border-color: var(--accent-gold, #d4a843);
+  opacity: 1;
+}
+
+.olen-wizard-bg-none {
+  width: 80px;
+  height: 50px;
+  border-radius: 8px;
+  border: 2px solid var(--card-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.olen-wizard-bg-none:hover,
+.olen-wizard-bg-none-active {
+  border-color: var(--accent-gold, #d4a843);
+  color: var(--text-secondary);
+}
+
+/* ── Calendar Toggle Cards ── */
+
+.olen-wizard-toggle-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.olen-wizard-toggle-card-content {
+  flex: 1;
+}
+
+.olen-wizard-toggle-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.olen-wizard-toggle-card-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.olen-wizard-toggle-card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* ── Fake Loader (Screen 8) ── */
+
+.olen-wizard-loader-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  gap: 20px;
+}
+
+.olen-wizard-loader-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: opacity 0.4s;
+  min-height: 20px;
+}
+
+.olen-wizard-loader-bar-track {
+  width: 240px;
+  height: 4px;
+  background: var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.olen-wizard-loader-bar-fill {
+  height: 100%;
+  background: var(--accent-gold, #d4a843);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+  width: 0;
+}
+
+.olen-wizard-loader-punchline {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 360px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.olen-wizard-loader-punchline-visible {
+  opacity: 1;
+}
+
+.olen-wizard-loader-ready {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-gold, #d4a843);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.olen-wizard-loader-ready-visible {
+  opacity: 1;
+}
+
+/* ── Summary Screen ── */
+
+.olen-wizard-summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.olen-wizard-summary-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.04));
+  border-radius: 8px;
+}
+
+.olen-wizard-summary-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.olen-wizard-summary-stat-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ── Directive Preview (Mocked) ── */
+
+.olen-wizard-directive-preview {
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+}
+
+.olen-wizard-directive-preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.olen-wizard-directive-preview-oracle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.olen-wizard-directive-preview-activity {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.olen-wizard-directive-preview-btn {
+  display: inline-block;
+  padding: 8px 24px;
+  background: linear-gradient(180deg, var(--accent-gold-bright, #e8c35a), var(--accent-amber, #c48820));
+  color: var(--bg-primary, #000);
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.olen-wizard-directive-explain {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+/* ── Tartarus Toggle ── */
+
+.olen-wizard-extras {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+}
+
+.olen-wizard-extras-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.olen-wizard-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.olen-wizard-toggle-label {
+  flex: 1;
+}
+
+.olen-wizard-toggle-name {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.olen-wizard-toggle-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ── Skip Banner (dashboard top) ── */
+
+.olen-skip-banner {
+  padding: 10px 16px;
+  background: var(--accent-gold-dim, rgba(212, 168, 67, 0.18));
+  border: 1px solid var(--accent-gold, #d4a843);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.olen-skip-banner:hover {
+  background: rgba(212, 168, 67, 0.25);
+}
+
+.olen-skip-banner-text {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.olen-skip-banner-action {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-gold, #d4a843);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
