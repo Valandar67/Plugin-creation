@@ -5,84 +5,11 @@
 
 ---
 
-## 1. BUG FIX: Audio cleanup — sound keeps playing after stop
+## ~~1. BUG FIX: Audio cleanup — sound keeps playing after stop~~ DONE
 
-**Problem:** When the user stops an activity (STOP button on dashboard banner,
-FINISH in workspace, or closing the view), any currently playing sound continues.
-The `alertSound.ts` functions create local `AudioContext` / `Audio` objects that
-are immediately lost — no references are stored, so nothing can cancel them.
+## ~~2. BUG FIX: Default activities pre-enabled on fresh install~~ DONE
 
-**Root cause:** Fire-and-forget pattern in `playDefaultBeep()` and
-`playCustomSound()` — no return values, no stored refs.
-
-### Implementation
-
-**File: `src/utils/alertSound.ts`**
-- Refactor to store the active `AudioContext` and `HTMLAudioElement` in module-level
-  variables (`activeCtx`, `activeAudio`).
-- `playDefaultBeep()` → store `ctx` and `osc` in module scope.
-- `playCustomSound()` → store the `Audio` element.
-- Add `export function stopAlertSound(): void` that:
-  - Calls `osc.stop()` + `ctx.close()` if an oscillator is active.
-  - Calls `audio.pause(); audio.currentTime = 0;` if a custom sound is playing.
-  - Calls `navigator.vibrate?.(0)` to cancel vibration.
-  - Resets module refs to `null`.
-
-**File: `src/views/WorkspaceView.ts`**
-- Import `stopAlertSound`.
-- Call `stopAlertSound()` in `onClose()` and at the start of `showFinishModal()`.
-
-**File: `src/views/DashboardView.ts`**
-- Import `stopAlertSound`.
-- Call `stopAlertSound()` in the STOP button handler, before clearing `activeWorkspace`.
-
-**File: `src/main.ts`**
-- Import `stopAlertSound`.
-- In `checkBackgroundTimer()`, when WorkspaceView opens (view takes over alerts),
-  call `stopAlertSound()` to hand off cleanly.
-
----
-
-## 2. BUG FIX: Default activities pre-enabled on fresh install
-
-**Problem:** On first install, the user's day is already filled with activities
-because `buildActivityConfig()` in `data/defaultActivities.ts` sets `enabled: true`
-by default. The onboarding wizard (Screen 3 "Arm Your Activities") pushes these
-with `enabled: true` even before the user has toggled anything.
-
-**What the user expects:** Activities should start disabled. The user picks which
-ones to enable during the wizard.
-
-### Implementation
-
-**File: `src/data/defaultActivities.ts`**
-- In `buildActivityConfig()`, change `enabled: true` → `enabled: false`.
-- In OnboardingView Screen 3, activities the user explicitly toggles ON get
-  `enabled: true`. Unselected ones stay `false`.
-
-**Verify:** After onboarding completes, only user-selected activities appear
-in the day map.
-
----
-
-## 3. BUG FIX: Activity folder path — unify to "Personal life"
-
-**Problem:** Default activities use `Activities/Workout`, `Activities/Reading`,
-etc., while some user-created ones end up in `Personal life/`. This creates two
-separate folder trees in the vault.
-
-**What the user expects:** All activities save to `Personal life/` by default.
-
-### Implementation
-
-**File: `src/data/defaultActivities.ts`**
-- Change all `defaultFolder` values from `Activities/X` to `Personal life/X`.
-  - `"Activities/Workout"` → `"Personal life/Workout"`
-  - `"Activities/Cardio"` → `"Personal life/Cardio"`
-  - etc. for all 12 default activities.
-
-**Note:** Existing users who already have `Activities/` folders will keep them
-(folder paths are stored in settings per-activity). This only affects new installs.
+## ~~3. BUG FIX: Activity folder path — unify to "Personal life"~~ DONE
 
 ---
 
