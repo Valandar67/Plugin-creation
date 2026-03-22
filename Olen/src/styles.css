@@ -1420,6 +1420,46 @@
   50% { opacity: 0.5; }
 }
 
+.olen-workspace-timer-break {
+  color: var(--success) !important;
+  text-shadow: 0 0 30px color-mix(in srgb, var(--success) 15%, transparent) !important;
+}
+
+.olen-workspace-timer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.olen-workspace-timer-label {
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.olen-workspace-pom-info {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.olen-pom-dot {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.olen-pom-dot-done {
+  color: var(--accent-gold);
+}
+
+.olen-pom-dot-active {
+  color: var(--accent-gold-bright);
+}
+
 .olen-workspace-finish-btn {
   padding: 8px 20px !important;
   font-size: 10px !important;

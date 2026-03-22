@@ -20,6 +20,11 @@ export class WorkspaceView extends ItemView {
   private pomodoroMode = false;
   private countdownTotal = 0; // seconds
   private pomodoroExpired = false;
+  private pomodoroRound = 1;
+  private pomodoroTotalRounds = 4;
+  private onBreak = false;
+  private breakDuration = 0; // seconds
+  private breakStartTime: Date | null = null;
   /** When in template mode, tracks the daily note file the template is bound to */
   private templateNoteFile: TFile | null = null;
   /** Tracks whether we already processed a completion (prevents double-apply) */
@@ -241,18 +246,27 @@ export class WorkspaceView extends ItemView {
       const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
       if (!timerEl) return;
 
-      if (this.pomodoroMode) {
+      if (this.pomodoroMode && this.onBreak && this.breakStartTime) {
+        // Break countdown
+        const breakElapsed = Math.floor((Date.now() - this.breakStartTime.getTime()) / 1000);
+        const breakRemaining = this.breakDuration - breakElapsed;
+        timerEl.textContent = this.formatTime(Math.max(0, breakRemaining));
+
+        if (breakRemaining <= 0 && !this.pomodoroExpired) {
+          this.pomodoroExpired = true;
+          if (workspace) this.showBreakEndAlert(workspace);
+        }
+      } else if (this.pomodoroMode) {
+        // Work countdown
         const remaining = this.countdownTotal - this.elapsed;
         timerEl.textContent = this.formatTime(Math.max(0, remaining));
 
-        // Warning state in last 60 seconds
         if (remaining <= 60 && remaining > 0) {
           timerEl.classList.add("olen-workspace-timer-warning");
         } else {
           timerEl.classList.remove("olen-workspace-timer-warning");
         }
 
-        // Timer expired
         if (remaining <= 0 && !this.pomodoroExpired) {
           this.pomodoroExpired = true;
           timerEl.classList.add("olen-workspace-timer-warning");
@@ -318,10 +332,23 @@ export class WorkspaceView extends ItemView {
     actInfo.createEl("span", { cls: "olen-workspace-emoji", text: workspace.emoji });
     actInfo.createEl("span", { cls: "olen-workspace-act-name", text: workspace.activityName });
 
-    const timerEl = topBar.createEl("div", {
+    const timerArea = topBar.createDiv({ cls: "olen-workspace-timer-area" });
+    const timerEl = timerArea.createEl("div", {
       cls: "olen-workspace-timer",
       text: this.pomodoroMode ? this.formatTime(this.countdownTotal) : "00:00",
     });
+    if (this.pomodoroMode) {
+      timerArea.createEl("div", { cls: "olen-workspace-timer-label", text: "WORK" });
+      const pomInfo = timerArea.createDiv({ cls: "olen-workspace-pom-info" });
+      for (let i = 1; i <= this.pomodoroTotalRounds; i++) {
+        pomInfo.createEl("span", {
+          cls: i < this.pomodoroRound ? "olen-pom-dot olen-pom-dot-done" :
+               i === this.pomodoroRound ? "olen-pom-dot olen-pom-dot-active" :
+               "olen-pom-dot",
+          text: i < this.pomodoroRound ? "\u25CF" : i === this.pomodoroRound ? "\u25CF" : "\u25CB",
+        });
+      }
+    }
 
     const finishBtn = topBar.createEl("button", {
       cls: "olen-btn olen-btn-primary olen-workspace-finish-btn",
@@ -485,6 +512,18 @@ export class WorkspaceView extends ItemView {
     } catch { /* Web Audio not available */ }
   }
 
+  private renderPomodoroDots(container: HTMLElement): void {
+    const dots = container.createDiv({ cls: "olen-workspace-pom-info" });
+    for (let i = 1; i <= this.pomodoroTotalRounds; i++) {
+      dots.createEl("span", {
+        cls: i < this.pomodoroRound ? "olen-pom-dot olen-pom-dot-done" :
+             i === this.pomodoroRound ? "olen-pom-dot olen-pom-dot-active" :
+             "olen-pom-dot",
+        text: i < this.pomodoroRound ? "\u25CF" : i === this.pomodoroRound ? "\u25CF" : "\u25CB",
+      });
+    }
+  }
+
   private showPomodoroAlert(workspace: ActiveWorkspace): void {
     this.playAlertSound();
     (navigator as any).vibrate?.([200, 100, 200]);
@@ -495,23 +534,28 @@ export class WorkspaceView extends ItemView {
     const sheet = overlay.createDiv({ cls: "olen-sheet" });
     sheet.createDiv({ cls: "olen-sheet-handle" });
 
-    sheet.createEl("div", { cls: "olen-heading-lg", text: "TIME'S UP!" });
+    sheet.createEl("div", { cls: "olen-heading-lg", text: `POMODORO ${this.pomodoroRound} COMPLETE!` });
     const durationMinutes = Math.round(this.countdownTotal / 60);
     sheet.createEl("div", {
       cls: "olen-body-italic",
-      attr: { style: "margin: 12px 0 20px;" },
-      text: `${workspace.emoji} ${workspace.activityName} · ${durationMinutes} minutes`,
+      attr: { style: "margin: 12px 0 8px;" },
+      text: `${workspace.emoji} ${workspace.activityName} \u00B7 ${durationMinutes} minutes`,
     });
 
-    const actions = sheet.createDiv({ cls: "olen-workspace-states-grid", attr: { style: "display: flex; gap: 12px; justify-content: center;" } });
+    this.renderPomodoroDots(sheet);
 
-    const finishBtn = actions.createEl("button", {
+    const isLastRound = this.pomodoroRound >= this.pomodoroTotalRounds;
+    const breakLabel = isLastRound ? "LONG BREAK (20m)" : "TAKE BREAK (5m)";
+
+    const actions = sheet.createDiv({ attr: { style: "display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;" } });
+
+    const breakBtn = actions.createEl("button", {
       cls: "olen-btn olen-btn-primary",
-      text: "FINISH",
+      text: breakLabel,
     });
-    finishBtn.addEventListener("click", () => {
+    breakBtn.addEventListener("click", () => {
       closeSheet();
-      this.showFinishModal(workspace);
+      this.startBreak(workspace, isLastRound);
     });
 
     const extendBtn = actions.createEl("button", {
@@ -526,6 +570,15 @@ export class WorkspaceView extends ItemView {
       closeSheet();
     });
 
+    const finishBtn = actions.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      text: "FINISH",
+    });
+    finishBtn.addEventListener("click", () => {
+      closeSheet();
+      this.showFinishModal(workspace);
+    });
+
     const closeSheet = () => {
       overlay.classList.remove("visible");
       setTimeout(() => overlay.remove(), 350);
@@ -533,6 +586,119 @@ export class WorkspaceView extends ItemView {
 
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add("visible"));
+  }
+
+  private startBreak(workspace: ActiveWorkspace, isLongBreak: boolean): void {
+    this.onBreak = true;
+    this.breakDuration = isLongBreak ? 20 * 60 : 5 * 60;
+    this.breakStartTime = new Date();
+    this.pomodoroExpired = false;
+
+    // Update timer display for break mode
+    const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
+    if (timerEl) {
+      timerEl.textContent = this.formatTime(this.breakDuration);
+      timerEl.classList.remove("olen-workspace-timer-warning");
+      timerEl.classList.add("olen-workspace-timer-break");
+    }
+
+    // Update label
+    const labelEl = this.contentEl.querySelector(".olen-workspace-timer-label");
+    if (labelEl) labelEl.textContent = "BREAK";
+
+    // Update dots
+    this.updatePomodoroDots();
+  }
+
+  private showBreakEndAlert(workspace: ActiveWorkspace): void {
+    this.playAlertSound();
+    (navigator as any).vibrate?.([200, 100, 200]);
+
+    const isLastRound = this.pomodoroRound >= this.pomodoroTotalRounds;
+
+    const overlay = document.createElement("div");
+    overlay.className = "olen-sheet-overlay";
+
+    const sheet = overlay.createDiv({ cls: "olen-sheet" });
+    sheet.createDiv({ cls: "olen-sheet-handle" });
+
+    sheet.createEl("div", {
+      cls: "olen-heading-lg",
+      text: isLastRound ? "SESSION COMPLETE!" : "BREAK'S OVER!",
+    });
+    sheet.createEl("div", {
+      cls: "olen-body-italic",
+      attr: { style: "margin: 12px 0 8px;" },
+      text: isLastRound
+        ? `All ${this.pomodoroTotalRounds} pomodoros done \u2014 great work!`
+        : `Ready for pomodoro ${this.pomodoroRound + 1} of ${this.pomodoroTotalRounds}`,
+    });
+
+    this.renderPomodoroDots(sheet);
+
+    const actions = sheet.createDiv({ attr: { style: "display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;" } });
+
+    if (!isLastRound) {
+      const nextBtn = actions.createEl("button", {
+        cls: "olen-btn olen-btn-primary",
+        text: "NEXT POMODORO",
+      });
+      nextBtn.addEventListener("click", () => {
+        this.pomodoroRound++;
+        this.onBreak = false;
+        this.breakStartTime = null;
+        this.pomodoroExpired = false;
+        this.startTime = new Date();
+        this.elapsed = 0;
+
+        // Restore work timer display
+        const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
+        this.countdownTotal = (activity?.estimatedDuration ?? 25) * 60;
+
+        const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
+        if (timerEl) {
+          timerEl.textContent = this.formatTime(this.countdownTotal);
+          timerEl.classList.remove("olen-workspace-timer-break");
+        }
+
+        const labelEl = this.contentEl.querySelector(".olen-workspace-timer-label");
+        if (labelEl) labelEl.textContent = "WORK";
+
+        this.updatePomodoroDots();
+        closeSheet();
+      });
+    }
+
+    const finishBtn = actions.createEl("button", {
+      cls: isLastRound ? "olen-btn olen-btn-primary" : "olen-btn olen-btn-secondary",
+      text: "FINISH",
+    });
+    finishBtn.addEventListener("click", () => {
+      closeSheet();
+      this.showFinishModal(workspace);
+    });
+
+    const closeSheet = () => {
+      overlay.classList.remove("visible");
+      setTimeout(() => overlay.remove(), 350);
+    };
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("visible"));
+  }
+
+  private updatePomodoroDots(): void {
+    const existing = this.contentEl.querySelector(".olen-workspace-pom-info");
+    if (!existing) return;
+    existing.empty();
+    for (let i = 1; i <= this.pomodoroTotalRounds; i++) {
+      (existing as HTMLElement).createEl("span", {
+        cls: i < this.pomodoroRound ? "olen-pom-dot olen-pom-dot-done" :
+             i === this.pomodoroRound ? "olen-pom-dot olen-pom-dot-active" :
+             "olen-pom-dot",
+        text: i < this.pomodoroRound ? "\u25CF" : i === this.pomodoroRound ? "\u25CF" : "\u25CB",
+      });
+    }
   }
 
   private showFinishModal(workspace: ActiveWorkspace): void {
