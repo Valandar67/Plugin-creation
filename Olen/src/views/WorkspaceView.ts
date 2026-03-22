@@ -11,6 +11,7 @@ import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult } 
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
+import { playAlertSound, vibrateAlert } from "../utils/alertSound";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -66,10 +67,24 @@ export class WorkspaceView extends ItemView {
     } else {
       // Default mode: timer + skills + finish
       this.startTime = new Date(workspace.startTime);
-      if (activity?.pomodoro && activity.estimatedDuration > 0) {
+
+      // Restore persisted pomodoro state (survives view close/reopen)
+      if (workspace.pomodoroActive) {
+        this.pomodoroMode = true;
+        this.pomodoroRound = workspace.pomodoroRound ?? 1;
+        this.onBreak = workspace.pomodoroOnBreak ?? false;
+        this.countdownTotal = workspace.pomodoroCountdownTotal ?? (activity?.estimatedDuration ?? 25) * 60;
+        if (this.onBreak) {
+          this.breakDuration = this.countdownTotal;
+          this.breakStartTime = new Date(workspace.startTime);
+        }
+      } else if (activity?.pomodoro && activity.estimatedDuration > 0) {
+        // First time setup — no persisted state yet
         this.pomodoroMode = true;
         this.countdownTotal = activity.estimatedDuration * 60;
+        await this.savePomodoroState();
       }
+
       this.render(workspace);
       this.startTimer();
     }
@@ -285,6 +300,19 @@ export class WorkspaceView extends ItemView {
     }
   }
 
+  private async savePomodoroState(): Promise<void> {
+    const ws = this.plugin.settings.activeWorkspace;
+    if (!ws || !this.pomodoroMode) return;
+    ws.pomodoroActive = true;
+    ws.pomodoroRound = this.pomodoroRound;
+    ws.pomodoroOnBreak = this.onBreak;
+    ws.pomodoroCountdownTotal = this.onBreak ? this.breakDuration : this.countdownTotal;
+    ws.startTime = this.onBreak && this.breakStartTime
+      ? this.breakStartTime.toISOString()
+      : this.startTime.toISOString();
+    await this.plugin.saveSettings();
+  }
+
   private applyThemeOverrides(root: HTMLElement): void {
     const mode = this.plugin.settings.themeMode ?? "dark";
     const preset = THEME_PRESETS[mode];
@@ -496,22 +524,6 @@ export class WorkspaceView extends ItemView {
       .sort();
   }
 
-  private playAlertSound(): void {
-    try {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      osc.type = "sine";
-      gain.gain.value = 0.3;
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-      osc.stop(ctx.currentTime + 1.5);
-    } catch { /* Web Audio not available */ }
-  }
-
   private renderPomodoroDots(container: HTMLElement): void {
     const dots = container.createDiv({ cls: "olen-workspace-pom-info" });
     for (let i = 1; i <= this.pomodoroTotalRounds; i++) {
@@ -525,8 +537,8 @@ export class WorkspaceView extends ItemView {
   }
 
   private showPomodoroAlert(workspace: ActiveWorkspace): void {
-    this.playAlertSound();
-    (navigator as any).vibrate?.([200, 100, 200]);
+    playAlertSound();
+    vibrateAlert();
 
     const overlay = document.createElement("div");
     overlay.className = "olen-sheet-overlay";
@@ -565,6 +577,8 @@ export class WorkspaceView extends ItemView {
     extendBtn.addEventListener("click", () => {
       this.countdownTotal = this.elapsed + 300;
       this.pomodoroExpired = false;
+      this.startTime = new Date(Date.now() - this.elapsed * 1000);
+      this.savePomodoroState();
       const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
       if (timerEl) timerEl.classList.remove("olen-workspace-timer-warning");
       closeSheet();
@@ -606,13 +620,14 @@ export class WorkspaceView extends ItemView {
     const labelEl = this.contentEl.querySelector(".olen-workspace-timer-label");
     if (labelEl) labelEl.textContent = "BREAK";
 
-    // Update dots
+    // Update dots and persist state
     this.updatePomodoroDots();
+    this.savePomodoroState();
   }
 
   private showBreakEndAlert(workspace: ActiveWorkspace): void {
-    this.playAlertSound();
-    (navigator as any).vibrate?.([200, 100, 200]);
+    playAlertSound();
+    vibrateAlert();
 
     const isLastRound = this.pomodoroRound >= this.pomodoroTotalRounds;
 
@@ -665,6 +680,7 @@ export class WorkspaceView extends ItemView {
         if (labelEl) labelEl.textContent = "WORK";
 
         this.updatePomodoroDots();
+        this.savePomodoroState();
         closeSheet();
       });
     }

@@ -6,7 +6,7 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { CompletionMap, Completion, CalendarTask } from "../types";
-import { VIEW_TYPE_OLEN } from "../constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { OlenEngine } from "../engines/OlenEngine";
@@ -79,6 +79,12 @@ export class DashboardView extends ItemView {
 
     // Apply theme overrides
     this.applyThemeOverrides(root);
+
+    // Active workspace banner (if a session is running)
+    const ws = settings.activeWorkspace;
+    if (ws) {
+      this.renderActiveWorkspaceBanner(root, ws);
+    }
 
     // Gather completion data from vault
     const completionData = this.gatherCompletionData();
@@ -200,6 +206,85 @@ export class DashboardView extends ItemView {
           break;
       }
     }
+  }
+
+  // --- Active Workspace Banner ---
+
+  private renderActiveWorkspaceBanner(
+    root: HTMLElement,
+    ws: NonNullable<import("../types").OlenSettings["activeWorkspace"]>,
+  ): void {
+    const banner = root.createDiv({ cls: "olen-active-workspace-banner" });
+
+    // Left: emoji + name + timer
+    const left = banner.createDiv({ cls: "olen-awb-left" });
+    left.createSpan({ cls: "olen-awb-emoji", text: ws.emoji });
+
+    const info = left.createDiv({ cls: "olen-awb-info" });
+    info.createDiv({ cls: "olen-awb-name", text: ws.activityName });
+
+    const timerEl = info.createDiv({ cls: "olen-awb-timer" });
+
+    // Right: action buttons
+    const right = banner.createDiv({ cls: "olen-awb-actions" });
+
+    const openBtn = right.createEl("button", {
+      cls: "olen-awb-btn olen-awb-btn-open",
+      text: "Open",
+    });
+    openBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.plugin.activateWorkspaceView();
+    });
+
+    const stopBtn = right.createEl("button", {
+      cls: "olen-awb-btn olen-awb-btn-stop",
+      text: "Stop",
+    });
+    stopBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      // Close any open workspace views first
+      const wsLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_WORKSPACE);
+      for (const leaf of wsLeaves) {
+        leaf.detach();
+      }
+      this.plugin.settings.activeWorkspace = undefined;
+      await this.plugin.saveSettings();
+      new Notice("Session stopped");
+      await this.render();
+    });
+
+    // Tapping the banner itself opens the workspace
+    banner.addEventListener("click", () => {
+      this.plugin.activateWorkspaceView();
+    });
+
+    // Live timer update
+    const updateTimer = () => {
+      const start = new Date(ws.startTime).getTime();
+      const elapsed = Math.floor((Date.now() - start) / 1000);
+
+      if (ws.pomodoroActive && ws.pomodoroCountdownTotal) {
+        const remaining = Math.max(0, ws.pomodoroCountdownTotal - elapsed);
+        const min = Math.floor(remaining / 60);
+        const sec = remaining % 60;
+        const label = ws.pomodoroOnBreak ? "BREAK" : `POMO ${ws.pomodoroRound ?? 1}/4`;
+        timerEl.textContent = `${label}  ${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+        if (ws.pomodoroOnBreak) {
+          timerEl.classList.add("olen-awb-timer-break");
+        } else {
+          timerEl.classList.remove("olen-awb-timer-break");
+        }
+      } else {
+        const min = Math.floor(elapsed / 60);
+        const sec = elapsed % 60;
+        timerEl.textContent = `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+      }
+    };
+
+    updateTimer();
+    const id = window.setInterval(updateTimer, 1000);
+    this.intervals.push(id);
   }
 
   // --- Data Gathering ---

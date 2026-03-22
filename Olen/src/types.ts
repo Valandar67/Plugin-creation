@@ -150,10 +150,16 @@ export interface ActiveWorkspace {
   activityName: string;
   emoji: string;
   category: Category;
-  startTime: string; // ISO
+  startTime: string; // ISO — start of current work/break interval
   skills: string[];
   hasWorkspace: boolean;
   skillFolder?: string;
+
+  // Pomodoro state (persisted for background operation)
+  pomodoroActive?: boolean;
+  pomodoroRound?: number;        // 1-4
+  pomodoroOnBreak?: boolean;
+  pomodoroCountdownTotal?: number; // seconds for current interval
 }
 
 export interface WorkspaceResult {

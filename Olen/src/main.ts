@@ -16,11 +16,13 @@ import { TemplateEngine } from "./templates/TemplateEngine";
 import { getTracker } from "./tracker-bridge";
 import { THEME_PRESETS } from "./data/themes";
 import { readObsidianAccentColor, applyAccentColor } from "./utils/accentColor";
+import { playAlertSound, vibrateAlert } from "./utils/alertSound";
 
 export default class OlenPlugin extends Plugin {
   settings!: OlenSettings;
   templateEngine!: TemplateEngine;
   obsidianAccentColor: string | null = null;
+  private backgroundAlertFired = false;
 
   async onload(): Promise<void> {
     // Load settings with defaults
@@ -204,6 +206,9 @@ export default class OlenPlugin extends Plugin {
         }
       })
     );
+
+    // Background pomodoro timer — fires alerts even when WorkspaceView is closed
+    this.startBackgroundTimer();
   }
 
   onunload(): void {
@@ -406,6 +411,48 @@ export default class OlenPlugin extends Plugin {
         view.render();
       }
     }
+  }
+
+  // --- Background Pomodoro Timer ---
+
+  private startBackgroundTimer(): void {
+    const id = window.setInterval(() => this.checkBackgroundTimer(), 1000);
+    this.registerInterval(id);
+  }
+
+  private checkBackgroundTimer(): void {
+    const ws = this.settings.activeWorkspace;
+    if (!ws?.pomodoroActive) {
+      this.backgroundAlertFired = false;
+      return;
+    }
+
+    // Don't fire if WorkspaceView is currently open (it handles its own alerts)
+    const wsLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_WORKSPACE);
+    if (wsLeaves.length > 0) {
+      this.backgroundAlertFired = false;
+      return;
+    }
+
+    const startTime = new Date(ws.startTime).getTime();
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const total = ws.pomodoroCountdownTotal ?? 0;
+    const remaining = total - elapsed;
+
+    if (remaining <= 0 && !this.backgroundAlertFired) {
+      this.backgroundAlertFired = true;
+      this.fireBackgroundAlert(ws);
+    }
+  }
+
+  private fireBackgroundAlert(ws: NonNullable<OlenSettings["activeWorkspace"]>): void {
+    playAlertSound();
+    vibrateAlert();
+
+    const label = ws.pomodoroOnBreak
+      ? "Break"
+      : `Pomodoro ${ws.pomodoroRound ?? 1}`;
+    new Notice(`${ws.emoji} ${ws.activityName} \u2014 ${label} complete!`, 10000);
   }
 
   async activateWorkspaceView(): Promise<void> {

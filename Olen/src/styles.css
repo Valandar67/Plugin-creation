@@ -5305,3 +5305,102 @@
   letter-spacing: 1px;
 }
 
+/* ── Active Workspace Banner ── */
+
+.olen-active-workspace-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: color-mix(in srgb, var(--accent-gold) 10%, var(--card-bg, rgba(0,0,0,0.55)));
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 30%, transparent);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  animation: olen-fade-in 0.3s ease-out;
+}
+
+.olen-active-workspace-banner:hover {
+  background: color-mix(in srgb, var(--accent-gold) 16%, var(--card-bg, rgba(0,0,0,0.55)));
+  border-color: color-mix(in srgb, var(--accent-gold) 45%, transparent);
+}
+
+.olen-awb-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.olen-awb-emoji {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.olen-awb-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.olen-awb-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #f2ece0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.olen-awb-timer {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-gold, #d4a843);
+  letter-spacing: 0.5px;
+}
+
+.olen-awb-timer-break {
+  color: var(--success, #d49b0a);
+}
+
+.olen-awb-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.olen-awb-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.olen-awb-btn-open {
+  background: var(--accent-gold, #d4a843);
+  color: #000;
+}
+
+.olen-awb-btn-open:hover {
+  background: var(--accent-gold-bright, #e8c35a);
+}
+
+.olen-awb-btn-stop {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger, #a83240);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+.olen-awb-btn-stop:hover {
+  background: color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
