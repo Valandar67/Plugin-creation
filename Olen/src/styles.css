@@ -626,6 +626,7 @@
   line-height: 1.8;
   max-width: 340px;
   margin: 0 auto 10px;
+  overflow-wrap: break-word;
 }
 
 .olen-quote-attribution {
@@ -1406,6 +1407,17 @@
   text-shadow: 0 0 30px color-mix(in srgb, var(--accent-gold) 15%, transparent);
   letter-spacing: 2px;
   flex-shrink: 0;
+}
+
+.olen-workspace-timer-warning {
+  color: var(--danger) !important;
+  text-shadow: 0 0 30px color-mix(in srgb, var(--danger) 25%, transparent) !important;
+  animation: olenTimerPulse 1s ease-in-out infinite;
+}
+
+@keyframes olenTimerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .olen-workspace-finish-btn {
@@ -2975,7 +2987,6 @@
 }
 
 .olen-onboarding-screen {
-  flex: 1;
   display: flex;
   flex-direction: column;
   padding: 40px var(--spacing-lg);
@@ -2985,6 +2996,7 @@
 }
 
 .olen-onboarding-final {
+  flex: 1;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -3026,7 +3038,7 @@
 .olen-onboarding-actions {
   display: flex;
   gap: 12px;
-  margin-top: auto;
+  margin-top: 32px;
   padding-top: 24px;
 }
 

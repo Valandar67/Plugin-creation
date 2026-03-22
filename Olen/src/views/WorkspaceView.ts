@@ -17,6 +17,9 @@ export class WorkspaceView extends ItemView {
   private timerInterval: number | null = null;
   private startTime: Date;
   private elapsed = 0; // seconds
+  private pomodoroMode = false;
+  private countdownTotal = 0; // seconds
+  private pomodoroExpired = false;
   /** When in template mode, tracks the daily note file the template is bound to */
   private templateNoteFile: TFile | null = null;
   /** Tracks whether we already processed a completion (prevents double-apply) */
@@ -58,6 +61,10 @@ export class WorkspaceView extends ItemView {
     } else {
       // Default mode: timer + skills + finish
       this.startTime = new Date(workspace.startTime);
+      if (activity?.pomodoro && activity.estimatedDuration > 0) {
+        this.pomodoroMode = true;
+        this.countdownTotal = activity.estimatedDuration * 60;
+      }
       this.render(workspace);
       this.startTimer();
     }
@@ -228,10 +235,32 @@ export class WorkspaceView extends ItemView {
   // ================================================================
 
   private startTimer(): void {
+    const workspace = this.plugin.settings.activeWorkspace;
     this.timerInterval = window.setInterval(() => {
       this.elapsed = Math.floor((Date.now() - this.startTime.getTime()) / 1000);
       const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
-      if (timerEl) timerEl.textContent = this.formatTime(this.elapsed);
+      if (!timerEl) return;
+
+      if (this.pomodoroMode) {
+        const remaining = this.countdownTotal - this.elapsed;
+        timerEl.textContent = this.formatTime(Math.max(0, remaining));
+
+        // Warning state in last 60 seconds
+        if (remaining <= 60 && remaining > 0) {
+          timerEl.classList.add("olen-workspace-timer-warning");
+        } else {
+          timerEl.classList.remove("olen-workspace-timer-warning");
+        }
+
+        // Timer expired
+        if (remaining <= 0 && !this.pomodoroExpired) {
+          this.pomodoroExpired = true;
+          timerEl.classList.add("olen-workspace-timer-warning");
+          if (workspace) this.showPomodoroAlert(workspace);
+        }
+      } else {
+        timerEl.textContent = this.formatTime(this.elapsed);
+      }
     }, 1000);
   }
 
@@ -291,7 +320,7 @@ export class WorkspaceView extends ItemView {
 
     const timerEl = topBar.createEl("div", {
       cls: "olen-workspace-timer",
-      text: "00:00",
+      text: this.pomodoroMode ? this.formatTime(this.countdownTotal) : "00:00",
     });
 
     const finishBtn = topBar.createEl("button", {
@@ -438,6 +467,72 @@ export class WorkspaceView extends ItemView {
       .filter((f) => f.path.startsWith(normalizedFolder))
       .map((f) => f.basename)
       .sort();
+  }
+
+  private playAlertSound(): void {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.value = 0.3;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+      osc.stop(ctx.currentTime + 1.5);
+    } catch { /* Web Audio not available */ }
+  }
+
+  private showPomodoroAlert(workspace: ActiveWorkspace): void {
+    this.playAlertSound();
+    (navigator as any).vibrate?.([200, 100, 200]);
+
+    const overlay = document.createElement("div");
+    overlay.className = "olen-sheet-overlay";
+
+    const sheet = overlay.createDiv({ cls: "olen-sheet" });
+    sheet.createDiv({ cls: "olen-sheet-handle" });
+
+    sheet.createEl("div", { cls: "olen-heading-lg", text: "TIME'S UP!" });
+    const durationMinutes = Math.round(this.countdownTotal / 60);
+    sheet.createEl("div", {
+      cls: "olen-body-italic",
+      attr: { style: "margin: 12px 0 20px;" },
+      text: `${workspace.emoji} ${workspace.activityName} · ${durationMinutes} minutes`,
+    });
+
+    const actions = sheet.createDiv({ cls: "olen-workspace-states-grid", attr: { style: "display: flex; gap: 12px; justify-content: center;" } });
+
+    const finishBtn = actions.createEl("button", {
+      cls: "olen-btn olen-btn-primary",
+      text: "FINISH",
+    });
+    finishBtn.addEventListener("click", () => {
+      closeSheet();
+      this.showFinishModal(workspace);
+    });
+
+    const extendBtn = actions.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      text: "+5 MIN",
+    });
+    extendBtn.addEventListener("click", () => {
+      this.countdownTotal = this.elapsed + 300;
+      this.pomodoroExpired = false;
+      const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
+      if (timerEl) timerEl.classList.remove("olen-workspace-timer-warning");
+      closeSheet();
+    });
+
+    const closeSheet = () => {
+      overlay.classList.remove("visible");
+      setTimeout(() => overlay.remove(), 350);
+    };
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("visible"));
   }
 
   private showFinishModal(workspace: ActiveWorkspace): void {

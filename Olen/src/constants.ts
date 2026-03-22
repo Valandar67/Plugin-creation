@@ -306,6 +306,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   quoteFolderPath: "",
   lastQuoteIndex: -1,
   recentQuoteIds: [],
+  quoteMaxLength: 0,
 
   // Dream Board
   dreamBoardImages: [],

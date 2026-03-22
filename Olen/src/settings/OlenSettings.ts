@@ -524,6 +524,18 @@ export class OlenSettingTab extends PluginSettingTab {
         })
       );
 
+    if (!activity.workspaceTemplate) {
+      new Setting(details)
+        .setName("Pomodoro mode")
+        .setDesc("Countdown from estimated duration. Alerts when time is up.")
+        .addToggle((toggle) =>
+          toggle.setValue(activity.pomodoro ?? false).onChange(async (v) => {
+            this.plugin.settings.activities[index].pomodoro = v;
+            await this.plugin.saveSettings();
+          })
+        );
+    }
+
     new Setting(details)
       .setName("Has workspace")
       .setDesc("Opens workspace view with timer when started, instead of marking done immediately")
@@ -987,6 +999,20 @@ export class OlenSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.quoteFolderPath)
           .onChange(async (v) => {
             this.plugin.settings.quoteFolderPath = v;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
+      .setName("Max quote length")
+      .setDesc("Quotes longer than this (in characters) won't appear. 0 = no limit.")
+      .addText((t) =>
+        t
+          .setPlaceholder("0")
+          .setValue(String(this.plugin.settings.quoteMaxLength ?? 0))
+          .onChange(async (v) => {
+            const n = parseInt(v);
+            this.plugin.settings.quoteMaxLength = isNaN(n) || n < 0 ? 0 : n;
             await this.plugin.saveSettings();
           })
       );

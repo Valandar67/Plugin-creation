@@ -42,6 +42,7 @@ export interface ActivityConfig {
   preferredTime: PreferredTime;
   timeOverride?: TimeOverride;
   estimatedDuration: number; // minutes
+  pomodoro?: boolean;
 
   // === Screen Sources (§I dual system) ===
   dashboardSource?: "native" | "custom";
@@ -459,6 +460,7 @@ export interface OlenSettings {
   quoteFolderPath: string;
   lastQuoteIndex: number;
   recentQuoteIds: number[];
+  quoteMaxLength: number;
 
   // Dream Board
   dreamBoardImages: DreamBoardImage[];

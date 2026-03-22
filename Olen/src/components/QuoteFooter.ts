@@ -37,21 +37,28 @@ interface Quote {
   attribution: string;
 }
 
+function filterByMaxLength(quotes: Quote[], maxLength: number): Quote[] {
+  if (!maxLength || maxLength <= 0) return quotes;
+  return quotes.filter((q) => q.text.length <= maxLength);
+}
+
 function getQuote(
   app: App,
   settings: OlenSettings,
   onSettingsUpdate: (settings: Partial<OlenSettings>) => void
 ): Quote {
+  const maxLen = settings.quoteMaxLength ?? 0;
+
   // Try vault folder quotes first
   if (settings.quoteFolderPath) {
-    const vaultQuotes = loadQuotesFromVault(app, settings.quoteFolderPath);
+    const vaultQuotes = filterByMaxLength(loadQuotesFromVault(app, settings.quoteFolderPath), maxLen);
     if (vaultQuotes.length > 0) {
       return pickQuote(vaultQuotes, settings, onSettingsUpdate);
     }
   }
 
   // Fallback to hardcoded quotes
-  return pickQuote(FALLBACK_QUOTES, settings, onSettingsUpdate);
+  return pickQuote(filterByMaxLength(FALLBACK_QUOTES, maxLen), settings, onSettingsUpdate);
 }
 
 function pickQuote(

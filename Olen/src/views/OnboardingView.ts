@@ -164,12 +164,7 @@ export class OnboardingView extends ItemView {
       attr: { style: "max-width: 400px; margin-bottom: 40px; line-height: 1.7; opacity: 0.6;" },
     });
 
-    const btn = content.createEl("button", {
-      cls: "olen-btn olen-btn-primary olen-btn-large",
-      text: "LET'S GO \u2192",
-      attr: { style: "min-width: 200px;" },
-    });
-    btn.addEventListener("click", () => this.goto(1));
+    this.renderNav(content, { next: 1, nextLabel: "LET'S GO \u2192" });
   }
 
   // ── Intro 1: "How It Works" ────────────────────────────
@@ -1286,10 +1281,14 @@ export class OnboardingView extends ItemView {
         });
 
         // Manual advance only — no auto-timeout
-        const nextBtn = punchline.createEl("button", {
+        const actions = punchline.createDiv({ cls: "olen-onboarding-actions" });
+        actions.style.justifyContent = "center";
+        const nextBtn = actions.createEl("button", {
           cls: "olen-btn olen-btn-primary olen-btn-large",
           text: "NEXT \u2192",
         });
+        nextBtn.style.flex = "0 1 auto";
+        nextBtn.style.minWidth = "140px";
         nextBtn.addEventListener("click", () => {
           timeouts.forEach(clearTimeout);
           this.goto(11);
