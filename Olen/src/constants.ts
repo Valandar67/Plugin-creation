@@ -11,7 +11,19 @@ import type {
   WorkspaceCompletionState,
   CalendarSettings,
   PersonalStats,
+  PomodoroSettings,
 } from "./types";
+
+export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
+  focusMinutes: 25,
+  breakMinutes: 5,
+  longBreakMinutes: 15,
+  sessionsBeforeLong: 4,
+  autoStartFocus: false,
+  autoStartBreak: false,
+  soundEnabled: true,
+  vibrationEnabled: true,
+};
 
 // --- View Type ---
 

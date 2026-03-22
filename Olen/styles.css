@@ -1460,6 +1460,159 @@
   color: var(--accent-gold-bright);
 }
 
+/* Timer label row (label + gear) */
+.olen-workspace-timer-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.olen-pom-settings-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.olen-pom-settings-btn:hover {
+  opacity: 1;
+  color: var(--accent-gold);
+}
+
+/* Pomodoro Settings Form */
+.olen-pom-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 8px 0;
+}
+
+.olen-pom-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.olen-pom-settings-label {
+  font-size: 13px;
+  color: var(--text-primary, #f2ece0);
+  font-weight: 500;
+}
+
+.olen-pom-settings-desc {
+  font-size: 11px;
+  color: var(--text-muted, #7e7769);
+  display: block;
+  margin-top: 2px;
+}
+
+.olen-pom-settings-input {
+  width: 52px;
+  height: 36px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-gold, #d4a843);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 30%, transparent);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+  flex-shrink: 0;
+}
+
+.olen-pom-settings-input::-webkit-inner-spin-button,
+.olen-pom-settings-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.olen-pom-settings-input:focus {
+  border-color: var(--accent-gold, #d4a843);
+}
+
+.olen-pom-settings-divider {
+  height: 1px;
+  background: var(--divider, rgba(255,255,255,0.06));
+  margin: 4px 0;
+}
+
+.olen-pom-settings-toggle-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Toggle switch */
+.olen-pom-toggle {
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--card-border, rgba(255,255,255,0.06));
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.olen-pom-toggle-on {
+  background: var(--accent-gold, #d4a843);
+}
+
+.olen-pom-toggle-knob {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-primary, #f2ece0);
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+
+.olen-pom-toggle-on .olen-pom-toggle-knob {
+  transform: translateX(18px);
+}
+
+/* Sound file picker */
+.olen-pom-settings-file-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.olen-pom-settings-file-name {
+  font-size: 11px;
+  color: var(--text-secondary, #c8c0b2);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.olen-pom-sound-item {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #c8c0b2);
+  border-bottom: 1px solid var(--divider, rgba(255,255,255,0.06));
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.olen-pom-sound-item:hover {
+  background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
+  color: var(--text-primary, #f2ece0);
+}
+
 .olen-workspace-finish-btn {
   padding: 8px 20px !important;
   font-size: 10px !important;

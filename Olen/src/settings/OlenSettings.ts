@@ -6,7 +6,7 @@
 import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency, OlenThemeMode } from "../types";
-import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG } from "../constants";
+import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG, DEFAULT_POMODORO_SETTINGS } from "../constants";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 import { BUILTIN_TEMPLATE_IDS } from "../templates/builtins";
 
@@ -527,13 +527,141 @@ export class OlenSettingTab extends PluginSettingTab {
     if (!activity.workspaceTemplate) {
       new Setting(details)
         .setName("Pomodoro mode")
-        .setDesc("Countdown from estimated duration. Alerts when time is up.")
+        .setDesc("Use Pomodoro timer with work/break cycles")
         .addToggle((toggle) =>
           toggle.setValue(activity.pomodoro ?? false).onChange(async (v) => {
             this.plugin.settings.activities[index].pomodoro = v;
             await this.plugin.saveSettings();
+            this.display(); // re-render to show/hide sub-settings
           })
         );
+
+      if (activity.pomodoro) {
+        const ps = activity.pomodoroSettings ?? { ...DEFAULT_POMODORO_SETTINGS };
+
+        new Setting(details)
+          .setName("Focus time (minutes)")
+          .addText((text) =>
+            text.setValue(String(ps.focusMinutes)).onChange(async (v) => {
+              const n = parseInt(v) || 25;
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.focusMinutes = Math.max(1, n);
+              await this.plugin.saveSettings();
+            })
+          );
+
+        new Setting(details)
+          .setName("Break time (minutes)")
+          .addText((text) =>
+            text.setValue(String(ps.breakMinutes)).onChange(async (v) => {
+              const n = parseInt(v) || 5;
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.breakMinutes = Math.max(1, n);
+              await this.plugin.saveSettings();
+            })
+          );
+
+        new Setting(details)
+          .setName("Long break (minutes)")
+          .addText((text) =>
+            text.setValue(String(ps.longBreakMinutes)).onChange(async (v) => {
+              const n = parseInt(v) || 15;
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.longBreakMinutes = Math.max(1, n);
+              await this.plugin.saveSettings();
+            })
+          );
+
+        new Setting(details)
+          .setName("Sessions before long break")
+          .addText((text) =>
+            text.setValue(String(ps.sessionsBeforeLong)).onChange(async (v) => {
+              const n = parseInt(v) || 4;
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.sessionsBeforeLong = Math.max(2, n);
+              await this.plugin.saveSettings();
+            })
+          );
+
+        new Setting(details)
+          .setName("Auto start focus")
+          .setDesc("Start work session after break without interaction")
+          .addToggle((toggle) =>
+            toggle.setValue(ps.autoStartFocus).onChange(async (v) => {
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.autoStartFocus = v;
+              await this.plugin.saveSettings();
+            })
+          );
+
+        new Setting(details)
+          .setName("Auto start break")
+          .setDesc("Start break after work session without interaction")
+          .addToggle((toggle) =>
+            toggle.setValue(ps.autoStartBreak).onChange(async (v) => {
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.autoStartBreak = v;
+              await this.plugin.saveSettings();
+            })
+          );
+
+        new Setting(details)
+          .setName("Sound")
+          .setDesc("Play alert sound when timer ends")
+          .addToggle((toggle) =>
+            toggle.setValue(ps.soundEnabled).onChange(async (v) => {
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.soundEnabled = v;
+              await this.plugin.saveSettings();
+              this.display();
+            })
+          );
+
+        if (ps.soundEnabled) {
+          new Setting(details)
+            .setName("Custom sound file")
+            .setDesc("Vault path to audio file (leave empty for default beep)")
+            .addText((text) =>
+              text
+                .setPlaceholder("e.g. sounds/bell.mp3")
+                .setValue(ps.soundFile ?? "")
+                .onChange(async (v) => {
+                  if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                    this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+                  }
+                  this.plugin.settings.activities[index].pomodoroSettings!.soundFile = v || undefined;
+                  await this.plugin.saveSettings();
+                })
+            );
+        }
+
+        new Setting(details)
+          .setName("Vibration")
+          .setDesc("Vibrate when timer ends")
+          .addToggle((toggle) =>
+            toggle.setValue(ps.vibrationEnabled).onChange(async (v) => {
+              if (!this.plugin.settings.activities[index].pomodoroSettings) {
+                this.plugin.settings.activities[index].pomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
+              }
+              this.plugin.settings.activities[index].pomodoroSettings!.vibrationEnabled = v;
+              await this.plugin.saveSettings();
+            })
+          );
+      }
     }
 
     new Setting(details)

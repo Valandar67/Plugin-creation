@@ -446,12 +446,18 @@ export default class OlenPlugin extends Plugin {
   }
 
   private fireBackgroundAlert(ws: NonNullable<OlenSettings["activeWorkspace"]>): void {
-    playAlertSound();
-    vibrateAlert();
+    const pomS = ws.pomodoroSettings;
+    const resolveResource = (path: string): string => {
+      const adapter = this.app.vault.adapter;
+      return (adapter as any).getResourcePath ? (adapter as any).getResourcePath(path) : path;
+    };
+    playAlertSound(pomS, resolveResource);
+    vibrateAlert(pomS);
 
+    const totalRounds = pomS?.sessionsBeforeLong ?? 4;
     const label = ws.pomodoroOnBreak
       ? "Break"
-      : `Pomodoro ${ws.pomodoroRound ?? 1}`;
+      : `Pomodoro ${ws.pomodoroRound ?? 1}/${totalRounds}`;
     new Notice(`${ws.emoji} ${ws.activityName} \u2014 ${label} complete!`, 10000);
   }
 

@@ -17,6 +17,18 @@ export interface TimeOverride {
   endHour: number;
 }
 
+export interface PomodoroSettings {
+  focusMinutes: number;       // default 25
+  breakMinutes: number;       // default 5
+  longBreakMinutes: number;   // default 15
+  sessionsBeforeLong: number; // default 4
+  autoStartFocus: boolean;    // auto-start work after break
+  autoStartBreak: boolean;    // auto-start break after work
+  soundEnabled: boolean;      // play alert sound on timer end
+  soundFile?: string;         // vault path to custom sound file (empty = default beep)
+  vibrationEnabled: boolean;  // vibrate on timer end
+}
+
 export interface ActivityConfig {
   id: string;
   name: string;
@@ -43,6 +55,7 @@ export interface ActivityConfig {
   timeOverride?: TimeOverride;
   estimatedDuration: number; // minutes
   pomodoro?: boolean;
+  pomodoroSettings?: PomodoroSettings;
 
   // === Screen Sources (§I dual system) ===
   dashboardSource?: "native" | "custom";
@@ -160,6 +173,7 @@ export interface ActiveWorkspace {
   pomodoroRound?: number;        // 1-4
   pomodoroOnBreak?: boolean;
   pomodoroCountdownTotal?: number; // seconds for current interval
+  pomodoroSettings?: PomodoroSettings; // per-activity settings snapshot
 }
 
 export interface WorkspaceResult {

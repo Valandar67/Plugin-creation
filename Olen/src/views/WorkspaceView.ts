@@ -7,8 +7,8 @@
 
 import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult } from "../types";
-import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES } from "../constants";
+import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult, PomodoroSettings } from "../types";
+import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES, DEFAULT_POMODORO_SETTINGS } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { playAlertSound, vibrateAlert } from "../utils/alertSound";
@@ -26,6 +26,7 @@ export class WorkspaceView extends ItemView {
   private onBreak = false;
   private breakDuration = 0; // seconds
   private breakStartTime: Date | null = null;
+  private pomSettings: PomodoroSettings = { ...DEFAULT_POMODORO_SETTINGS };
   /** When in template mode, tracks the daily note file the template is bound to */
   private templateNoteFile: TFile | null = null;
   /** Tracks whether we already processed a completion (prevents double-apply) */
@@ -68,20 +69,32 @@ export class WorkspaceView extends ItemView {
       // Default mode: timer + skills + finish
       this.startTime = new Date(workspace.startTime);
 
+      // Load per-activity pomodoro settings
+      this.pomSettings = {
+        ...DEFAULT_POMODORO_SETTINGS,
+        ...(activity?.pomodoroSettings ?? {}),
+      };
+      this.pomodoroTotalRounds = this.pomSettings.sessionsBeforeLong;
+
       // Restore persisted pomodoro state (survives view close/reopen)
       if (workspace.pomodoroActive) {
         this.pomodoroMode = true;
         this.pomodoroRound = workspace.pomodoroRound ?? 1;
         this.onBreak = workspace.pomodoroOnBreak ?? false;
-        this.countdownTotal = workspace.pomodoroCountdownTotal ?? (activity?.estimatedDuration ?? 25) * 60;
+        // Use persisted settings snapshot if available
+        if (workspace.pomodoroSettings) {
+          this.pomSettings = workspace.pomodoroSettings;
+          this.pomodoroTotalRounds = this.pomSettings.sessionsBeforeLong;
+        }
+        this.countdownTotal = workspace.pomodoroCountdownTotal ?? this.pomSettings.focusMinutes * 60;
         if (this.onBreak) {
           this.breakDuration = this.countdownTotal;
           this.breakStartTime = new Date(workspace.startTime);
         }
-      } else if (activity?.pomodoro && activity.estimatedDuration > 0) {
-        // First time setup — no persisted state yet
+      } else if (activity?.pomodoro) {
+        // First time setup — always use pomSettings.focusMinutes (default 25)
         this.pomodoroMode = true;
-        this.countdownTotal = activity.estimatedDuration * 60;
+        this.countdownTotal = this.pomSettings.focusMinutes * 60;
         await this.savePomodoroState();
       }
 
@@ -307,6 +320,7 @@ export class WorkspaceView extends ItemView {
     ws.pomodoroRound = this.pomodoroRound;
     ws.pomodoroOnBreak = this.onBreak;
     ws.pomodoroCountdownTotal = this.onBreak ? this.breakDuration : this.countdownTotal;
+    ws.pomodoroSettings = { ...this.pomSettings };
     ws.startTime = this.onBreak && this.breakStartTime
       ? this.breakStartTime.toISOString()
       : this.startTime.toISOString();
@@ -366,7 +380,15 @@ export class WorkspaceView extends ItemView {
       text: this.pomodoroMode ? this.formatTime(this.countdownTotal) : "00:00",
     });
     if (this.pomodoroMode) {
-      timerArea.createEl("div", { cls: "olen-workspace-timer-label", text: "WORK" });
+      const labelRow = timerArea.createDiv({ cls: "olen-workspace-timer-label-row" });
+      labelRow.createEl("div", { cls: "olen-workspace-timer-label", text: this.onBreak ? "BREAK" : "WORK" });
+      const gearBtn = labelRow.createEl("button", {
+        cls: "olen-pom-settings-btn",
+        attr: { "aria-label": "Pomodoro settings" },
+      });
+      gearBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+      gearBtn.addEventListener("click", () => this.showPomodoroSettingsPanel(workspace));
+
       const pomInfo = timerArea.createDiv({ cls: "olen-workspace-pom-info" });
       for (let i = 1; i <= this.pomodoroTotalRounds; i++) {
         pomInfo.createEl("span", {
@@ -536,9 +558,14 @@ export class WorkspaceView extends ItemView {
     }
   }
 
+  private resolveResource(path: string): string {
+    const adapter = this.app.vault.adapter;
+    return (adapter as any).getResourcePath ? (adapter as any).getResourcePath(path) : path;
+  }
+
   private showPomodoroAlert(workspace: ActiveWorkspace): void {
-    playAlertSound();
-    vibrateAlert();
+    playAlertSound(this.pomSettings, (p) => this.resolveResource(p));
+    vibrateAlert(this.pomSettings);
 
     const overlay = document.createElement("div");
     overlay.className = "olen-sheet-overlay";
@@ -557,9 +584,19 @@ export class WorkspaceView extends ItemView {
     this.renderPomodoroDots(sheet);
 
     const isLastRound = this.pomodoroRound >= this.pomodoroTotalRounds;
-    const breakLabel = isLastRound ? "LONG BREAK (20m)" : "TAKE BREAK (5m)";
+    const breakLabel = isLastRound
+      ? `LONG BREAK (${this.pomSettings.longBreakMinutes}m)`
+      : `TAKE BREAK (${this.pomSettings.breakMinutes}m)`;
 
     const actions = sheet.createDiv({ attr: { style: "display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;" } });
+
+    if (this.pomSettings.autoStartBreak) {
+      // Auto-start break after a short delay
+      setTimeout(() => {
+        closeSheet();
+        this.startBreak(workspace, isLastRound);
+      }, 1500);
+    }
 
     const breakBtn = actions.createEl("button", {
       cls: "olen-btn olen-btn-primary",
@@ -604,7 +641,9 @@ export class WorkspaceView extends ItemView {
 
   private startBreak(workspace: ActiveWorkspace, isLongBreak: boolean): void {
     this.onBreak = true;
-    this.breakDuration = isLongBreak ? 20 * 60 : 5 * 60;
+    this.breakDuration = isLongBreak
+      ? this.pomSettings.longBreakMinutes * 60
+      : this.pomSettings.breakMinutes * 60;
     this.breakStartTime = new Date();
     this.pomodoroExpired = false;
 
@@ -626,8 +665,8 @@ export class WorkspaceView extends ItemView {
   }
 
   private showBreakEndAlert(workspace: ActiveWorkspace): void {
-    playAlertSound();
-    vibrateAlert();
+    playAlertSound(this.pomSettings, (p) => this.resolveResource(p));
+    vibrateAlert(this.pomSettings);
 
     const isLastRound = this.pomodoroRound >= this.pomodoroTotalRounds;
 
@@ -653,36 +692,40 @@ export class WorkspaceView extends ItemView {
 
     const actions = sheet.createDiv({ attr: { style: "display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;" } });
 
+    const startNextRound = () => {
+      this.pomodoroRound++;
+      this.onBreak = false;
+      this.breakStartTime = null;
+      this.pomodoroExpired = false;
+      this.startTime = new Date();
+      this.elapsed = 0;
+
+      this.countdownTotal = this.pomSettings.focusMinutes * 60;
+
+      const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
+      if (timerEl) {
+        timerEl.textContent = this.formatTime(this.countdownTotal);
+        timerEl.classList.remove("olen-workspace-timer-break");
+      }
+
+      const labelEl = this.contentEl.querySelector(".olen-workspace-timer-label");
+      if (labelEl) labelEl.textContent = "WORK";
+
+      this.updatePomodoroDots();
+      this.savePomodoroState();
+      closeSheet();
+    };
+
     if (!isLastRound) {
+      if (this.pomSettings.autoStartFocus) {
+        setTimeout(() => startNextRound(), 1500);
+      }
+
       const nextBtn = actions.createEl("button", {
         cls: "olen-btn olen-btn-primary",
         text: "NEXT POMODORO",
       });
-      nextBtn.addEventListener("click", () => {
-        this.pomodoroRound++;
-        this.onBreak = false;
-        this.breakStartTime = null;
-        this.pomodoroExpired = false;
-        this.startTime = new Date();
-        this.elapsed = 0;
-
-        // Restore work timer display
-        const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
-        this.countdownTotal = (activity?.estimatedDuration ?? 25) * 60;
-
-        const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
-        if (timerEl) {
-          timerEl.textContent = this.formatTime(this.countdownTotal);
-          timerEl.classList.remove("olen-workspace-timer-break");
-        }
-
-        const labelEl = this.contentEl.querySelector(".olen-workspace-timer-label");
-        if (labelEl) labelEl.textContent = "WORK";
-
-        this.updatePomodoroDots();
-        this.savePomodoroState();
-        closeSheet();
-      });
+      nextBtn.addEventListener("click", () => startNextRound());
     }
 
     const finishBtn = actions.createEl("button", {
@@ -715,6 +758,257 @@ export class WorkspaceView extends ItemView {
         text: i < this.pomodoroRound ? "\u25CF" : i === this.pomodoroRound ? "\u25CF" : "\u25CB",
       });
     }
+  }
+
+  private showPomodoroSettingsPanel(workspace: ActiveWorkspace): void {
+    const overlay = document.createElement("div");
+    overlay.className = "olen-sheet-overlay";
+
+    const sheet = overlay.createDiv({ cls: "olen-sheet" });
+    sheet.createDiv({ cls: "olen-sheet-handle" });
+    sheet.createEl("div", { cls: "olen-heading-lg", text: "TIMER SETTINGS" });
+
+    const profileLabel = `${this.pomSettings.focusMinutes}/${this.pomSettings.breakMinutes}`;
+    sheet.createEl("div", {
+      cls: "olen-body-italic",
+      attr: { style: "margin: 4px 0 16px; opacity: 0.6;" },
+      text: `Profile: ${profileLabel}`,
+    });
+
+    const form = sheet.createDiv({ cls: "olen-pom-settings-form" });
+
+    // Focus time
+    const focusRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    focusRow.createEl("span", { cls: "olen-pom-settings-label", text: "Focus time" });
+    const focusInput = focusRow.createEl("input", {
+      cls: "olen-pom-settings-input",
+      attr: { type: "number", min: "1", max: "120", value: String(this.pomSettings.focusMinutes) },
+    });
+
+    // Break time
+    const breakRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    breakRow.createEl("span", { cls: "olen-pom-settings-label", text: "Break time" });
+    const breakInput = breakRow.createEl("input", {
+      cls: "olen-pom-settings-input",
+      attr: { type: "number", min: "1", max: "60", value: String(this.pomSettings.breakMinutes) },
+    });
+
+    // Long break
+    const longRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    longRow.createEl("span", { cls: "olen-pom-settings-label", text: "Long break" });
+    const longInput = longRow.createEl("input", {
+      cls: "olen-pom-settings-input",
+      attr: { type: "number", min: "1", max: "60", value: String(this.pomSettings.longBreakMinutes) },
+    });
+
+    // Sessions before long break
+    const sessionsRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    sessionsRow.createEl("span", { cls: "olen-pom-settings-label", text: "Sessions before long break" });
+    const sessionsInput = sessionsRow.createEl("input", {
+      cls: "olen-pom-settings-input",
+      attr: { type: "number", min: "2", max: "10", value: String(this.pomSettings.sessionsBeforeLong) },
+    });
+
+    // Divider
+    form.createDiv({ cls: "olen-pom-settings-divider" });
+
+    // Auto start focus
+    const autoFocusRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    const autoFocusLeft = autoFocusRow.createDiv({ cls: "olen-pom-settings-toggle-info" });
+    autoFocusLeft.createEl("span", { cls: "olen-pom-settings-label", text: "Auto start focus" });
+    autoFocusLeft.createEl("span", { cls: "olen-pom-settings-desc", text: "Start work after break ends" });
+    const autoFocusToggle = autoFocusRow.createEl("div", {
+      cls: `olen-pom-toggle ${this.pomSettings.autoStartFocus ? "olen-pom-toggle-on" : ""}`,
+    });
+    autoFocusToggle.createDiv({ cls: "olen-pom-toggle-knob" });
+    autoFocusToggle.addEventListener("click", () => {
+      this.pomSettings.autoStartFocus = !this.pomSettings.autoStartFocus;
+      autoFocusToggle.classList.toggle("olen-pom-toggle-on", this.pomSettings.autoStartFocus);
+    });
+
+    // Auto start break
+    const autoBreakRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    const autoBreakLeft = autoBreakRow.createDiv({ cls: "olen-pom-settings-toggle-info" });
+    autoBreakLeft.createEl("span", { cls: "olen-pom-settings-label", text: "Auto start break" });
+    autoBreakLeft.createEl("span", { cls: "olen-pom-settings-desc", text: "Start break after work ends" });
+    const autoBreakToggle = autoBreakRow.createEl("div", {
+      cls: `olen-pom-toggle ${this.pomSettings.autoStartBreak ? "olen-pom-toggle-on" : ""}`,
+    });
+    autoBreakToggle.createDiv({ cls: "olen-pom-toggle-knob" });
+    autoBreakToggle.addEventListener("click", () => {
+      this.pomSettings.autoStartBreak = !this.pomSettings.autoStartBreak;
+      autoBreakToggle.classList.toggle("olen-pom-toggle-on", this.pomSettings.autoStartBreak);
+    });
+
+    // Another divider
+    form.createDiv({ cls: "olen-pom-settings-divider" });
+
+    // Sound enabled
+    const soundRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    const soundLeft = soundRow.createDiv({ cls: "olen-pom-settings-toggle-info" });
+    soundLeft.createEl("span", { cls: "olen-pom-settings-label", text: "Sound" });
+    soundLeft.createEl("span", { cls: "olen-pom-settings-desc", text: "Play alert sound on timer end" });
+    const soundToggle = soundRow.createEl("div", {
+      cls: `olen-pom-toggle ${this.pomSettings.soundEnabled ? "olen-pom-toggle-on" : ""}`,
+    });
+    soundToggle.createDiv({ cls: "olen-pom-toggle-knob" });
+    soundToggle.addEventListener("click", () => {
+      this.pomSettings.soundEnabled = !this.pomSettings.soundEnabled;
+      soundToggle.classList.toggle("olen-pom-toggle-on", this.pomSettings.soundEnabled);
+      // Show/hide sound file picker
+      soundFileRow.style.display = this.pomSettings.soundEnabled ? "flex" : "none";
+    });
+
+    // Sound file picker
+    const soundFileRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    soundFileRow.style.display = this.pomSettings.soundEnabled ? "flex" : "none";
+    soundFileRow.createEl("span", { cls: "olen-pom-settings-label", text: "Sound file" });
+    const soundFileRight = soundFileRow.createDiv({ cls: "olen-pom-settings-file-pick" });
+    const soundFileLabel = soundFileRight.createEl("span", {
+      cls: "olen-pom-settings-file-name",
+      text: this.pomSettings.soundFile || "Default beep",
+    });
+    const browseBtn = soundFileRight.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      attr: { style: "padding: 4px 10px; font-size: 10px;" },
+      text: "BROWSE",
+    });
+    browseBtn.addEventListener("click", () => {
+      // Show a file picker for audio files in the vault
+      this.showSoundFilePicker(soundFileLabel);
+    });
+    if (this.pomSettings.soundFile) {
+      const clearBtn = soundFileRight.createEl("button", {
+        cls: "olen-btn olen-btn-secondary",
+        attr: { style: "padding: 4px 10px; font-size: 10px;" },
+        text: "RESET",
+      });
+      clearBtn.addEventListener("click", () => {
+        this.pomSettings.soundFile = undefined;
+        soundFileLabel.textContent = "Default beep";
+        clearBtn.remove();
+      });
+    }
+
+    // Vibration enabled
+    const vibRow = form.createDiv({ cls: "olen-pom-settings-row" });
+    const vibLeft = vibRow.createDiv({ cls: "olen-pom-settings-toggle-info" });
+    vibLeft.createEl("span", { cls: "olen-pom-settings-label", text: "Vibration" });
+    vibLeft.createEl("span", { cls: "olen-pom-settings-desc", text: "Vibrate on timer end" });
+    const vibToggle = vibRow.createEl("div", {
+      cls: `olen-pom-toggle ${this.pomSettings.vibrationEnabled ? "olen-pom-toggle-on" : ""}`,
+    });
+    vibToggle.createDiv({ cls: "olen-pom-toggle-knob" });
+    vibToggle.addEventListener("click", () => {
+      this.pomSettings.vibrationEnabled = !this.pomSettings.vibrationEnabled;
+      vibToggle.classList.toggle("olen-pom-toggle-on", this.pomSettings.vibrationEnabled);
+    });
+
+    // Save button
+    const actions = sheet.createDiv({ attr: { style: "display: flex; gap: 12px; justify-content: center; margin-top: 20px;" } });
+    const saveBtn = actions.createEl("button", {
+      cls: "olen-btn olen-btn-primary",
+      text: "SAVE",
+    });
+    saveBtn.addEventListener("click", async () => {
+      this.pomSettings.focusMinutes = Math.max(1, parseInt(focusInput.value) || 25);
+      this.pomSettings.breakMinutes = Math.max(1, parseInt(breakInput.value) || 5);
+      this.pomSettings.longBreakMinutes = Math.max(1, parseInt(longInput.value) || 15);
+      this.pomSettings.sessionsBeforeLong = Math.max(2, parseInt(sessionsInput.value) || 4);
+      this.pomodoroTotalRounds = this.pomSettings.sessionsBeforeLong;
+
+      // Save to activity config for future sessions
+      const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
+      if (activity) {
+        activity.pomodoroSettings = { ...this.pomSettings };
+      }
+
+      // If not mid-break, update the current countdown to new focus time
+      if (!this.onBreak && this.pomodoroRound === 1 && this.elapsed < 5) {
+        this.countdownTotal = this.pomSettings.focusMinutes * 60;
+        const timerEl = this.contentEl.querySelector(".olen-workspace-timer");
+        if (timerEl) timerEl.textContent = this.formatTime(this.countdownTotal);
+      }
+
+      await this.savePomodoroState();
+      this.updatePomodoroDots();
+
+      new Notice("Pomodoro settings saved");
+      closeSheet();
+    });
+
+    const cancelBtn = actions.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      text: "CANCEL",
+    });
+    cancelBtn.addEventListener("click", () => closeSheet());
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeSheet();
+    });
+
+    const closeSheet = () => {
+      overlay.classList.remove("visible");
+      setTimeout(() => overlay.remove(), 350);
+    };
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("visible"));
+  }
+
+  private showSoundFilePicker(labelEl: HTMLElement): void {
+    const audioExtensions = new Set(["mp3", "wav", "ogg", "m4a", "flac", "aac", "webm"]);
+    const files = this.app.vault.getFiles()
+      .filter((f) => {
+        const ext = f.extension.toLowerCase();
+        return audioExtensions.has(ext);
+      })
+      .sort((a, b) => a.path.localeCompare(b.path));
+
+    const overlay = document.createElement("div");
+    overlay.className = "olen-sheet-overlay";
+
+    const sheet = overlay.createDiv({ cls: "olen-sheet" });
+    sheet.createDiv({ cls: "olen-sheet-handle" });
+    sheet.createEl("div", { cls: "olen-heading-lg", text: "SELECT SOUND FILE" });
+
+    if (files.length === 0) {
+      sheet.createEl("div", {
+        cls: "olen-body-italic",
+        attr: { style: "margin: 20px 0; text-align: center;" },
+        text: "No audio files found in vault",
+      });
+    } else {
+      const list = sheet.createDiv({ attr: { style: "max-height: 300px; overflow-y: auto; margin: 12px 0;" } });
+      for (const file of files) {
+        const item = list.createDiv({ cls: "olen-pom-sound-item" });
+        item.textContent = file.path;
+        item.addEventListener("click", () => {
+          this.pomSettings.soundFile = file.path;
+          labelEl.textContent = file.name;
+          closeSheet();
+        });
+      }
+    }
+
+    const cancelBtn = sheet.createEl("button", {
+      cls: "olen-btn olen-btn-secondary",
+      attr: { style: "margin-top: 12px;" },
+      text: "CANCEL",
+    });
+    cancelBtn.addEventListener("click", () => closeSheet());
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeSheet();
+    });
+
+    const closeSheet = () => {
+      overlay.classList.remove("visible");
+      setTimeout(() => overlay.remove(), 350);
+    };
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("visible"));
   }
 
   private showFinishModal(workspace: ActiveWorkspace): void {

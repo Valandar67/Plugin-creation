@@ -268,7 +268,8 @@ export class DashboardView extends ItemView {
         const remaining = Math.max(0, ws.pomodoroCountdownTotal - elapsed);
         const min = Math.floor(remaining / 60);
         const sec = remaining % 60;
-        const label = ws.pomodoroOnBreak ? "BREAK" : `POMO ${ws.pomodoroRound ?? 1}/4`;
+        const totalRounds = ws.pomodoroSettings?.sessionsBeforeLong ?? 4;
+        const label = ws.pomodoroOnBreak ? "BREAK" : `POMO ${ws.pomodoroRound ?? 1}/${totalRounds}`;
         timerEl.textContent = `${label}  ${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
         if (ws.pomodoroOnBreak) {
           timerEl.classList.add("olen-awb-timer-break");
