@@ -5,10 +5,38 @@
 
 import type { PomodoroSettings } from "../types";
 
+// Module-level refs so we can stop audio on demand
+let activeCtx: AudioContext | null = null;
+let activeOsc: OscillatorNode | null = null;
+let activeAudio: HTMLAudioElement | null = null;
+
+/**
+ * Stop any currently playing alert sound and cancel vibration.
+ */
+export function stopAlertSound(): void {
+  if (activeOsc) {
+    try { activeOsc.stop(); } catch { /* already stopped */ }
+    activeOsc = null;
+  }
+  if (activeCtx) {
+    try { activeCtx.close(); } catch { /* already closed */ }
+    activeCtx = null;
+  }
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.currentTime = 0;
+    activeAudio = null;
+  }
+  // Cancel any ongoing vibration
+  (navigator as any).vibrate?.(0);
+}
+
 /**
  * Play the default beep sound (880Hz sine wave, 1.5s fade).
  */
-export function playDefaultBeep(): void {
+function playDefaultBeep(): void {
+  // Stop any previous sound first
+  stopAlertSound();
   try {
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
@@ -21,17 +49,31 @@ export function playDefaultBeep(): void {
     osc.start();
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
     osc.stop(ctx.currentTime + 1.5);
+
+    // Store refs for cancellation
+    activeCtx = ctx;
+    activeOsc = osc;
+
+    // Auto-cleanup after the sound ends
+    osc.onended = () => {
+      activeOsc = null;
+      activeCtx = null;
+      try { ctx.close(); } catch { /* ignore */ }
+    };
   } catch { /* Web Audio not available */ }
 }
 
 /**
  * Play a custom sound file from the vault using a resource path.
  */
-export function playCustomSound(resourcePath: string): void {
+function playCustomSound(resourcePath: string): void {
+  stopAlertSound();
   try {
     const audio = new Audio(resourcePath);
     audio.volume = 0.5;
-    audio.play().catch(() => {/* playback not allowed */});
+    activeAudio = audio;
+    audio.play().catch(() => { /* playback not allowed */ });
+    audio.onended = () => { activeAudio = null; };
   } catch { /* Audio not available */ }
 }
 

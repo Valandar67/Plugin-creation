@@ -11,7 +11,7 @@ import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult, P
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES, DEFAULT_POMODORO_SETTINGS } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
-import { playAlertSound, vibrateAlert } from "../utils/alertSound";
+import { playAlertSound, vibrateAlert, stopAlertSound } from "../utils/alertSound";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -105,6 +105,7 @@ export class WorkspaceView extends ItemView {
 
   async onClose(): Promise<void> {
     this.stopTimer();
+    stopAlertSound();
     this.templateNoteFile = null;
     this.completionApplied = false;
     this.contentEl.empty();
@@ -1013,6 +1014,7 @@ export class WorkspaceView extends ItemView {
 
   private showFinishModal(workspace: ActiveWorkspace): void {
     this.stopTimer();
+    stopAlertSound();
     const endTime = new Date();
     const durationMinutes = Math.round((endTime.getTime() - this.startTime.getTime()) / 60000);
 

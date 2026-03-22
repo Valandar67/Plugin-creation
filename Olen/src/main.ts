@@ -16,7 +16,7 @@ import { TemplateEngine } from "./templates/TemplateEngine";
 import { getTracker } from "./tracker-bridge";
 import { THEME_PRESETS } from "./data/themes";
 import { readObsidianAccentColor, applyAccentColor } from "./utils/accentColor";
-import { playAlertSound, vibrateAlert } from "./utils/alertSound";
+import { playAlertSound, vibrateAlert, stopAlertSound } from "./utils/alertSound";
 
 export default class OlenPlugin extends Plugin {
   settings!: OlenSettings;
@@ -430,6 +430,7 @@ export default class OlenPlugin extends Plugin {
     // Don't fire if WorkspaceView is currently open (it handles its own alerts)
     const wsLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_WORKSPACE);
     if (wsLeaves.length > 0) {
+      if (this.backgroundAlertFired) stopAlertSound();
       this.backgroundAlertFired = false;
       return;
     }

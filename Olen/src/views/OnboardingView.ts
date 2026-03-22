@@ -643,12 +643,11 @@ export class OnboardingView extends ItemView {
 
       for (const template of group.activities) {
         const existing = this.plugin.settings.activities.find((a) => a.id === template.id);
-        const isEnabled = existing ? existing.enabled : true;
+        const isEnabled = existing ? existing.enabled : false;
 
-        // If not yet in settings, add it as enabled by default
+        // If not yet in settings, add it as disabled — user must opt in
         if (!existing) {
           const newActivity = buildActivityConfig(template, group.category);
-          newActivity.enabled = true;
           this.plugin.settings.activities.push(newActivity);
         }
 

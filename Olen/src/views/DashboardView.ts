@@ -7,6 +7,7 @@ import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { CompletionMap, Completion, CalendarTask } from "../types";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE } from "../constants";
+import { stopAlertSound } from "../utils/alertSound";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { OlenEngine } from "../engines/OlenEngine";
@@ -243,6 +244,7 @@ export class DashboardView extends ItemView {
     });
     stopBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
+      stopAlertSound();
       // Close any open workspace views first
       const wsLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_WORKSPACE);
       for (const leaf of wsLeaves) {
