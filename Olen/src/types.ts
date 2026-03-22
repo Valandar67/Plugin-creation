@@ -250,6 +250,16 @@ export interface PersonalStats {
   weightLogCustomDays: number;   // used when frequency is "custom"
   lastWeightLogDate: string | null; // YYYY-MM-DD
   sleepTime: number;         // hour in 24h format (e.g. 22.5 = 10:30pm), 0 = disabled
+  lifeExpectancy: number;    // years — default from gender, user can override (0 = auto)
+}
+
+// --- Sunday Check-in ---
+
+export interface SundayCheckinSettings {
+  enabled: boolean;
+  lastCheckinDate: string | null;  // ISO date of last completed check-in
+  consecutiveIgnores: number;
+  journalFolder: string;
 }
 
 // --- Goals ---
@@ -494,6 +504,9 @@ export interface OlenSettings {
 
   // Tartarus integration toggle
   enableTartarus: boolean;
+
+  // Sunday Check-in
+  sundayCheckin: SundayCheckinSettings;
 }
 
 // --- TrackHabitRank data.json shape (for migration) ---

@@ -5,7 +5,7 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView, Modal } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS } from "./constants";
+import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS, DEFAULT_SUNDAY_CHECKIN } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
 import { ActivityDashboardView } from "./views/ActivityDashboardView";
@@ -62,6 +62,11 @@ export default class OlenPlugin extends Plugin {
       {},
       DEFAULT_PERSONAL_STATS,
       this.settings.personalStats
+    );
+    this.settings.sundayCheckin = Object.assign(
+      {},
+      DEFAULT_SUNDAY_CHECKIN,
+      this.settings.sundayCheckin
     );
 
     // Migrate legacy field names from session → workspace

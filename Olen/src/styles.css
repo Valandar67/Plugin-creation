@@ -5557,3 +5557,388 @@
   background: color-mix(in srgb, var(--danger) 30%, transparent);
 }
 
+/* ============================================================
+   Memento Mori — Life in Weeks
+   ============================================================ */
+
+.olen-memento-mori-card {
+  padding: 20px;
+}
+
+.olen-memento-mori-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.olen-memento-mori-gear {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.olen-memento-mori-gear:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.olen-memento-mori-stats {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.olen-memento-mori-grid {
+  display: grid;
+  grid-template-columns: repeat(52, 4px);
+  gap: 1px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.olen-memento-mori-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.15s;
+}
+
+.olen-memento-mori-dot-lived {
+  background: var(--accent-gold, #d4a843);
+}
+
+.olen-memento-mori-dot-current {
+  background: var(--accent-gold-bright, #e8c35a);
+  animation: olenMementoPulse 2s ease-in-out infinite;
+}
+
+@keyframes olenMementoPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+.olen-memento-mori-countdown {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.olen-memento-mori-countdown-cell {
+  text-align: center;
+}
+
+.olen-memento-mori-countdown-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: "Georgia", serif;
+}
+
+.olen-memento-mori-countdown-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Compact Memento Mori (dashboard section) */
+
+.olen-memento-mori-compact {
+  padding: 14px 20px;
+}
+
+.olen-memento-mori-compact-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.olen-memento-mori-compact-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.olen-memento-mori-compact-fill {
+  height: 100%;
+  background: var(--accent-gold, #d4a843);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* ============================================================
+   Sunday Check-in Banner
+   ============================================================ */
+
+.olen-sunday-banner {
+  padding: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(212, 168, 67, 0.08) 0%,
+    rgba(212, 168, 67, 0.03) 100%
+  );
+  border: 1px solid rgba(212, 168, 67, 0.15);
+  box-shadow: 0 0 40px rgba(212, 168, 67, 0.06);
+}
+
+.olen-sunday-banner-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.olen-sunday-banner-text {
+  font-family: "Georgia", serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--accent-gold-bright, #e8c35a);
+}
+
+.olen-sunday-banner-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* ============================================================
+   Sunday Check-in Opt-out Modal
+   ============================================================ */
+
+.olen-sunday-optout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.olen-sunday-optout-sheet {
+  background: var(--card-bg-solid, #0a0a0a);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius, 22px);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+}
+
+.olen-sunday-optout-title {
+  font-family: "Georgia", serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.olen-sunday-optout-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.olen-sunday-optout-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* ============================================================
+   Sunday Modal — Multi-step Check-in
+   ============================================================ */
+
+.olen-sunday-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  transition: opacity 0.5s ease;
+}
+
+.olen-sunday-modal-overlay.olen-sunday-modal-fading {
+  opacity: 0;
+}
+
+.olen-sunday-modal {
+  background: var(--card-bg-solid, #0a0a0a);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius, 22px);
+  padding: 32px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.olen-sunday-step {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.olen-sunday-dialogue {
+  font-family: "Georgia", serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--accent-gold-bright, #e8c35a);
+  line-height: 1.6;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.olen-sunday-summary {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px 0;
+}
+
+.olen-sunday-summary-row {
+  text-align: center;
+}
+
+.olen-sunday-summary-row span:first-child {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: "Georgia", serif;
+}
+
+.olen-sunday-summary-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.olen-sunday-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.olen-sunday-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xs, 10px);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.olen-sunday-input:focus {
+  outline: none;
+  border-color: var(--accent-gold, #d4a843);
+}
+
+.olen-sunday-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xs, 10px);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.olen-sunday-textarea:focus {
+  outline: none;
+  border-color: var(--accent-gold, #d4a843);
+}
+
+.olen-sunday-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Step 4: Farewell Animation */
+
+.olen-sunday-farewell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.olen-sunday-farewell-text {
+  font-family: "Georgia", serif;
+  font-size: 22px;
+  font-style: italic;
+  color: var(--accent-gold-bright, #e8c35a);
+  text-align: center;
+  animation: olenFarewell 4s ease-in-out forwards;
+}
+
+@keyframes olenFarewell {
+  0% { transform: translateY(40px); opacity: 0; }
+  20% { transform: translateY(0); opacity: 1; }
+  80% { transform: translateY(-20px); opacity: 1; }
+  100% { transform: translateY(-60px); opacity: 0; }
+}
+
+/* ============================================================
+   DreamBoard — Journal Section
+   ============================================================ */
+
+.olen-dreamboard-journal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.olen-dreamboard-journal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-xs, 10px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.2s;
+}
+
+.olen-dreamboard-journal-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.olen-dreamboard-journal-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.olen-dreamboard-journal-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

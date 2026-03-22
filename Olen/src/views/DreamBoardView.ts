@@ -14,6 +14,8 @@ import type {
 import { VIEW_TYPE_DREAMBOARD } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
+import { renderMementoMoriFull } from "../components/MementoMori";
+import { createJournalEntry, getRecentJournalEntries } from "../utils/journal";
 
 export class DreamBoardView extends ItemView {
   plugin: OlenPlugin;
@@ -101,6 +103,12 @@ export class DreamBoardView extends ItemView {
       // Completed goals section with graph
       this.renderCompletedSection(root, settings.completedGoals ?? []);
     }
+
+    // Memento Mori section
+    renderMementoMoriFull(root, settings, 0, () => this.editLifeExpectancy());
+
+    // Journal section
+    this.renderJournalSection(root);
 
     // Dream board grid (images)
     this.renderImageBoard(root, settings.dreamBoardImages ?? []);
@@ -1035,6 +1043,144 @@ export class DreamBoardView extends ItemView {
     await this.plugin.saveSettings();
     new Notice("Image removed from vision board");
     await this.render();
+  }
+
+  // ── Journal Section ──
+
+  private renderJournalSection(root: HTMLElement): void {
+    const section = root.createDiv({ cls: "olen-dreamboard-section" });
+
+    const labelRow = section.createDiv({ cls: "olen-dreamboard-section-label" });
+    labelRow.createEl("span", { text: "JOURNAL" });
+
+    const writeBtn = labelRow.createEl("button", {
+      cls: "olen-dreamboard-add-inline",
+      text: "+",
+    });
+    writeBtn.addEventListener("click", () => this.openJournalEditor());
+
+    // Recent entries
+    const folder = this.plugin.settings.sundayCheckin?.journalFolder || "Journal";
+    const entries = getRecentJournalEntries(this.app, folder, 5);
+
+    if (entries.length === 0) {
+      const empty = section.createDiv({ cls: "olen-dreamboard-empty" });
+      empty.createEl("div", { text: "No journal entries yet." });
+      empty.createEl("div", {
+        cls: "olen-dreamboard-empty-sub",
+        text: "Tap + to write your first reflection.",
+      });
+      return;
+    }
+
+    const list = section.createDiv({ cls: "olen-dreamboard-journal-list" });
+    for (const entry of entries) {
+      const row = list.createDiv({ cls: "olen-dreamboard-journal-row" });
+      row.createEl("span", { cls: "olen-dreamboard-journal-date", text: entry.date });
+      row.createEl("span", { cls: "olen-dreamboard-journal-name", text: entry.name });
+      row.addEventListener("click", () => {
+        const file = this.app.vault.getAbstractFileByPath(entry.path);
+        if (file) {
+          this.app.workspace.getLeaf("tab").openFile(file as any);
+        }
+      });
+      row.addClass("olen-clickable");
+    }
+  }
+
+  private openJournalEditor(): void {
+    const overlay = this.createOverlay();
+    const sheet = this.createSheet(overlay, "Write in Journal");
+
+    const titleInput = sheet.createEl("input", {
+      cls: "olen-dreamboard-input",
+      attr: { type: "text", placeholder: new Date().toISOString().slice(0, 10) },
+    });
+
+    const textarea = sheet.createEl("textarea", {
+      cls: "olen-dreamboard-input-area",
+      attr: { placeholder: "What's on your mind?", rows: "6" },
+    });
+
+    const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
+
+    const saveBtn = actions.createEl("button", {
+      cls: "olen-dreamboard-btn-primary",
+      text: "Save",
+    });
+    saveBtn.addEventListener("click", async () => {
+      const content = textarea.value.trim();
+      if (!content) return;
+
+      const title = titleInput.value.trim() || new Date().toISOString().slice(0, 10);
+      const folder = this.plugin.settings.sundayCheckin?.journalFolder || "Journal";
+      await createJournalEntry(this.app, folder, title, content);
+      new Notice("Journal entry saved");
+      this.closeOverlay(overlay);
+      await this.render();
+    });
+
+    const cancelBtn = actions.createEl("button", {
+      cls: "olen-dreamboard-btn-secondary",
+      text: "Cancel",
+    });
+    cancelBtn.addEventListener("click", () => this.closeOverlay(overlay));
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+      overlay.classList.add("visible");
+      textarea.focus();
+    });
+  }
+
+  // ── Life Expectancy Override ──
+
+  private editLifeExpectancy(): void {
+    const overlay = this.createOverlay();
+    const sheet = this.createSheet(overlay, "Life Expectancy");
+
+    sheet.createEl("div", {
+      cls: "olen-dreamboard-dialog-hint",
+      text: "Override the default life expectancy used for the Memento Mori visualization. Set to 0 for gender-based default.",
+    });
+
+    const input = sheet.createEl("input", {
+      cls: "olen-dreamboard-input",
+      attr: {
+        type: "number",
+        placeholder: "e.g. 80",
+        min: "0",
+        max: "120",
+        step: "0.1",
+      },
+    });
+    input.value = String(this.plugin.settings.personalStats.lifeExpectancy || "");
+
+    const actions = sheet.createDiv({ cls: "olen-dreamboard-dialog-actions" });
+
+    const saveBtn = actions.createEl("button", {
+      cls: "olen-dreamboard-btn-primary",
+      text: "Save",
+    });
+    saveBtn.addEventListener("click", async () => {
+      const v = parseFloat(input.value);
+      this.plugin.settings.personalStats.lifeExpectancy = isNaN(v) || v < 0 ? 0 : v;
+      await this.plugin.saveSettings();
+      this.closeOverlay(overlay);
+      await this.render();
+    });
+
+    const cancelBtn = actions.createEl("button", {
+      cls: "olen-dreamboard-btn-secondary",
+      text: "Cancel",
+    });
+    cancelBtn.addEventListener("click", () => this.closeOverlay(overlay));
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => {
+      overlay.classList.add("visible");
+      input.focus();
+    });
   }
 
   // ── Helpers ──

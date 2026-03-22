@@ -6,7 +6,7 @@
 import { App, PluginSettingTab, Setting, TextComponent, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency, OlenThemeMode } from "../types";
-import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG, DEFAULT_POMODORO_SETTINGS } from "../constants";
+import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG, DEFAULT_POMODORO_SETTINGS, LIFE_EXPECTANCY_MALE, LIFE_EXPECTANCY_FEMALE } from "../constants";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 import { BUILTIN_TEMPLATE_IDS } from "../templates/builtins";
 
@@ -339,6 +339,24 @@ export class OlenSettingTab extends PluginSettingTab {
         });
       }
     }
+
+    // Life expectancy override
+    const currentExpectancy = stats.lifeExpectancy > 0
+      ? stats.lifeExpectancy
+      : stats.gender === "female" ? LIFE_EXPECTANCY_FEMALE : LIFE_EXPECTANCY_MALE;
+
+    new Setting(body)
+      .setName("Life expectancy (years)")
+      .setDesc(`Used for Memento Mori. Default: ${currentExpectancy} (from gender). Set to override.`)
+      .addText((t) =>
+        t.setValue(stats.lifeExpectancy ? String(stats.lifeExpectancy) : "")
+          .setPlaceholder(`${currentExpectancy} (auto)`)
+          .onChange(async (v) => {
+            const n = parseFloat(v);
+            this.plugin.settings.personalStats.lifeExpectancy = (!isNaN(n) && n > 0) ? n : 0;
+            await this.plugin.saveSettings();
+          })
+      );
   }
 
   private calculateAge(birthdate: string): number {
@@ -1168,6 +1186,41 @@ export class OlenSettingTab extends PluginSettingTab {
             this.plugin.confirmAndResetWizard();
           });
       });
+
+    // --- Sunday Check-in ---
+
+    new Setting(body)
+      .setName("Sunday check-in")
+      .setDesc("Olen checks in with you every Sunday to reflect on your week")
+      .addToggle((t) =>
+        t
+          .setValue(this.plugin.settings.sundayCheckin?.enabled !== false)
+          .onChange(async (v) => {
+            if (!this.plugin.settings.sundayCheckin) {
+              this.plugin.settings.sundayCheckin = { enabled: v, lastCheckinDate: null, consecutiveIgnores: 0, journalFolder: "Journal" };
+            } else {
+              this.plugin.settings.sundayCheckin.enabled = v;
+            }
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
+      .setName("Journal folder")
+      .setDesc("Where Sunday reflections and journal entries are saved")
+      .addText((t) =>
+        t
+          .setPlaceholder("Journal")
+          .setValue(this.plugin.settings.sundayCheckin?.journalFolder || "Journal")
+          .onChange(async (v) => {
+            if (!this.plugin.settings.sundayCheckin) {
+              this.plugin.settings.sundayCheckin = { enabled: true, lastCheckinDate: null, consecutiveIgnores: 0, journalFolder: v || "Journal" };
+            } else {
+              this.plugin.settings.sundayCheckin.journalFolder = v || "Journal";
+            }
+            await this.plugin.saveSettings();
+          })
+      );
 
     new Setting(body)
       .setName("Enable Tartarus system")

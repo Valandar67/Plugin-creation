@@ -27,6 +27,9 @@ import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import { renderStatsRow } from "../components/StatsRow";
 import { renderMonthlyHeatmap } from "../components/MonthlyHeatmap";
 import { renderSessionCollage } from "../components/SessionCollage";
+import { renderMementoMoriCompact } from "../components/MementoMori";
+import { shouldShowSundayBanner, renderSundayBanner, renderOptOutModal } from "../components/SundayCheckin";
+import { openSundayModal } from "../modals/SundayModal";
 // MyWhyModal is no longer used — tapping "My Why" navigates to DreamBoardView
 import { showTaskModal } from "../modals/TaskModal";
 import type { MuscleGroupId } from "../constants";
@@ -199,6 +202,10 @@ export class DashboardView extends ItemView {
           });
           break;
 
+        case "mementomori":
+          renderMementoMoriCompact(root, settings, staggerIdx++);
+          break;
+
         case "quote":
           renderQuoteFooter(root, this.app, settings, staggerIdx++, (partial) => {
             Object.assign(this.plugin.settings, partial);
@@ -206,6 +213,40 @@ export class DashboardView extends ItemView {
           });
           break;
       }
+    }
+
+    // Sunday check-in banner (bottom of dashboard)
+    const now2 = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
+    if (shouldShowSundayBanner(settings, now2)) {
+      renderSundayBanner(root, settings, staggerIdx++, {
+        onLetHimIn: () => {
+          openSundayModal(this.app, settings, engine, completionData, {
+            onComplete: () => this.render(),
+            onSaveSettings: () => this.plugin.saveSettings(),
+          });
+        },
+        onIgnore: async () => {
+          settings.sundayCheckin.consecutiveIgnores++;
+          await this.plugin.saveSettings();
+
+          if (settings.sundayCheckin.consecutiveIgnores >= 2) {
+            renderOptOutModal(
+              async () => {
+                settings.sundayCheckin.enabled = false;
+                await this.plugin.saveSettings();
+                await this.render();
+              },
+              async () => {
+                settings.sundayCheckin.consecutiveIgnores = 0;
+                await this.plugin.saveSettings();
+                await this.render();
+              },
+            );
+          } else {
+            await this.render();
+          }
+        },
+      });
     }
   }
 

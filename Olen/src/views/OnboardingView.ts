@@ -286,14 +286,14 @@ export class OnboardingView extends ItemView {
     });
   }
 
-  // ── Screen 0: "Who Are You Becoming?" (Identity) ────────
+  // ── Screen 0: "About You" (Identity) ────────
 
   private renderScreen0_Identity(root: HTMLElement): void {
     const content = root.createDiv({ cls: "olen-onboarding-screen" });
 
     content.createEl("div", {
       cls: "olen-display",
-      text: "Who Are You Becoming?",
+      text: "About You",
       attr: { style: "text-align: center; margin-bottom: 32px;" },
     });
 
@@ -308,6 +308,24 @@ export class OnboardingView extends ItemView {
         value: (this.plugin.settings.userName && this.plugin.settings.userName !== "User" && this.plugin.settings.userName !== "Warrior") ? this.plugin.settings.userName : "",
       },
     });
+
+    // Gender
+    const genderField = content.createDiv({ cls: "olen-onboarding-field" });
+    genderField.createEl("label", { cls: "olen-heading", text: "GENDER" });
+    genderField.createEl("div", {
+      cls: "olen-body-italic",
+      text: "This helps personalize your experience.",
+      attr: { style: "margin-bottom: 8px;" },
+    });
+    const genderSelect = genderField.createEl("select", { cls: "olen-onboarding-input" });
+    const genderOptions: { value: string; label: string }[] = [
+      { value: "male", label: "Male" },
+      { value: "female", label: "Female" },
+    ];
+    for (const opt of genderOptions) {
+      const el = genderSelect.createEl("option", { text: opt.label, attr: { value: opt.value } });
+      if (this.plugin.settings.personalStats.gender === opt.value) el.selected = true;
+    }
 
     // My Why
     const whyField = content.createDiv({ cls: "olen-onboarding-field" });
@@ -380,6 +398,7 @@ export class OnboardingView extends ItemView {
       onNext: () => {
         const name = nameInput.value.trim();
         if (name) this.plugin.settings.userName = name;
+        this.plugin.settings.personalStats.gender = genderSelect.value as any;
         this.plugin.settings.myWhy = whyInput.value.trim();
         this.plugin.settings.aphorism = aphInput.value.trim();
         this.plugin.settings.homepage = homeInput.value.trim();

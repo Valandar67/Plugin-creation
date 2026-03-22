@@ -12,7 +12,13 @@ import type {
   CalendarSettings,
   PersonalStats,
   PomodoroSettings,
+  SundayCheckinSettings,
 } from "./types";
+
+// --- Life Expectancy Defaults ---
+
+export const LIFE_EXPECTANCY_MALE = 71.2;
+export const LIFE_EXPECTANCY_FEMALE = 76.4;
 
 export const DEFAULT_POMODORO_SETTINGS: PomodoroSettings = {
   focusMinutes: 25,
@@ -195,6 +201,16 @@ export const DEFAULT_PERSONAL_STATS: PersonalStats = {
   weightLogCustomDays: 7,
   lastWeightLogDate: null,
   sleepTime: 0,
+  lifeExpectancy: 0,
+};
+
+// --- Default Sunday Check-in Settings ---
+
+export const DEFAULT_SUNDAY_CHECKIN: SundayCheckinSettings = {
+  enabled: true,
+  lastCheckinDate: null,
+  consecutiveIgnores: 0,
+  journalFolder: "Journal",
 };
 
 // --- Muscle Group Definitions ---
@@ -332,4 +348,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
 
   // Tartarus
   enableTartarus: true,
+
+  // Sunday Check-in
+  sundayCheckin: DEFAULT_SUNDAY_CHECKIN,
 };
