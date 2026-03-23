@@ -47,13 +47,18 @@ export function renderSundayBanner(
 
   const actions = inner.createDiv({ cls: "olen-sunday-banner-actions" });
 
+  const dismissBanner = (callback: () => void) => {
+    banner.classList.add("olen-sunday-banner-dismissing");
+    setTimeout(callback, 400);
+  };
+
   const letInBtn = actions.createEl("button", {
     cls: "olen-btn olen-btn-primary",
     text: "Let him in",
   });
   letInBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    callbacks.onLetHimIn();
+    dismissBanner(() => callbacks.onLetHimIn());
   });
 
   const ignoreBtn = actions.createEl("button", {
@@ -62,7 +67,7 @@ export function renderSundayBanner(
   });
   ignoreBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    callbacks.onIgnore();
+    dismissBanner(() => callbacks.onIgnore());
   });
 }
 
@@ -93,12 +98,16 @@ export function renderOptOutModal(
   const actions = document.createElement("div");
   actions.className = "olen-sunday-optout-actions";
 
+  const dismissOverlay = (callback: () => void) => {
+    overlay.style.opacity = "0";
+    setTimeout(() => { overlay.remove(); callback(); }, 400);
+  };
+
   const turnOffBtn = document.createElement("button");
   turnOffBtn.className = "olen-btn olen-btn-ghost";
   turnOffBtn.textContent = "Turn off";
   turnOffBtn.addEventListener("click", () => {
-    overlay.remove();
-    onTurnOff();
+    dismissOverlay(onTurnOff);
   });
   actions.appendChild(turnOffBtn);
 
@@ -106,8 +115,7 @@ export function renderOptOutModal(
   keepBtn.className = "olen-btn olen-btn-primary";
   keepBtn.textContent = "No, keep him";
   keepBtn.addEventListener("click", () => {
-    overlay.remove();
-    onKeep();
+    dismissOverlay(onKeep);
   });
   actions.appendChild(keepBtn);
 
@@ -117,8 +125,7 @@ export function renderOptOutModal(
   // Close on backdrop click
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) {
-      overlay.remove();
-      onKeep();
+      dismissOverlay(onKeep);
     }
   });
 

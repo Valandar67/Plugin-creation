@@ -5683,13 +5683,15 @@
 
 .olen-sunday-banner {
   padding: 20px;
-  background: linear-gradient(
-    135deg,
-    rgba(212, 168, 67, 0.08) 0%,
-    rgba(212, 168, 67, 0.03) 100%
-  );
-  border: 1px solid rgba(212, 168, 67, 0.15);
-  box-shadow: 0 0 40px rgba(212, 168, 67, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.olen-sunday-banner.olen-sunday-banner-dismissing {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
 }
 
 .olen-sunday-banner-inner {
@@ -5701,10 +5703,10 @@
 }
 
 .olen-sunday-banner-text {
-  font-family: "Georgia", serif;
-  font-size: 18px;
-  font-style: italic;
-  color: var(--accent-gold-bright, #e8c35a);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary, #a09888);
+  letter-spacing: 0.3px;
 }
 
 .olen-sunday-banner-actions {
@@ -5725,6 +5727,7 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(8px);
+  transition: opacity 0.4s ease;
 }
 
 .olen-sunday-optout-sheet {
@@ -5770,7 +5773,12 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(12px);
+  opacity: 0;
   transition: opacity 0.5s ease;
+}
+
+.olen-sunday-modal-overlay.olen-sunday-modal-visible {
+  opacity: 1;
 }
 
 .olen-sunday-modal-overlay.olen-sunday-modal-fading {
@@ -5792,6 +5800,12 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  animation: olenStepFadeIn 0.4s ease both;
+}
+
+@keyframes olenStepFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .olen-sunday-dialogue {

@@ -44,6 +44,13 @@ export function openSundayModal(
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
+  // Fade in the overlay
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.classList.add("olen-sunday-modal-visible");
+    });
+  });
+
   // Prevent backdrop close during flow
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) {
