@@ -78,9 +78,6 @@
 
 .olen-dashboard {
   background: var(--bg-primary);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 255, 255, 0.015) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 70% 100%, rgba(255, 255, 255, 0.01) 0%, transparent 50%);
   color: var(--text-primary);
   min-height: 100vh;
   padding: 0 0 120px 0;
@@ -268,7 +265,6 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 120% 80% at 50% 30%, color-mix(in srgb, var(--accent-gold) 6%, transparent) 0%, transparent 50%),
     linear-gradient(180deg,
       rgba(0, 0, 0, 0.15) 0%,
       rgba(0, 0, 0, 0.05) 40%,
@@ -5984,10 +5980,9 @@
 }
 
 .olen-sunday-farewell-text {
-  font-family: "Georgia", serif;
-  font-size: 22px;
-  font-style: italic;
-  color: var(--accent-gold-bright, #e8c35a);
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-secondary, #a09888);
   text-align: center;
   animation: olenFarewell 4s ease-in-out forwards;
 }
