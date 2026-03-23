@@ -239,12 +239,11 @@ export class DashboardView extends ItemView {
               async () => {
                 settings.sundayCheckin.consecutiveIgnores = 0;
                 await this.plugin.saveSettings();
-                await this.render();
+                // Don't re-render — banner is already gone
               },
             );
-          } else {
-            await this.render();
           }
+          // Don't re-render after single ignore — banner already faded out
         },
       });
     }

@@ -62,8 +62,11 @@ export function openSundayModal(
     renderStep2(modal, app, settings, analysis, () => {
       renderStep3(modal, settings, analysis, callbacks.onSaveSettings, () => {
         renderStep4(modal, overlay, settings, analysis, () => {
-          // Complete
-          settings.sundayCheckin.lastCheckinDate = new Date().toISOString().slice(0, 10);
+          // Complete — use simulated date if set so banner doesn't re-appear
+          const effectiveDate = settings.simulatedDate
+            ? new Date(settings.simulatedDate)
+            : new Date();
+          settings.sundayCheckin.lastCheckinDate = effectiveDate.toISOString().slice(0, 10);
           settings.sundayCheckin.consecutiveIgnores = 0;
           callbacks.onSaveSettings().then(() => {
             overlay.remove();
