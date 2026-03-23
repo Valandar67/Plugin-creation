@@ -5804,30 +5804,116 @@
   padding: 12px 0;
 }
 
-.olen-sunday-summary {
+/* Category Bars */
+
+.olen-sunday-category-bars {
   display: flex;
-  justify-content: center;
-  gap: 24px;
-  padding: 16px 0;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
 }
 
-.olen-sunday-summary-row {
-  text-align: center;
+.olen-sunday-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.olen-sunday-summary-row span:first-child {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-family: "Georgia", serif;
-}
-
-.olen-sunday-summary-label {
-  font-size: 11px;
-  color: var(--text-muted);
+.olen-sunday-bar-label {
+  width: 50px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
+  color: var(--text-secondary, #a09888);
+  font-weight: 600;
+}
+
+.olen-sunday-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.olen-sunday-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.olen-sunday-bar-value {
+  font-size: 11px;
+  color: var(--text-muted, #7a7368);
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* 7-Day Sparkline */
+
+.olen-sunday-sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 48px;
+  margin: 16px 0 8px;
+  justify-content: center;
+  padding: 0 8px;
+}
+
+.olen-sunday-spark-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  max-width: 32px;
+}
+
+.olen-sunday-spark-bar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.olen-sunday-spark-day {
+  font-size: 8px;
   letter-spacing: 0.5px;
+  color: var(--text-dim, #5a5550);
+  text-transform: uppercase;
+}
+
+/* Meta row (trend + streak) */
+
+.olen-sunday-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0 12px;
+}
+
+.olen-sunday-trend {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+
+.olen-sunday-trend.up {
+  color: var(--success, #6abf69);
+}
+
+.olen-sunday-trend.down {
+  color: var(--danger, #d45555);
+}
+
+.olen-sunday-streak-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 180, 50, 0.12);
+  color: var(--accent-gold-bright, #e8c35a);
 }
 
 .olen-sunday-hint {

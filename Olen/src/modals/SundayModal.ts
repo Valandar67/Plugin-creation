@@ -1,13 +1,13 @@
 // ============================================================
 // Olen — Sunday Modal (Multi-step check-in)
-// Step 1: Olen's opening dialogue
+// Step 1: Olen's opening dialogue + visual performance
 // Step 2: Journal entry
-// Step 3: Goal-setting / problem-solving
-// Step 4: Farewell animation
+// Step 3: Goal-setting / problem-solving (adaptive)
+// Step 4: Farewell animation (tier-aware)
 // ============================================================
 
 import type { App } from "obsidian";
-import type { OlenSettings } from "../types";
+import type { OlenSettings, Category } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
 import type { CompletionMap } from "../types";
 import {
@@ -18,6 +18,7 @@ import {
   type PerformanceTier,
 } from "../data/sundayDialogues";
 import { createJournalEntry } from "../utils/journal";
+import { BOSSES } from "../constants";
 
 export interface SundayModalCallbacks {
   onComplete: () => void;
@@ -78,6 +79,18 @@ interface WeeklyAnalysis {
   streak: number;
   damage: number;
   completionRate: number;
+  weekOverWeek: number;
+  bestDay: string;
+  byDay: Array<{ day: string; date: string; completions: Map<Category, number> }>;
+  categoryCounts: Record<string, number>;
+  categoryTargets: Record<string, number>;
+  bossName: string;
+  bossHpPercent: number;
+  chapter: number;
+  chapterName: string;
+  eudaimoniaIndex: number;
+  neglectedCategory: string;
+  strongCategory: string;
 }
 
 function analyzeWeeklyPerformance(
@@ -108,23 +121,34 @@ function analyzeWeeklyPerformance(
     }
   }
 
-  // Determine completion days (unique days with at least one completion)
+  // Days and streak
   const completedDays = engine.getDaysOfPresence();
   const streak = engine.getOverallStreak();
 
-  // Determine neglected/strong categories
+  // Weekly stats (sparkline data, trend, best day)
+  const weeklyStats = engine.getWeeklyStats();
+
+  // Category balance
   const categoryRates = Object.entries(categoryCounts).map(([cat, done]) => ({
     cat,
     rate: categoryTargets[cat] > 0 ? done / categoryTargets[cat] : 1,
   }));
   categoryRates.sort((a, b) => a.rate - b.rate);
-
   const neglectedCategory = categoryRates[0]?.cat || "spirit";
   const strongCategory = categoryRates[categoryRates.length - 1]?.cat || "body";
 
-  // Boss damage this week
-  const damage = totalCompleted; // Simplified: 1 damage per completion
+  // Boss info
+  const boss = BOSSES.find((b) => b.tier === settings.currentTier);
+  const bossName = boss?.name || "Unknown";
+  const bossHpPercent = settings.bossMaxHP > 0
+    ? Math.round((settings.bossCurrentHP / settings.bossMaxHP) * 100)
+    : 100;
 
+  // Progression
+  const chapter = engine.getChapter();
+  const eudaimoniaIndex = engine.getEudaimoniaIndex();
+
+  const damage = totalCompleted;
   const completionRate = totalTarget > 0 ? totalCompleted / totalTarget : 0;
   const tier = getPerformanceTier(completionRate);
 
@@ -142,6 +166,14 @@ function analyzeWeeklyPerformance(
     strongCategory,
     skippedActivity: mostNeglectedActivity || "an activity",
     daysSince: maxDaysSince,
+    completionRate,
+    weekOverWeek: weeklyStats.weekOverWeek,
+    bestDay: weeklyStats.bestDay,
+    bossName,
+    bossHpPercent,
+    chapter: chapter.number,
+    chapterName: chapter.name,
+    eudaimoniaIndex,
   };
 
   const dialogue = pickDialogue(tier, ctx);
@@ -155,14 +187,26 @@ function analyzeWeeklyPerformance(
     streak,
     damage,
     completionRate,
+    weekOverWeek: weeklyStats.weekOverWeek,
+    bestDay: weeklyStats.bestDay,
+    byDay: weeklyStats.byDay,
+    categoryCounts,
+    categoryTargets,
+    bossName,
+    bossHpPercent,
+    chapter: chapter.number,
+    chapterName: chapter.name,
+    eudaimoniaIndex,
+    neglectedCategory,
+    strongCategory,
   };
 }
 
-// --- Step 1: Olen's Opening Dialogue ---
+// --- Step 1: Olen's Opening Dialogue + Visuals ---
 
 function renderStep1(
   modal: HTMLElement,
-  _settings: OlenSettings,
+  settings: OlenSettings,
   analysis: WeeklyAnalysis,
   onNext: () => void,
 ): void {
@@ -172,33 +216,137 @@ function renderStep1(
   const content = document.createElement("div");
   content.className = "olen-sunday-step";
 
+  // Dialogue
   const dialogueEl = document.createElement("div");
   dialogueEl.className = "olen-sunday-dialogue";
   dialogueEl.textContent = analysis.dialogue;
   content.appendChild(dialogueEl);
 
-  // Performance summary
-  const summary = document.createElement("div");
-  summary.className = "olen-sunday-summary";
-  summary.innerHTML = `
-    <div class="olen-sunday-summary-row">
-      <span>${analysis.completedCount}/${analysis.targetCount}</span>
-      <span class="olen-sunday-summary-label">activities</span>
-    </div>
-    <div class="olen-sunday-summary-row">
-      <span>${analysis.completedDays}/7</span>
-      <span class="olen-sunday-summary-label">active days</span>
-    </div>
-    <div class="olen-sunday-summary-row">
-      <span>${analysis.streak}</span>
-      <span class="olen-sunday-summary-label">day streak</span>
-    </div>
-  `;
-  content.appendChild(summary);
+  // Category bars
+  const barsContainer = document.createElement("div");
+  barsContainer.className = "olen-sunday-category-bars";
+
+  const categories: Array<{ key: string; label: string }> = [
+    { key: "body", label: "BODY" },
+    { key: "mind", label: "MIND" },
+    { key: "spirit", label: "SPIRIT" },
+  ];
+
+  for (const cat of categories) {
+    const done = analysis.categoryCounts[cat.key] || 0;
+    const target = analysis.categoryTargets[cat.key] || 1;
+    const pct = Math.min(100, Math.round((done / target) * 100));
+    const color = settings.categoryColors[cat.key as keyof typeof settings.categoryColors] ?? "#928d85";
+
+    const row = document.createElement("div");
+    row.className = "olen-sunday-bar-row";
+
+    const label = document.createElement("span");
+    label.className = "olen-sunday-bar-label";
+    label.textContent = cat.label;
+    row.appendChild(label);
+
+    const track = document.createElement("div");
+    track.className = "olen-sunday-bar-track";
+
+    const fill = document.createElement("div");
+    fill.className = "olen-sunday-bar-fill";
+    fill.style.width = "0%";
+    fill.style.background = color;
+    track.appendChild(fill);
+    row.appendChild(track);
+
+    const value = document.createElement("span");
+    value.className = "olen-sunday-bar-value";
+    value.textContent = `${done}/${target}`;
+    row.appendChild(value);
+
+    barsContainer.appendChild(row);
+
+    // Animate bars after render
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fill.style.width = `${pct}%`;
+      });
+    });
+  }
+  content.appendChild(barsContainer);
+
+  // 7-day sparkline
+  const sparkline = document.createElement("div");
+  sparkline.className = "olen-sunday-sparkline";
+
+  // Find max daily total for scaling
+  let maxDaily = 0;
+  for (const day of analysis.byDay) {
+    let dayTotal = 0;
+    day.completions.forEach((v) => { dayTotal += v; });
+    if (dayTotal > maxDaily) maxDaily = dayTotal;
+  }
+  if (maxDaily === 0) maxDaily = 1;
+
+  for (const day of analysis.byDay) {
+    let dayTotal = 0;
+    day.completions.forEach((v) => { dayTotal += v; });
+
+    const col = document.createElement("div");
+    col.className = "olen-sunday-spark-col";
+
+    const bar = document.createElement("div");
+    bar.className = "olen-sunday-spark-bar";
+    const heightPct = Math.max(5, (dayTotal / maxDaily) * 100);
+    bar.style.height = "0%";
+    bar.style.background = dayTotal > 0
+      ? "var(--accent-gold, #d4a843)"
+      : "rgba(255,255,255,0.08)";
+
+    col.appendChild(bar);
+
+    const dayLabel = document.createElement("span");
+    dayLabel.className = "olen-sunday-spark-day";
+    dayLabel.textContent = day.day.slice(0, 3);
+    col.appendChild(dayLabel);
+
+    sparkline.appendChild(col);
+
+    // Animate sparkline bars
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.height = `${heightPct}%`;
+      });
+    });
+  }
+  content.appendChild(sparkline);
+
+  // Trend + streak row
+  const metaRow = document.createElement("div");
+  metaRow.className = "olen-sunday-meta-row";
+
+  // Week-over-week trend
+  if (analysis.weekOverWeek !== 0) {
+    const trend = document.createElement("span");
+    trend.className = `olen-sunday-trend ${analysis.weekOverWeek > 0 ? "up" : "down"}`;
+    const arrow = analysis.weekOverWeek > 0 ? "↑" : "↓";
+    const sign = analysis.weekOverWeek > 0 ? "+" : "";
+    trend.textContent = `${arrow} ${sign}${analysis.weekOverWeek} vs last week`;
+    metaRow.appendChild(trend);
+  }
+
+  // Streak badge
+  if (analysis.streak > 0) {
+    const badge = document.createElement("span");
+    badge.className = "olen-sunday-streak-badge";
+    badge.textContent = `🔥 ${analysis.streak}`;
+    metaRow.appendChild(badge);
+  }
+
+  if (metaRow.childElementCount > 0) {
+    content.appendChild(metaRow);
+  }
 
   const nextBtn = document.createElement("button");
   nextBtn.className = "olen-btn olen-btn-primary olen-btn-large";
-  nextBtn.textContent = "Continue \u2192";
+  nextBtn.textContent = "Continue →";
   nextBtn.addEventListener("click", onNext);
   content.appendChild(nextBtn);
 
@@ -276,7 +424,7 @@ function renderStep2(
   requestAnimationFrame(() => textarea.focus());
 }
 
-// --- Step 3: Goal-setting / Problem-solving ---
+// --- Step 3: Goal-setting / Problem-solving (Adaptive) ---
 
 function renderStep3(
   modal: HTMLElement,
@@ -290,17 +438,18 @@ function renderStep3(
   const content = document.createElement("div");
   content.className = "olen-sunday-step";
 
+  // Adaptive heading + hint based on analysis
+  const { heading, hint } = getAdaptiveStep3Content(analysis);
+
   const label = document.createElement("div");
   label.className = "olen-heading";
-  label.textContent = analysis.tier === "positive" ? "WHAT'S WORKING?" : "HOW DO YOU FIX THIS?";
+  label.textContent = heading;
   content.appendChild(label);
 
-  const hint = document.createElement("div");
-  hint.className = "olen-sunday-hint";
-  hint.textContent = analysis.tier === "positive"
-    ? "What's working? How do you keep this up?"
-    : "How do you plan to solve this? One goal per line.";
-  content.appendChild(hint);
+  const hintEl = document.createElement("div");
+  hintEl.className = "olen-sunday-hint";
+  hintEl.textContent = hint;
+  content.appendChild(hintEl);
 
   const textarea = document.createElement("textarea");
   textarea.className = "olen-sunday-textarea";
@@ -350,13 +499,47 @@ function renderStep3(
   requestAnimationFrame(() => textarea.focus());
 }
 
-// --- Step 4: Farewell ---
+function getAdaptiveStep3Content(analysis: WeeklyAnalysis): { heading: string; hint: string } {
+  // Check for neglected category
+  const neglectRate = analysis.categoryTargets[analysis.neglectedCategory] > 0
+    ? analysis.categoryCounts[analysis.neglectedCategory] / analysis.categoryTargets[analysis.neglectedCategory]
+    : 1;
+
+  if (analysis.tier === "positive") {
+    return {
+      heading: "WHAT'S WORKING?",
+      hint: "You're in a flow state. What's your secret this week? How do you keep it going?",
+    };
+  }
+
+  if (neglectRate < 0.3) {
+    const cat = analysis.neglectedCategory.charAt(0).toUpperCase() + analysis.neglectedCategory.slice(1);
+    return {
+      heading: `${cat.toUpperCase()} NEEDS YOU`,
+      hint: `Your ${analysis.neglectedCategory} is falling behind. What's one thing you can commit to this week?`,
+    };
+  }
+
+  if (analysis.streak === 0) {
+    return {
+      heading: "REBUILD THE STREAK",
+      hint: "The streak broke. What knocked you off track, and how do you prevent it next week?",
+    };
+  }
+
+  return {
+    heading: "HOW DO YOU FIX THIS?",
+    hint: "What's one realistic change you can make this week? One goal per line.",
+  };
+}
+
+// --- Step 4: Farewell (Tier-aware) ---
 
 function renderStep4(
   modal: HTMLElement,
   overlay: HTMLElement,
   settings: OlenSettings,
-  _analysis: WeeklyAnalysis,
+  analysis: WeeklyAnalysis,
   onComplete: () => void,
 ): void {
   modal.empty();
@@ -366,7 +549,7 @@ function renderStep4(
 
   const text = document.createElement("div");
   text.className = "olen-sunday-farewell-text";
-  text.textContent = pickFarewell(settings.userName);
+  text.textContent = pickFarewell(settings.userName, analysis.tier);
   content.appendChild(text);
 
   modal.appendChild(content);
