@@ -226,6 +226,8 @@ export class DashboardView extends ItemView {
           });
         },
         onIgnore: async () => {
+          // Mark today as "handled" so banner won't reappear until next Sunday
+          settings.sundayCheckin.lastCheckinDate = now2.toISOString().slice(0, 10);
           settings.sundayCheckin.consecutiveIgnores++;
           await this.plugin.saveSettings();
 
@@ -234,16 +236,13 @@ export class DashboardView extends ItemView {
               async () => {
                 settings.sundayCheckin.enabled = false;
                 await this.plugin.saveSettings();
-                await this.render();
               },
               async () => {
                 settings.sundayCheckin.consecutiveIgnores = 0;
                 await this.plugin.saveSettings();
-                // Don't re-render — banner is already gone
               },
             );
           }
-          // Don't re-render after single ignore — banner already faded out
         },
       });
     }
