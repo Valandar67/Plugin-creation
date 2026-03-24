@@ -1,0 +1,1137 @@
+{
+  "enabledActivities": {
+    "Journal": false,
+    "Workout": true,
+    "Medicine": false,
+    "Water Plants": false,
+    "Gaming": false,
+    "Research": false,
+    "Study": false,
+    "GTG": false,
+    "No Fap": false,
+    "Reading": true,
+    "Cardio": true,
+    "Python": false,
+    "Guitar": false,
+    "Drumming": true,
+    "Health Study": true,
+    "Social": true,
+    "Drawing": true
+  },
+  "customHabits": [],
+  "activityOverrides": [
+    {
+      "originalName": "Drumming",
+      "name": "Drum practice",
+      "folder": "Personal Life/04 Drum practice",
+      "field": "Drum practice hub"
+    },
+    {
+      "originalName": "Health Study",
+      "folder": "Personal Life/05 Research About Health",
+      "field": "Health Study",
+      "name": "Health Study"
+    }
+  ],
+  "currentTier": 3,
+  "bossMaxHP": 15,
+  "bossCurrentHP": 15,
+  "consecutivePerfectWeeks": 0,
+  "disciplineTokens": 1,
+  "disciplineCompletionCount": 2,
+  "inTartarus": false,
+  "tartarusPenanceTasks": [],
+  "tartarusStartDate": null,
+  "lastThresholdCheck": "2026-03-23",
+  "failedThresholdDays": 1,
+  "templeTasks": [
+    {
+      "id": "bathing",
+      "name": "Bathing",
+      "lastCompleted": "2026-02-13T09:43:32.825Z",
+      "intervalDays": 1,
+      "emoji": "🚿"
+    },
+    {
+      "id": "facial-hair",
+      "name": "Facial hair",
+      "lastCompleted": null,
+      "intervalDays": 2,
+      "emoji": "🪒"
+    },
+    {
+      "id": "nails",
+      "name": "Nails",
+      "lastCompleted": null,
+      "intervalDays": 7,
+      "emoji": "✂️"
+    },
+    {
+      "id": "haircut",
+      "name": "Haircut",
+      "lastCompleted": null,
+      "intervalDays": 21,
+      "emoji": "💈"
+    }
+  ],
+  "lastMorpheusSummon": "2026-02-11",
+  "lastQuoteShown": "\"The obstacle is the way.\" — Marcus Aurelius",
+  "systemState": "active",
+  "pauseStartTime": null,
+  "totalPausedTime": 125641,
+  "simulatedDate": null,
+  "customBosses": [
+    {
+      "tier": 1,
+      "image": "https://greektraveltellers.com/images/Blog/Monsters%20in%20Greek%20Mythology/Typhon-monster-in-Greek-mythology.jpg"
+    },
+    {
+      "tier": 2,
+      "image": "https://eclecticlight.co/wp-content/uploads/2016/10/poyntersiren.jpg"
+    },
+    {
+      "tier": 3,
+      "image": "florent-desailly-hydramainrender1smoll.jpg",
+      "name": "Hydra"
+    }
+  ],
+  "customTartarusTasks": [],
+  "tartarusImage": "fire_giant_by_darkcloud013_d6t8f73.jpg",
+  "tartarusBackgroundImage": "n3w5YUh-_90Rt19Ix0aANg.jpg",
+  "hadesWrathApplied": false,
+  "bossStartOfDayHP": 15,
+  "lastHPResetDate": "2026-03-23",
+  "lastCompletionCounts": {
+    "Workout": 1,
+    "Cardio": 5,
+    "Reading": 5,
+    "Drumming": 4,
+    "Health Study": 2,
+    "Social": 3,
+    "Drawing": 1,
+    "Workout_discipline": 1,
+    "Cardio_discipline": 2,
+    "Drawing_discipline": 0,
+    "Reading_discipline": 2,
+    "Drumming_discipline": 2,
+    "Health Study_discipline": 1,
+    "Social_discipline": 0
+  },
+  "useAutoDynamicHP": true,
+  "autoDynamicHPMaxMultiplier": 1.5,
+  "bossHPMultiplierMin": 1.1,
+  "bossHPMultiplierMax": 2.4,
+  "maxTier": 13,
+  "rankGraceHP": 20,
+  "rankGraceDays": 3,
+  "rankBelowSince": null,
+  "activitySnapshots": {
+    "f4b4f3c1-3889-4db3-aaf0-6da2f7baa8d4": {
+      "activityId": "f4b4f3c1-3889-4db3-aaf0-6da2f7baa8d4",
+      "disabledDate": "2025-12-18",
+      "frozenStreak": 1,
+      "frozenHP": 1
+    },
+    "Journal": {
+      "activityId": "Journal",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Guitar": {
+      "activityId": "Guitar",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Python": {
+      "activityId": "Python",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "No Fap": {
+      "activityId": "No Fap",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "GTG": {
+      "activityId": "GTG",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Study": {
+      "activityId": "Study",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Research": {
+      "activityId": "Research",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Gaming": {
+      "activityId": "Gaming",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Water Plants": {
+      "activityId": "Water Plants",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "Medicine": {
+      "activityId": "Medicine",
+      "disabledDate": "2025-12-30",
+      "frozenStreak": 0,
+      "frozenHP": 0
+    },
+    "8073f4e7-5cb2-4968-a5fe-ca108ec70ff7": {
+      "activityId": "8073f4e7-5cb2-4968-a5fe-ca108ec70ff7",
+      "disabledDate": "2026-02-01",
+      "frozenHP": 0,
+      "frozenStreak": 0
+    },
+    "bd44fd88-e837-4451-966a-078e958837aa": {
+      "activityId": "bd44fd88-e837-4451-966a-078e958837aa",
+      "disabledDate": "2026-02-01",
+      "frozenHP": 1,
+      "frozenStreak": 1
+    }
+  },
+  "snapshots": [
+    {
+      "timestamp": "2025-12-20T12:10:20.888Z",
+      "rank": "Platinum I",
+      "perActivity": [
+        {
+          "name": "Journal",
+          "rr": 38,
+          "streak": 38
+        },
+        {
+          "name": "Workout",
+          "rr": 5,
+          "streak": 5
+        },
+        {
+          "name": "Guitar",
+          "rr": 5,
+          "streak": 5
+        },
+        {
+          "name": "Python",
+          "rr": 4,
+          "streak": 4
+        },
+        {
+          "name": "Cardio",
+          "rr": 1,
+          "streak": 1
+        },
+        {
+          "name": "Reading",
+          "rr": 6,
+          "streak": 6
+        },
+        {
+          "name": "No Fap",
+          "rr": 10,
+          "streak": 2
+        },
+        {
+          "name": "GTG",
+          "rr": 6,
+          "streak": 6
+        },
+        {
+          "name": "Study",
+          "rr": 6,
+          "streak": 6
+        },
+        {
+          "name": "Research",
+          "rr": 4,
+          "streak": 4
+        },
+        {
+          "name": "Gaming",
+          "rr": 6,
+          "streak": 6
+        },
+        {
+          "name": "Water Plants",
+          "rr": 6,
+          "streak": 6
+        },
+        {
+          "name": "Medicine",
+          "rr": 6,
+          "streak": 6
+        },
+        {
+          "name": "AcaResearch",
+          "rr": 2,
+          "streak": 2
+        }
+      ],
+      "totalHP": 636,
+      "liveHP": 105,
+      "historicalHP": 531
+    },
+    {
+      "timestamp": "2025-12-31T06:37:45.525Z",
+      "rank": "Unranked",
+      "perActivity": [
+        {
+          "name": "Workout",
+          "rr": 0,
+          "streak": 1
+        },
+        {
+          "name": "f4b4f3c1-3889-4db3-aaf0-6da2f7baa8d4",
+          "rr": 1,
+          "streak": 0
+        },
+        {
+          "name": "Journal",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Guitar",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Python",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Reading",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "No Fap",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "GTG",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Study",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Research",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Gaming",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Water Plants",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Medicine",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Workout",
+          "rr": 0,
+          "streak": 0
+        },
+        {
+          "name": "Cardio",
+          "rr": 0,
+          "streak": 0
+        }
+      ],
+      "totalHP": 1,
+      "liveHP": 1,
+      "historicalHP": 0
+    }
+  ],
+  "activityRewardPools": [
+    {
+      "tier": "micro",
+      "options": [
+        {
+          "id": "act-micro-1",
+          "description": "Niggers",
+          "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+          "emoji": "🎁"
+        },
+        {
+          "id": "act-micro-1770726071630",
+          "description": "Idk",
+          "emoji": "🔥",
+          "image": ""
+        }
+      ]
+    },
+    {
+      "tier": "mini",
+      "options": [
+        {
+          "id": "act-mini-1",
+          "description": "[Activity mini reward 1]",
+          "image": "",
+          "emoji": "🎯"
+        }
+      ]
+    },
+    {
+      "tier": "standard",
+      "options": [
+        {
+          "id": "act-std-1",
+          "description": "[Activity standard reward 1]",
+          "image": "",
+          "emoji": "⚔️"
+        }
+      ]
+    },
+    {
+      "tier": "quality",
+      "options": [
+        {
+          "id": "act-qual-1",
+          "description": "[Activity quality reward 1]",
+          "image": "",
+          "emoji": "🔮"
+        }
+      ]
+    },
+    {
+      "tier": "premium",
+      "options": [
+        {
+          "id": "act-prem-1",
+          "description": "[Activity premium reward 1]",
+          "image": "",
+          "emoji": "🏛️"
+        }
+      ]
+    }
+  ],
+  "streakRewardPools": [
+    {
+      "tier": "micro",
+      "options": [
+        {
+          "id": "str-micro-1",
+          "description": "[Streak micro reward 1]",
+          "image": "",
+          "emoji": "✨"
+        }
+      ]
+    },
+    {
+      "tier": "mini",
+      "options": [
+        {
+          "id": "str-mini-1",
+          "description": "[Streak mini reward 1]",
+          "image": "",
+          "emoji": "🏆"
+        }
+      ]
+    },
+    {
+      "tier": "standard",
+      "options": [
+        {
+          "id": "str-std-1",
+          "description": "[Streak standard reward 1]",
+          "image": "",
+          "emoji": "🛡️"
+        }
+      ]
+    },
+    {
+      "tier": "quality",
+      "options": [
+        {
+          "id": "str-qual-1",
+          "description": "[Streak quality reward 1]",
+          "image": "",
+          "emoji": "⚡"
+        }
+      ]
+    },
+    {
+      "tier": "premium",
+      "options": [
+        {
+          "id": "str-prem-1",
+          "description": "[Streak premium reward 1]",
+          "image": "",
+          "emoji": "⭐"
+        }
+      ]
+    }
+  ],
+  "bossRewardPools": [
+    {
+      "tier": "micro",
+      "options": [
+        {
+          "id": "boss-micro-1",
+          "description": "[Boss micro reward 1]",
+          "image": "",
+          "emoji": "🌟"
+        }
+      ]
+    },
+    {
+      "tier": "mini",
+      "options": [
+        {
+          "id": "boss-mini-1",
+          "description": "[Boss mini reward 1]",
+          "image": "Obsidian/Images/Reading.jpg",
+          "emoji": "💎"
+        }
+      ]
+    },
+    {
+      "tier": "standard",
+      "options": [
+        {
+          "id": "boss-std-1",
+          "description": "[Boss standard reward 1]",
+          "image": "",
+          "emoji": "👑"
+        }
+      ]
+    },
+    {
+      "tier": "quality",
+      "options": [
+        {
+          "id": "boss-qual-1",
+          "description": "[Boss quality reward 1]",
+          "image": "",
+          "emoji": "🌙"
+        }
+      ]
+    },
+    {
+      "tier": "premium",
+      "options": [
+        {
+          "id": "boss-prem-1",
+          "description": "[Boss premium reward 1]",
+          "image": "",
+          "emoji": "🔱"
+        }
+      ]
+    }
+  ],
+  "activityRewardCounter": 1,
+  "streakRewardCounter": 0,
+  "pendingRewards": [],
+  "claimedRewards": [
+    {
+      "id": "claimed-1770313077118",
+      "description": "Cigar",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-05T17:37:57.118Z",
+      "earnedAt": "2026-02-05T17:37:49.103Z",
+      "expiresAt": "2026-02-12T17:37:49.103Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770371203939",
+      "description": "Cigar",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-06T09:46:43.939Z",
+      "earnedAt": "2026-02-06T09:46:33.618Z",
+      "expiresAt": "2026-02-13T09:46:33.618Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770376517597",
+      "description": "Cigar",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-06T11:15:17.597Z",
+      "earnedAt": "2026-02-06T09:47:12.196Z",
+      "expiresAt": "2026-02-13T09:47:12.196Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770376528526",
+      "description": "Cigar",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-06T11:15:28.526Z",
+      "earnedAt": "2026-02-06T09:44:37.760Z",
+      "expiresAt": "2026-02-13T09:44:37.760Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770382118967",
+      "description": "Cigar",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-06T12:48:38.967Z",
+      "earnedAt": "2026-02-05T21:07:57.825Z",
+      "expiresAt": "2026-02-12T21:07:57.825Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770382365997",
+      "description": "[Add your mini reward 2]",
+      "rewardTier": "mini",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-06T12:52:45.997Z",
+      "earnedAt": "2026-02-06T12:52:40.484Z",
+      "expiresAt": "2026-02-13T12:52:40.484Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770382400509",
+      "description": "[Add your mini reward 1]",
+      "rewardTier": "mini",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-06T12:53:20.509Z",
+      "earnedAt": "2026-02-06T12:53:17.544Z",
+      "expiresAt": "2026-02-13T12:53:17.544Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770382436301",
+      "description": "[Add your mini reward 2]",
+      "rewardTier": "mini",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-06T12:53:56.300Z",
+      "earnedAt": "2026-02-06T12:53:51.661Z",
+      "expiresAt": "2026-02-13T12:53:51.661Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770382460998",
+      "description": "[Add your standard reward 1]",
+      "rewardTier": "standard",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-06T12:54:20.998Z",
+      "earnedAt": "2026-02-06T12:54:18.477Z",
+      "expiresAt": "2026-02-13T12:54:18.477Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770542203307",
+      "description": "Chocolate",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-08T09:16:43.307Z",
+      "earnedAt": "2026-02-08T09:16:41.550Z",
+      "expiresAt": "2026-02-15T09:16:41.550Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770561197294",
+      "description": "Chocolate",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-08T14:33:17.294Z",
+      "earnedAt": "2026-02-08T14:33:09.794Z",
+      "expiresAt": "2026-02-15T14:33:09.794Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770561527334",
+      "description": "[Add your micro reward 2]",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-08T14:38:47.334Z",
+      "earnedAt": "2026-02-06T16:24:45.599Z",
+      "expiresAt": "2026-02-13T16:24:45.599Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770633570522",
+      "description": "Chocolate",
+      "rewardTier": "micro",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-09T10:39:30.522Z",
+      "earnedAt": "2026-02-08T09:23:32.078Z",
+      "expiresAt": "2026-02-15T09:23:32.078Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770633572924",
+      "description": "Chocolate",
+      "rewardTier": "micro",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-09T10:39:32.924Z",
+      "earnedAt": "2026-02-09T09:26:52.094Z",
+      "expiresAt": "2026-02-16T09:26:52.094Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770633575618",
+      "description": "[Add your micro reward 3]",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-09T10:39:35.618Z",
+      "earnedAt": "2026-02-08T09:23:32.030Z",
+      "expiresAt": "2026-02-15T09:23:32.030Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770662090951",
+      "description": "[Boss micro reward 1]",
+      "rewardTier": "micro",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-09T18:34:50.951Z",
+      "earnedAt": "2026-02-09T18:34:45.421Z",
+      "expiresAt": "2026-02-16T18:34:45.421Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770663207591",
+      "description": "[Activity mini reward 1]",
+      "rewardTier": "mini",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-09T18:53:27.591Z",
+      "earnedAt": "2026-02-09T18:53:26.322Z",
+      "expiresAt": "2026-02-16T18:53:26.322Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770911434169",
+      "description": "Niggers",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-12T15:50:34.169Z",
+      "earnedAt": "2026-02-12T15:50:05.911Z",
+      "expiresAt": "2026-02-19T15:50:05.911Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770978745419",
+      "description": "Niggers",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-13T10:32:25.419Z",
+      "earnedAt": "2026-02-13T10:32:23.607Z",
+      "expiresAt": "2026-02-20T10:32:23.607Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770993972145",
+      "selectedOptionId": "boss-micro-1",
+      "description": "[Boss micro reward 1]",
+      "emoji": "🌟",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "boss",
+      "claimedAt": "2026-02-13T14:46:12.145Z",
+      "earnedAt": "2026-02-13T14:46:07.914Z",
+      "expiresAt": "2026-02-20T14:46:07.914Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770994325949",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-13T14:52:05.949Z",
+      "earnedAt": "2026-02-13T14:51:49.972Z",
+      "expiresAt": "2026-02-20T14:51:49.972Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770994328680",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-13T14:52:08.680Z",
+      "earnedAt": "2026-02-13T14:51:49.972Z",
+      "expiresAt": "2026-02-20T14:51:49.972Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770994333119",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-13T14:52:13.119Z",
+      "earnedAt": "2026-02-13T14:51:49.950Z",
+      "expiresAt": "2026-02-20T14:51:49.950Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1770994636982",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-13T14:57:16.982Z",
+      "earnedAt": "2026-02-13T14:56:24.710Z",
+      "expiresAt": "2026-02-20T14:56:24.710Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1771258324521",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-16T16:12:04.521Z",
+      "earnedAt": "2026-02-16T16:11:34.955Z",
+      "expiresAt": "2026-02-23T16:11:34.955Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1771860539176",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-23T15:28:59.176Z",
+      "earnedAt": "2026-02-23T15:28:55.451Z",
+      "expiresAt": "2026-03-02T15:28:55.451Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1771924575302",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-02-24T09:16:15.302Z",
+      "earnedAt": "2026-02-23T17:57:53.157Z",
+      "expiresAt": "2026-03-02T17:57:53.157Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629224171",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:24.171Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629225782",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:25.782Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629226716",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:26.716Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629227310",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:27.310Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629227556",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:27.556Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629227724",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:27.724Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629227984",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:27.984Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629228583",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:28.583Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629229074",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:29.074Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629230366",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:30.366Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629232574",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:32.574Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629233817",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:00:33.817Z",
+      "earnedAt": "2026-03-04T13:00:22.036Z",
+      "expiresAt": "2026-03-11T13:00:22.036Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629467964",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:04:27.964Z",
+      "earnedAt": "2026-03-04T13:00:22.059Z",
+      "expiresAt": "2026-03-11T13:00:22.059Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629470079",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:04:30.079Z",
+      "earnedAt": "2026-03-04T13:00:22.059Z",
+      "expiresAt": "2026-03-11T13:00:22.059Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629471748",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:04:31.748Z",
+      "earnedAt": "2026-03-04T13:00:22.059Z",
+      "expiresAt": "2026-03-11T13:00:22.059Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629473765",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:04:33.765Z",
+      "earnedAt": "2026-03-04T13:00:22.059Z",
+      "expiresAt": "2026-03-11T13:00:22.059Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629477540",
+      "selectedOptionId": "act-micro-1770726071630",
+      "description": "Idk",
+      "emoji": "🔥",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:04:37.540Z",
+      "earnedAt": "2026-03-04T13:00:22.059Z",
+      "expiresAt": "2026-03-11T13:00:22.059Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629479600",
+      "selectedOptionId": "act-micro-1",
+      "description": "Niggers",
+      "emoji": "🎁",
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "rewardTier": "micro",
+      "rewardType": "activity",
+      "claimedAt": "2026-03-04T13:04:39.599Z",
+      "earnedAt": "2026-03-04T13:00:22.059Z",
+      "expiresAt": "2026-03-11T13:00:22.059Z",
+      "used": true
+    },
+    {
+      "id": "claimed-1772629481389",
+      "selectedOptionId": "boss-micro-1",
+      "description": "[Boss micro reward 1]",
+      "emoji": "🌟",
+      "image": "",
+      "rewardTier": "micro",
+      "rewardType": "boss",
+      "claimedAt": "2026-03-04T13:04:41.389Z",
+      "earnedAt": "2026-03-04T13:00:22.060Z",
+      "expiresAt": "2026-03-11T13:00:22.060Z",
+      "used": true
+    }
+  ],
+  "bankedRewards": [],
+  "lastRewardCheck": null,
+  "tierFigures": [
+    {
+      "tier": 2,
+      "position": "left",
+      "hideTierTitle": false,
+      "image": "Screenshot_20260205_194640_Gallery.png"
+    },
+    {
+      "tier": 5,
+      "position": "left",
+      "hideTierTitle": true,
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "scale": 1.1,
+      "offsetX": 0,
+      "offsetY": -18
+    },
+    {
+      "tier": 6,
+      "position": "left",
+      "hideTierTitle": true,
+      "image": "Obsidian/Images/Screenshot_20260205_194640_Gallery.jpg",
+      "scale": 1.1,
+      "offsetX": 0,
+      "offsetY": -18
+    }
+  ],
+  "showTierFigure": false,
+  "dashboardBgImage": "",
+  "activeTheme": "forest-spirit",
+  "userPrimaryColor": "#41593b",
+  "customTheme": {
+    "primary": "#2d4a3e",
+    "secondary": "#d4e8c2",
+    "accent": "#7a9a5d",
+    "muted": "#8a9a85"
+  },
+  "tartarusBgImage": "Obsidian/Images/Tartarus background.jpeg",
+  "_rewardPoolsMigrated": true,
+  "_tierSystemMigrated": true
+}

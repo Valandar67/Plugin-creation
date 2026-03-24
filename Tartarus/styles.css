@@ -1,0 +1,403 @@
+/* Rank Analysis Table */
+.rank-analysis {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.rank-analysis th {
+  text-align: left;
+  font-size: 0.8em;
+  opacity: 0.7;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 6px;
+}
+
+.rank-analysis td {
+  padding: 6px;
+}
+
+/* Heatmap */
+.rank-heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.rank-heatmap div {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+}
+
+.rank-heatmap .h1 { background: rgba(34,197,94,0.25); }
+.rank-heatmap .h2 { background: rgba(34,197,94,0.45); }
+.rank-heatmap .h3 { background: rgba(34,197,94,0.65); }
+.rank-heatmap .h4 { background: rgba(34,197,94,0.85); }
+
+/* Rank Analysis Table */
+.rank-analysis {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.rank-analysis th,
+.rank-analysis td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.rank-analysis th {
+  font-weight: 600;
+  background: var(--background-secondary);
+}
+
+/* Heatmap */
+.rank-heatmap {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.rank-heatmap > div {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+}
+
+.rank-heatmap .h1 { background: rgba(34, 197, 94, 0.3); }
+.rank-heatmap .h2 { background: rgba(34, 197, 94, 0.5); }
+.rank-heatmap .h3 { background: rgba(34, 197, 94, 0.7); }
+.rank-heatmap .h4 { background: rgba(34, 197, 94, 1); }
+
+/* ======================
+   MOBILE OPTIMIZATION
+   ====================== */
+
+/* Touch Target Standards - minimum 44px for all interactive elements */
+.track-habit-rank-btn,
+.track-habit-rank-toggle,
+.track-habit-rank-action {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive Container */
+.track-habit-rank-container {
+  width: 100%;
+  max-width: 100%;
+  padding: env(safe-area-inset-top, 0)
+           env(safe-area-inset-right, 16px)
+           env(safe-area-inset-bottom, 0)
+           env(safe-area-inset-left, 16px);
+  box-sizing: border-box;
+}
+
+/* Safe Area Support for Notched Devices */
+@supports (padding: env(safe-area-inset-top)) {
+  .track-habit-rank-container {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Scrollable Activity Lists */
+.track-habit-rank-activity-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Modal Responsive Sizing */
+.track-habit-rank-modal {
+  max-width: min(90vw, 600px);
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile Breakpoints */
+@media screen and (max-width: 480px) {
+  /* Compact layout for small screens */
+  .track-habit-rank-container {
+    padding: 12px;
+  }
+
+  /* Larger touch targets on mobile */
+  button,
+  .setting-item .checkbox-container,
+  .setting-item-control button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Stack flex items vertically on narrow screens */
+  .track-habit-rank-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Full-width buttons on mobile */
+  .track-habit-rank-btn-full {
+    width: 100%;
+  }
+
+  /* Responsive font sizes */
+  .track-habit-rank-title {
+    font-size: 1.8em;
+  }
+
+  .track-habit-rank-subtitle {
+    font-size: 0.7em;
+  }
+
+  /* Compact spacing */
+  .track-habit-rank-section {
+    margin-bottom: 12px;
+    padding: 10px;
+  }
+}
+
+@media screen and (max-width: 375px) {
+  /* iPhone SE / very small screens */
+  .track-habit-rank-container {
+    padding: 8px;
+  }
+
+  .track-habit-rank-title {
+    font-size: 1.6em;
+  }
+
+  /* Ensure buttons don't overflow */
+  .track-habit-rank-btn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  /* Tablet and desktop */
+  .track-habit-rank-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .track-habit-rank-modal {
+    max-width: 600px;
+  }
+}
+
+/* Hover States with Tap Equivalents */
+@media (hover: hover) {
+  .track-habit-rank-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+/* Active/pressed state for touch devices */
+.track-habit-rank-btn:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+/* Tap-to-reveal pattern for tooltips (replaces hover) */
+.track-habit-rank-tooltip {
+  position: relative;
+}
+
+.track-habit-rank-tooltip-content {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  font-size: 0.85em;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.track-habit-rank-tooltip.active .track-habit-rank-tooltip-content {
+  display: block;
+}
+
+/* Pull-to-refresh indicator styling */
+.track-habit-rank-refresh-indicator {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+/* Pause Banner - responsive */
+.track-habit-rank-pause-banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+@media screen and (max-width: 375px) {
+  .track-habit-rank-pause-banner {
+    padding: 10px 12px;
+    border-radius: 6px;
+  }
+}
+
+/* Developer Panel - collapsible sections for mobile */
+.track-habit-rank-dev-section {
+  margin-bottom: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.track-habit-rank-dev-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.track-habit-rank-dev-section-content {
+  padding: 12px 16px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.track-habit-rank-dev-section.collapsed .track-habit-rank-dev-section-content {
+  display: none;
+}
+
+/* Log Console Styling */
+.track-habit-rank-log-console {
+  font-family: monospace;
+  font-size: 0.8em;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.track-habit-rank-log-entry {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.track-habit-rank-log-entry:last-child {
+  border-bottom: none;
+}
+
+.track-habit-rank-log-entry.log-calc { color: #3B82F6; }
+.track-habit-rank-log-entry.log-meta { color: #8B5CF6; }
+.track-habit-rank-log-entry.log-time { color: #F59E0B; }
+.track-habit-rank-log-entry.log-dmg { color: #EF4444; }
+.track-habit-rank-log-entry.log-thresh { color: #EC4899; }
+.track-habit-rank-log-entry.log-save { color: #10B981; }
+
+/* Keyboard avoidance for input fields */
+@media screen and (max-height: 500px) {
+  .track-habit-rank-modal {
+    max-width: 100vh;
+    overflow-y: scroll;
+  }
+
+  .track-habit-rank-input-section {
+    padding-bottom: 60vh; /* Extra padding when keyboard visible */
+  }
+}
+
+/* ======================
+   SETTINGS TAB MOBILE
+   ====================== */
+
+/* Settings tab container */
+.track-habit-rank-settings {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* Mobile-optimized settings sections */
+.track-habit-rank-settings .track-habit-rank-section {
+  margin: 12px 0;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+/* Ensure toggles are touch-friendly */
+.track-habit-rank-settings .checkbox-container {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Settings buttons touch targets */
+.track-habit-rank-settings button {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+@media screen and (max-width: 480px) {
+  /* Stack stat cards on very narrow screens */
+  .track-habit-rank-settings .track-habit-rank-section {
+    padding: 12px;
+  }
+
+  /* Full-width buttons */
+  .track-habit-rank-settings button {
+    width: 100%;
+  }
+
+  /* Adjust Setting items for mobile */
+  .track-habit-rank-settings .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .track-habit-rank-settings .setting-item-info {
+    width: 100%;
+  }
+
+  .track-habit-rank-settings .setting-item-control {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Android-specific touch feedback */
+@media (pointer: coarse) {
+  .track-habit-rank-settings button:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  /* Larger tap targets for Android */
+  .track-habit-rank-settings .setting-item .checkbox-container {
+    transform: scale(1.2);
+    margin-right: 8px;
+  }
+}
