@@ -238,6 +238,85 @@ var RANK_TIER_COLORS = {
   13: "#c9a227",  // Chaos — royal gold
   14: "#1a1410"   // Tartarus — abyss black
 };
+
+// ===== Theme resolution (shared between dashboard + modals) =====
+var THEME_PRESETS_GLOBAL = {
+  "age-of-concern": { primary: "#613134", secondary: "#faddb3", accent: "#967b4d", muted: "#928d85" },
+  "dark-knight": { primary: "#1a1a2e", secondary: "#e0e0e0", accent: "#4a7c8f", muted: "#6c6c7e" },
+  "forest-spirit": { primary: "#2d4a3e", secondary: "#d4e8c2", accent: "#7a9a5d", muted: "#8a9a85" },
+  "obsidian-gold": { primary: "#1a1a1a", secondary: "#f0d060", accent: "#c9a227", muted: "#808080" },
+  "blood-moon": { primary: "#4a1020", secondary: "#f0c0a0", accent: "#c04040", muted: "#8a6060" },
+  "ocean-depths": { primary: "#0f2a3f", secondary: "#b8d8e8", accent: "#3a7ca5", muted: "#7090a0" },
+  "amethyst": { primary: "#2d1b4e", secondary: "#e0d0f0", accent: "#8a5cf6", muted: "#7a6a8a" },
+  "parchment": { primary: "#5a4a3a", secondary: "#f5ead0", accent: "#a0804a", muted: "#9a8a7a" },
+};
+function _darkenHex(hex, factor) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `#${Math.round(r*factor).toString(16).padStart(2,'0')}${Math.round(g*factor).toString(16).padStart(2,'0')}${Math.round(b*factor).toString(16).padStart(2,'0')}`;
+}
+function _lightenHex(hex, factor) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  const lr = Math.min(255, Math.round(r + (255 - r) * factor));
+  const lg = Math.min(255, Math.round(g + (255 - g) * factor));
+  const lb = Math.min(255, Math.round(b + (255 - b) * factor));
+  return `#${lr.toString(16).padStart(2,'0')}${lg.toString(16).padStart(2,'0')}${lb.toString(16).padStart(2,'0')}`;
+}
+function _desaturateHex(hex, factor) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  const grey = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
+  const dr = Math.round(r + (grey - r) * factor);
+  const dg = Math.round(g + (grey - g) * factor);
+  const db = Math.round(b + (grey - b) * factor);
+  return `#${dr.toString(16).padStart(2,'0')}${dg.toString(16).padStart(2,'0')}${db.toString(16).padStart(2,'0')}`;
+}
+function _deriveThemeFromPrimary(primary) {
+  return {
+    primary: primary,
+    secondary: _lightenHex(primary, 0.82),
+    accent: _lightenHex(_desaturateHex(primary, 0.3), 0.45),
+    muted: _desaturateHex(_lightenHex(primary, 0.4), 0.6)
+  };
+}
+function resolveThemeColors(settings) {
+  const activeTheme = settings.activeTheme || "auto";
+  let themeColors;
+  if (activeTheme === "auto") {
+    themeColors = _deriveThemeFromPrimary(settings.userPrimaryColor || "#613134");
+  } else if (activeTheme === "custom") {
+    themeColors = settings.customTheme || THEME_PRESETS_GLOBAL["age-of-concern"];
+  } else {
+    themeColors = THEME_PRESETS_GLOBAL[activeTheme] || _deriveThemeFromPrimary(settings.userPrimaryColor || "#613134");
+  }
+  return {
+    buccaneer: themeColors.primary,
+    peachYellow: themeColors.secondary,
+    leather: themeColors.accent,
+    naturalGrey: themeColors.muted,
+    gold: themeColors.accent,
+    goldLight: themeColors.accent,
+    goldMuted: themeColors.accent,
+    goldBorder: themeColors.primary,
+    green: themeColors.accent,
+    greenBorder: themeColors.primary,
+    greenMuted: themeColors.muted,
+    bg: _darkenHex(themeColors.primary, 0.35),
+    bgLight: _darkenHex(themeColors.primary, 0.45),
+    bgCard: _darkenHex(themeColors.primary, 0.40),
+    text: themeColors.secondary,
+    textMuted: themeColors.muted,
+    danger: themeColors.primary,
+    dangerLight: themeColors.primary,
+    dangerMuted: themeColors.primary,
+    accent: themeColors.accent
+  };
+}
+
 function getBossForTier(tier) {
   return BOSSES.find((b) => b.tier === tier) || null;
 }
@@ -366,6 +445,11 @@ var DEFAULT_SETTINGS = {
   claimedRewards: [],
   bankedRewards: [],
   lastRewardCheck: null,
+  // Chaos boss bonus (tier 13): double rewards for 1 month
+  chaosDoubleRewardsUntil: null,
+  // Tartarus boss bonus (tier 14): free from punishment
+  tartarusFreedom: false,
+  tartarusFreedomKeepAlive: false,
   // Tier figure settings
   tierFigures: [],  // Array of { tier, image, position ('left'|'right'), hideTierTitle, scale, offsetX, offsetY }
   showTierFigure: false,
@@ -401,6 +485,11 @@ function getEffectiveTodayISO(settings) {
   const d = getEffectiveNow(settings);
   d.setHours(0, 0, 0, 0);
   return d.toISOString().slice(0, 10);
+}
+function isChaosDoubleActive(settings) {
+  if (!settings.chaosDoubleRewardsUntil) return false;
+  const now = getEffectiveNow(settings);
+  return now < new Date(settings.chaosDoubleRewardsUntil);
 }
 function calculateLiveStreakWithDecay(completions, damagePerCompletion, asOf, settings) {
   const effectiveNow = settings ? getEffectiveNow(settings) : asOf || /* @__PURE__ */ new Date();
@@ -841,92 +930,8 @@ var TartarusView = class extends import_obsidian.ItemView {
     const rankName = getRankNameForTier(settings.currentTier, settings);
     const barColor = getProgressBarColor(settings.currentTier, settings.inTartarus);
 
-    // Theme presets
-    const THEME_PRESETS = {
-      "age-of-concern": { primary: "#613134", secondary: "#faddb3", accent: "#967b4d", muted: "#928d85" },
-      "dark-knight": { primary: "#1a1a2e", secondary: "#e0e0e0", accent: "#4a7c8f", muted: "#6c6c7e" },
-      "forest-spirit": { primary: "#2d4a3e", secondary: "#d4e8c2", accent: "#7a9a5d", muted: "#8a9a85" },
-      "obsidian-gold": { primary: "#1a1a1a", secondary: "#f0d060", accent: "#c9a227", muted: "#808080" },
-      "blood-moon": { primary: "#4a1020", secondary: "#f0c0a0", accent: "#c04040", muted: "#8a6060" },
-      "ocean-depths": { primary: "#0f2a3f", secondary: "#b8d8e8", accent: "#3a7ca5", muted: "#7090a0" },
-      "amethyst": { primary: "#2d1b4e", secondary: "#e0d0f0", accent: "#8a5cf6", muted: "#7a6a8a" },
-      "parchment": { primary: "#5a4a3a", secondary: "#f5ead0", accent: "#a0804a", muted: "#9a8a7a" },
-    };
-
-    // Helper to darken a hex color
-    const darkenHex = (hex, factor) => {
-      const r = parseInt(hex.slice(1,3), 16);
-      const g = parseInt(hex.slice(3,5), 16);
-      const b = parseInt(hex.slice(5,7), 16);
-      return `#${Math.round(r*factor).toString(16).padStart(2,'0')}${Math.round(g*factor).toString(16).padStart(2,'0')}${Math.round(b*factor).toString(16).padStart(2,'0')}`;
-    };
-
-    // Helper to lighten a hex color
-    const lightenHex = (hex, factor) => {
-      const r = parseInt(hex.slice(1,3), 16);
-      const g = parseInt(hex.slice(3,5), 16);
-      const b = parseInt(hex.slice(5,7), 16);
-      const lr = Math.min(255, Math.round(r + (255 - r) * factor));
-      const lg = Math.min(255, Math.round(g + (255 - g) * factor));
-      const lb = Math.min(255, Math.round(b + (255 - b) * factor));
-      return `#${lr.toString(16).padStart(2,'0')}${lg.toString(16).padStart(2,'0')}${lb.toString(16).padStart(2,'0')}`;
-    };
-
-    // Helper to desaturate a hex color toward grey
-    const desaturateHex = (hex, factor) => {
-      const r = parseInt(hex.slice(1,3), 16);
-      const g = parseInt(hex.slice(3,5), 16);
-      const b = parseInt(hex.slice(5,7), 16);
-      const grey = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
-      const dr = Math.round(r + (grey - r) * factor);
-      const dg = Math.round(g + (grey - g) * factor);
-      const db = Math.round(b + (grey - b) * factor);
-      return `#${dr.toString(16).padStart(2,'0')}${dg.toString(16).padStart(2,'0')}${db.toString(16).padStart(2,'0')}`;
-    };
-
-    // Auto-theme: derive all 4 colors from a single primary color
-    const deriveThemeFromPrimary = (primary) => {
-      return {
-        primary: primary,
-        secondary: lightenHex(primary, 0.82),
-        accent: lightenHex(desaturateHex(primary, 0.3), 0.45),
-        muted: desaturateHex(lightenHex(primary, 0.4), 0.6)
-      };
-    };
-
-    // Resolve active theme colors
-    const activeTheme = settings.activeTheme || "auto";
-    let themeColors;
-    if (activeTheme === "auto") {
-      themeColors = deriveThemeFromPrimary(settings.userPrimaryColor || "#613134");
-    } else if (activeTheme === "custom") {
-      themeColors = settings.customTheme || THEME_PRESETS["age-of-concern"];
-    } else {
-      themeColors = THEME_PRESETS[activeTheme] || deriveThemeFromPrimary(settings.userPrimaryColor || "#613134");
-    }
-
-    const colors = {
-      buccaneer: themeColors.primary,
-      peachYellow: themeColors.secondary,
-      leather: themeColors.accent,
-      naturalGrey: themeColors.muted,
-      gold: themeColors.accent,
-      goldLight: themeColors.accent,
-      goldMuted: themeColors.accent,
-      goldBorder: themeColors.primary,
-      green: themeColors.accent,
-      greenBorder: themeColors.primary,
-      bg: darkenHex(themeColors.primary, 0.35),
-      bgLight: darkenHex(themeColors.primary, 0.45),
-      bgCard: darkenHex(themeColors.primary, 0.40),
-      text: themeColors.secondary,
-      textMuted: themeColors.muted,
-      greenMuted: themeColors.muted,
-      danger: themeColors.primary,
-      dangerLight: themeColors.primary,
-      dangerMuted: themeColors.primary,
-      accent: themeColors.accent
-    };
+    // Resolve theme colors from global helper
+    const colors = resolveThemeColors(settings);
 
     // HP reset check is handled in the data layer (refresh), not here
     const wrapper = content.createDiv({
@@ -1998,6 +2003,7 @@ var TartarusView = class extends import_obsidian.ItemView {
    */
   renderRewardSection(wrapper) {
     const settings = this.plugin.settings;
+    const colors = resolveThemeColors(settings);
     const rewardProgress = this.plugin.getRewardProgress();
     const tierDisplayNames = {
       micro: "Micro",
@@ -2012,8 +2018,8 @@ var TartarusView = class extends import_obsidian.ItemView {
         style: `
           margin: 16px 0;
           padding: 16px;
-          background: #1a1410;
-          border: 1px solid #613134;
+          background: ${colors.bg};
+          border: 1px solid ${colors.goldBorder};
         `
       }
     });
@@ -2026,11 +2032,32 @@ var TartarusView = class extends import_obsidian.ItemView {
           font-weight: 500;
           letter-spacing: 1px;
           text-transform: uppercase;
-          color: #967b4d;
+          color: ${colors.gold};
           margin-bottom: 12px;
         `
       }
     });
+
+    // Chaos double rewards indicator
+    if (isChaosDoubleActive(settings)) {
+      const expiryDate = new Date(settings.chaosDoubleRewardsUntil);
+      const daysLeft = Math.ceil((expiryDate.getTime() - getEffectiveNow(settings).getTime()) / (24 * 60 * 60 * 1e3));
+      rewardSection.createEl("div", {
+        text: `Chaos Bonus: 2x rewards (${daysLeft}d remaining)`,
+        attr: {
+          style: `
+            font-family: "Georgia", serif;
+            font-size: 11px;
+            color: ${colors.gold};
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            background: ${colors.bgLight};
+            border: 1px solid ${colors.gold};
+          `
+        }
+      });
+    }
+
     const activityRemaining = rewardProgress.activityThreshold - rewardProgress.activityProgress;
     rewardSection.createEl("div", {
       text: `Next activity reward: ${activityRemaining} more completion${activityRemaining !== 1 ? "s" : ""}`,
@@ -2038,7 +2065,7 @@ var TartarusView = class extends import_obsidian.ItemView {
         style: `
           font-family: "Georgia", serif;
           font-size: 12px;
-          color: #928d85;
+          color: ${colors.textMuted};
           margin-bottom: 4px;
         `
       }
@@ -2050,7 +2077,7 @@ var TartarusView = class extends import_obsidian.ItemView {
         style: `
           font-family: "Georgia", serif;
           font-size: 12px;
-          color: #928d85;
+          color: ${colors.textMuted};
           margin-bottom: 8px;
         `
       }
@@ -2061,8 +2088,8 @@ var TartarusView = class extends import_obsidian.ItemView {
           style: `
             margin-top: 8px;
             padding: 10px 12px;
-            background: rgba(150, 123, 77, 0.1);
-            border: 1px solid #967b4d;
+            background: ${colors.bgLight};
+            border: 1px solid ${colors.gold};
           `
         }
       });
@@ -2072,7 +2099,7 @@ var TartarusView = class extends import_obsidian.ItemView {
           style: `
             font-family: "Times New Roman", serif;
             font-size: 12px;
-            color: #967b4d;
+            color: ${colors.gold};
           `
         }
       });
@@ -2085,7 +2112,7 @@ var TartarusView = class extends import_obsidian.ItemView {
             margin-top: 8px;
             font-family: "Georgia", serif;
             font-size: 12px;
-            color: #928d85;
+            color: ${colors.textMuted};
           `
         }
       });
@@ -2098,9 +2125,9 @@ var TartarusView = class extends import_obsidian.ItemView {
           margin-top: 12px;
           padding: 10px 16px;
           min-height: 44px;
-          background: #1a1410;
-          color: #967b4d;
-          border: 1px solid #967b4d;
+          background: ${colors.bg};
+          color: ${colors.gold};
+          border: 1px solid ${colors.gold};
           cursor: pointer;
           font-family: "Times New Roman", serif;
           font-size: 11px;
@@ -2832,6 +2859,34 @@ var TartarusView = class extends import_obsidian.ItemView {
    */
   renderDeathThresholdMonitor(wrapper, colors) {
     const settings = this.plugin.settings;
+
+    // If Tartarus was conquered and punishment is disabled, show freedom badge instead
+    if (settings.tartarusFreedom && !settings.tartarusFreedomKeepAlive) {
+      wrapper.createDiv({
+        attr: {
+          style: `
+            margin: 16px 0;
+            padding: 10px 16px;
+            background: ${colors.bgLight};
+            border: 1px solid ${colors.gold};
+            text-align: center;
+          `
+        }
+      }).createEl("div", {
+        text: "Free from punishment",
+        attr: {
+          style: `
+            font-family: "Times New Roman", serif;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: ${colors.gold};
+          `
+        }
+      });
+      return;
+    }
+
     const allActivities = [
       ...getEffectiveActivities(settings).filter((a) => settings.enabledActivities[a._originalName] ?? true),
       ...settings.customHabits.filter((h) => h.enabled)
@@ -3321,6 +3376,7 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
     const { contentEl } = this;
     const settings = this.plugin.settings;
     contentEl.empty();
+    const colors = resolveThemeColors(settings);
     const pools = getRewardPoolsForType(settings, this.pendingReward.rewardType);
     const pool = pools.find((p) => p.tier === this.pendingReward.rewardTier);
     const options = pool?.options || [];
@@ -3346,12 +3402,12 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
         style: `
           margin-bottom: 16px;
           padding: 12px 16px;
-          background: #1a1410;
-          border: 1px solid ${daysLeft <= 2 ? "#967b4d" : "#613134"};
+          background: ${colors.bg};
+          border: 1px solid ${daysLeft <= 2 ? colors.leather : colors.goldBorder};
           font-family: "Georgia", serif;
           font-size: 13px;
           font-style: italic;
-          color: ${daysLeft <= 2 ? "#967b4d" : "#928d85"};
+          color: ${daysLeft <= 2 ? colors.leather : colors.textMuted};
         `
       }
     });
@@ -3363,7 +3419,7 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
           font-family: "Times New Roman", serif;
           font-size: 14px;
           letter-spacing: 0.5px;
-          color: #967b4d;
+          color: ${colors.leather};
         `
       }
     });
@@ -3374,11 +3430,11 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
           style: `
             margin-bottom: 16px;
             padding: 16px;
-            background: #1a1410;
-            border: 1px solid rgba(97, 49, 52, 0.4);
+            background: ${colors.bg};
+            border: 1px solid ${colors.goldBorder};
             font-family: "Georgia", serif;
             font-size: 13px;
-            color: #613134;
+            color: ${colors.danger};
           `
         }
       });
@@ -3389,8 +3445,8 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
             style: `
               margin-bottom: 12px;
               padding: 16px;
-              border: 1px solid #613134;
-              background: #1a1410;
+              border: 1px solid ${colors.goldBorder};
+              background: ${colors.bg};
               cursor: pointer;
               transition: all 0.2s ease;
             `
@@ -3402,17 +3458,17 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
             style: `
               font-family: "Times New Roman", serif;
               font-size: 14px;
-              color: #faddb3;
+              color: ${colors.text};
             `
           }
         });
         optionBox.onmouseenter = () => {
-          optionBox.style.borderColor = "#967b4d";
-          optionBox.style.background = "rgba(150, 123, 77, 0.1)";
+          optionBox.style.borderColor = colors.leather;
+          optionBox.style.background = colors.bgLight;
         };
         optionBox.onmouseleave = () => {
-          optionBox.style.borderColor = "#613134";
-          optionBox.style.background = "#1a1410";
+          optionBox.style.borderColor = colors.goldBorder;
+          optionBox.style.background = colors.bg;
         };
         optionBox.onclick = async () => {
           await this.claimReward(option);
@@ -3428,7 +3484,7 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
             style: `
               margin-top: 20px;
               padding-top: 16px;
-              border-top: 1px solid #613134;
+              border-top: 1px solid ${colors.goldBorder};
             `
           }
         });
@@ -3439,7 +3495,7 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
               margin-bottom: 12px;
               font-family: "Times New Roman", serif;
               font-size: 13px;
-              color: #928d85;
+              color: ${colors.textMuted};
             `
           }
         });
@@ -3450,9 +3506,9 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
             style: `
               padding: 12px 24px;
               min-height: 44px;
-              background: #1a1410;
-              color: #928d85;
-              border: 1px solid #928d85;
+              background: ${colors.bg};
+              color: ${colors.textMuted};
+              border: 1px solid ${colors.textMuted};
               cursor: pointer;
               font-family: "Times New Roman", serif;
               font-size: 12px;
@@ -3473,11 +3529,11 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
             style: `
               margin-top: 20px;
               padding: 12px 16px;
-              background: #1a1410;
-              border: 1px solid rgba(146, 141, 133, 0.3);
+              background: ${colors.bg};
+              border: 1px solid ${colors.goldBorder};
               font-family: "Times New Roman", serif;
               font-size: 12px;
-              color: #928d85;
+              color: ${colors.textMuted};
               text-align: center;
             `
           }
@@ -3500,8 +3556,8 @@ var RewardSelectionModal = class extends import_obsidian.Modal {
           padding: 10px 20px;
           min-height: 44px;
           background: transparent;
-          color: #928d85;
-          border: 1px solid #613134;
+          color: ${colors.textMuted};
+          border: 1px solid ${colors.goldBorder};
           cursor: pointer;
           font-family: "Times New Roman", serif;
           font-size: 11px;
@@ -3567,8 +3623,10 @@ var BossRewardModal = class extends import_obsidian.Modal {
     const settings = this.plugin.settings;
     contentEl.empty();
 
+    const colors = resolveThemeColors(settings);
+
     contentEl.style.maxWidth = "360px";
-    contentEl.style.background = "#1a1410";
+    contentEl.style.background = colors.bg;
     contentEl.style.padding = "24px";
     contentEl.style.borderRadius = "12px";
 
@@ -3587,11 +3645,11 @@ var BossRewardModal = class extends import_obsidian.Modal {
           font-weight: 600;
           letter-spacing: 3px;
           text-transform: uppercase;
-          color: #c9a227;
+          color: ${colors.gold};
           text-align: center;
           margin-bottom: 20px;
           padding-bottom: 12px;
-          border-bottom: 1px solid rgba(201, 162, 39, 0.3);
+          border-bottom: 1px solid ${colors.goldBorder};
         `
       }
     });
@@ -3607,8 +3665,8 @@ var BossRewardModal = class extends import_obsidian.Modal {
       const rewardCard = contentEl.createDiv({
         attr: {
           style: `
-            background: linear-gradient(160deg, #22201c 0%, #181614 100%);
-            border: 2px solid rgba(201, 162, 39, 0.5);
+            background: linear-gradient(160deg, ${colors.bgLight} 0%, ${colors.bg} 100%);
+            border: 2px solid ${colors.goldBorder};
             border-radius: 8px;
             padding: 24px;
             text-align: center;
@@ -3641,7 +3699,7 @@ var BossRewardModal = class extends import_obsidian.Modal {
           style: `
             font-family: "Georgia", serif;
             font-size: 14px;
-            color: #e8eaec;
+            color: ${colors.text};
             margin-bottom: 16px;
           `
         }
@@ -3651,8 +3709,8 @@ var BossRewardModal = class extends import_obsidian.Modal {
         text: "Claim Reward",
         attr: {
           style: `
-            background: linear-gradient(180deg, #c9a227 0%, #8b6914 100%);
-            color: #1a1410;
+            background: linear-gradient(180deg, ${colors.gold} 0%, ${colors.goldBorder} 100%);
+            color: ${colors.bg};
             border: none;
             padding: 12px 24px;
             border-radius: 6px;
@@ -3694,13 +3752,13 @@ var BossRewardModal = class extends import_obsidian.Modal {
         }
       }).innerHTML = `
         <div style="font-size: 40px; margin-bottom: 12px; opacity: 0.5;">👑</div>
-        <div style="font-family: Georgia, serif; font-size: 13px; color: #8a8a8a; margin-bottom: 8px;">
+        <div style="font-family: Georgia, serif; font-size: 13px; color: ${colors.textMuted}; margin-bottom: 8px;">
           Defeat the boss to claim this reward
         </div>
-        <div style="font-family: Georgia, serif; font-size: 16px; color: #c9a227;">
+        <div style="font-family: Georgia, serif; font-size: 16px; color: ${colors.gold};">
           ${damageNeeded} damage remaining
         </div>
-        <div style="font-family: Georgia, serif; font-size: 11px; color: #6a6a6a; margin-top: 8px;">
+        <div style="font-family: Georgia, serif; font-size: 11px; color: ${colors.textMuted}; margin-top: 8px;">
           (${hpPercent}% HP left)
         </div>
       `;
@@ -3714,8 +3772,8 @@ var BossRewardModal = class extends import_obsidian.Modal {
           display: block;
           width: 100%;
           background: transparent;
-          color: #8a8a8a;
-          border: 1px solid #3a3a3a;
+          color: ${colors.textMuted};
+          border: 1px solid ${colors.goldBorder};
           padding: 10px;
           border-radius: 6px;
           font-family: "Georgia", serif;
@@ -3744,30 +3802,13 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
     const settings = this.plugin.settings;
     contentEl.empty();
 
+    // Resolve theme colors
+    const colors = resolveThemeColors(settings);
+
     // Add modal styles
     contentEl.style.maxWidth = "500px";
-    contentEl.style.background = "#1a1410";
+    contentEl.style.background = colors.bg;
     contentEl.style.padding = "20px";
-
-    const colors = {
-      buccaneer: "#613134",
-      peachYellow: "#faddb3",
-      leather: "#967b4d",
-      naturalGrey: "#928d85",
-      gold: "#967b4d",
-      goldLight: "#967b4d",
-      goldMuted: "#967b4d",
-      goldBorder: "#613134",
-      green: "#967b4d",
-      greenMuted: "#928d85",
-      greenBorder: "#613134",
-      bg: "#1a1410",
-      bgLight: "#221c16",
-      text: "#faddb3",
-      textMuted: "#928d85",
-      danger: "#613134",
-      accent: "#967b4d"
-    };
 
     const tierDisplayNames = {
       micro: "Micro",
@@ -5092,6 +5133,46 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
 
     // Custom habits
     body.createEl("div", { text: "CUSTOM HABITS", attr: { style: "font-size: 0.75em; font-weight: 600; letter-spacing: 1.5px; margin: 16px 0 8px 0; color: var(--text-muted);" } });
+
+    // Import from Olen
+    new import_obsidian.Setting(body).setName("Import from Olen").setDesc("Copy activity configurations from the Olen plugin").addButton(
+      (btn) => btn.setButtonText("Import").onClick(async () => {
+        try {
+          const olenDataPath = ".obsidian/plugins/olen/data.json";
+          const olenRaw = await this.app.vault.adapter.read(olenDataPath);
+          const olenData = JSON.parse(olenRaw);
+          const olenActivities = olenData.activities || [];
+          if (olenActivities.length === 0) {
+            new import_obsidian.Notice("No activities found in Olen configuration");
+            return;
+          }
+          const existingNames = this.plugin.settings.customHabits.map(h => h.name.toLowerCase());
+          let imported = 0;
+          for (const act of olenActivities) {
+            if (!act.name || !act.folder) continue;
+            if (existingNames.includes(act.name.toLowerCase())) continue;
+            this.plugin.settings.customHabits.push({
+              id: crypto.randomUUID(),
+              name: act.name,
+              folder: act.folder,
+              field: act.property || act.name,
+              damagePerCompletion: act.damagePerCompletion || 1,
+              enabled: act.enabled !== false,
+              weeklyTarget: act.weeklyTarget || 7,
+              trackingMode: act.trackingMode || "daily"
+            });
+            imported++;
+          }
+          await this.plugin.saveSettings();
+          this.plugin.refreshRankView();
+          this.display();
+          new import_obsidian.Notice(`Imported ${imported} activities from Olen (${olenActivities.length - imported} skipped as duplicates)`);
+        } catch (e) {
+          new import_obsidian.Notice("Could not read Olen data. Make sure the Olen plugin is installed.");
+        }
+      })
+    );
+
     new import_obsidian.Setting(body).setName("Add custom habit").addButton(
       (btn) => btn.setButtonText("+ Add").setCta().onClick(async () => {
         this.plugin.settings.customHabits.push({
@@ -5156,36 +5237,6 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
       }));
     });
 
-    // Activity editor (collapsible sub-section)
-    body.createEl("div", { text: "ACTIVITY EDITOR", attr: { style: "font-size: 0.75em; font-weight: 600; letter-spacing: 1.5px; margin: 16px 0 8px 0; color: var(--text-muted);" } });
-    new import_obsidian.Setting(body).setName("Reset all customizations").addButton(
-      (btn) => btn.setButtonText("Reset All").setWarning().onClick(async () => {
-        this.plugin.settings.activityOverrides = [];
-        await this.plugin.saveSettings();
-        this.plugin.refreshRankView();
-        this.display();
-      })
-    );
-    ACTIVITIES.forEach((activity) => {
-      const override = this.plugin.settings.activityOverrides?.find((o) => o.originalName === activity.name);
-      const actContainer = body.createDiv({ attr: { style: "margin-top: 8px; border: 1px solid var(--background-modifier-border); border-radius: 6px; overflow: hidden;" } });
-      const actHeader = actContainer.createDiv({ attr: { style: "display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--background-secondary); cursor: pointer; min-height: 40px;" } });
-      const displayName = override?.name || activity.name;
-      actHeader.createEl("span", { text: `${displayName}${override ? " \u270F\uFE0F" : ""}`, attr: { style: "font-weight: 500; font-size: 0.9em;" } });
-      const actArrow = actHeader.createEl("span", { text: "\u25B6", attr: { style: "font-size: 9px;" } });
-      const actContent = actContainer.createDiv({ attr: { style: "display: none; padding: 8px 12px;" } });
-      actHeader.addEventListener("click", () => {
-        const isOpen = actContent.style.display !== "none";
-        actContent.style.display = isOpen ? "none" : "block";
-        actArrow.textContent = isOpen ? "\u25B6" : "\u25BC";
-      });
-      new import_obsidian.Setting(actContent).setName("Display Name").addText((t) => t.setPlaceholder(activity.name).setValue(override?.name || "").onChange(async (v) => { this.updateActivityOverride(activity.name, "name", v || void 0); await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
-      new import_obsidian.Setting(actContent).setName("Folder Path").addText((t) => t.setPlaceholder(activity.folder).setValue(override?.folder || "").onChange(async (v) => { this.updateActivityOverride(activity.name, "folder", v || void 0); await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
-      new import_obsidian.Setting(actContent).setName("Field Name").addText((t) => t.setPlaceholder(activity.field).setValue(override?.field || "").onChange(async (v) => { this.updateActivityOverride(activity.name, "field", v || void 0); await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
-      new import_obsidian.Setting(actContent).setName("Damage/Completion").addText((t) => t.setPlaceholder(String(activity.damagePerCompletion)).setValue(override?.damagePerCompletion !== void 0 ? String(override.damagePerCompletion) : "").onChange(async (v) => { const num = parseInt(v); this.updateActivityOverride(activity.name, "damagePerCompletion", isNaN(num) ? void 0 : num); await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
-      new import_obsidian.Setting(actContent).setName("Weekly Target").addText((t) => t.setPlaceholder(String(activity.weeklyTarget || 7)).setValue(override?.weeklyTarget !== void 0 ? String(override.weeklyTarget) : "").onChange(async (v) => { const num = parseInt(v); this.updateActivityOverride(activity.name, "weeklyTarget", isNaN(num) ? void 0 : num); const s = this.getWeeklyTargetStats(); const hp = calculateBossHP(s.total, this.plugin.settings.currentTier, this.plugin.settings, s.lowest); this.plugin.settings.bossMaxHP = hp; if (this.plugin.settings.bossCurrentHP > hp) this.plugin.settings.bossCurrentHP = hp; await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
-      new import_obsidian.Setting(actContent).addButton((btn) => btn.setButtonText("Reset").onClick(async () => { this.plugin.settings.activityOverrides = this.plugin.settings.activityOverrides.filter((o) => o.originalName !== activity.name); await this.plugin.saveSettings(); this.plugin.refreshRankView(); this.display(); }));
-    });
   }
 
   /**
@@ -5381,6 +5432,17 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
         new import_obsidian.Notice("Boss progression reset to Tier 1");
       })
     );
+    // Tartarus Freedom toggle (only shown after defeating Tartarus)
+    if (this.plugin.settings.tartarusFreedom) {
+      new import_obsidian.Setting(containerEl).setName("Keep punishment alive").setDesc("You conquered Tartarus and are free from punishment. Toggle this to re-enable the death threshold.").addToggle(
+        (t) => t.setValue(this.plugin.settings.tartarusFreedomKeepAlive).onChange(async (v) => {
+          this.plugin.settings.tartarusFreedomKeepAlive = v;
+          await this.plugin.saveSettings();
+          this.plugin.refreshRankView();
+        })
+      );
+    }
+
     new import_obsidian.Setting(containerEl).setName("Boss Editor").setDesc("Customize boss names, descriptions, lore, and images").setHeading();
     new import_obsidian.Setting(containerEl).setName("Reset all boss customizations").setDesc("Restore all bosses to their default values").addButton(
       (btn) => btn.setButtonText("Reset All").setWarning().onClick(async () => {
@@ -6576,20 +6638,46 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     const currentTier = this.settings.currentTier;
     const currentHP = this.settings.bossCurrentHP;
     const maxTier = this.settings.maxTier || 14;
-    if (currentHP <= 0 && currentTier < maxTier) {
+    if (currentHP <= 0 && currentTier <= maxTier) {
       const oldTier = this.settings.currentTier;
+      await this.awardBossReward(oldTier);
+
+      // Chaos (tier 13) defeated: double rewards for 1 month
+      if (oldTier === 13) {
+        const oneMonth = new Date(getEffectiveNow(this.settings));
+        oneMonth.setMonth(oneMonth.getMonth() + 1);
+        this.settings.chaosDoubleRewardsUntil = oneMonth.toISOString();
+        new import_obsidian.Notice("Chaos defeated! All rewards doubled for 1 month!");
+      }
+
+      // Tartarus (tier 14 / maxTier) defeated: freedom from punishment
+      if (oldTier === maxTier) {
+        this.settings.tartarusFreedom = true;
+        // Stay on max tier — there's no tier beyond
+        this.settings.bossCurrentHP = 0;
+        await this.saveSettings();
+        new import_obsidian.Notice("Tartarus conquered! You are free from punishment forever!");
+        return;
+      }
+
+      // Advance to next tier
       this.settings.currentTier = oldTier + 1;
       const stats = this.getWeeklyTargetStats();
       this.settings.bossMaxHP = calculateBossHP(stats.total, this.settings.currentTier, this.settings, stats.lowest);
       this.settings.bossCurrentHP = this.settings.bossMaxHP;
       const newRank = getRankNameForTier(this.settings.currentTier, this.settings);
       const newBoss = getCustomizedBossForTier(this.settings.currentTier, this.settings);
-      await this.awardBossReward(oldTier);
+
       await this.saveSettings();
       new import_obsidian.Notice(`\u{1F389} Boss Defeated! You are now ${newRank}! Face ${newBoss?.name}!`);
     }
   }
   async checkDeathThreshold() {
+    // Tartarus defeated + not keeping alive = free from punishment
+    if (this.settings.tartarusFreedom && !this.settings.tartarusFreedomKeepAlive) {
+      debugLog.log("THRESH", "Death threshold check skipped (Tartarus freedom active)");
+      return;
+    }
     if (this.settings.inTartarus) {
       await this.checkHadesWrath();
       debugLog.log("THRESH", "Death threshold check skipped (in Tartarus), checked Hades Wrath instead");
@@ -6740,7 +6828,8 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     if (!this.settings.bankedRewards) this.settings.bankedRewards = [];
     const rewardTier = getRewardTierForPlayerTier(this.settings.currentTier);
     const thresholds = REWARD_THRESHOLDS[rewardTier];
-    this.settings.activityRewardCounter += newCompletions;
+    const chaosMultiplier = isChaosDoubleActive(this.settings) ? 2 : 1;
+    this.settings.activityRewardCounter += newCompletions * chaosMultiplier;
     while (this.settings.activityRewardCounter >= thresholds.activityInterval) {
       this.settings.activityRewardCounter -= thresholds.activityInterval;
       const pendingReward = this.createPendingReward(rewardTier, "activity");
@@ -6787,7 +6876,8 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     if (!this.settings.pendingRewards) this.settings.pendingRewards = [];
     const rewardTier = getRewardTierForPlayerTier(this.settings.currentTier);
     const thresholds = REWARD_THRESHOLDS[rewardTier];
-    this.settings.streakRewardCounter++;
+    const chaosMultiplier = isChaosDoubleActive(this.settings) ? 2 : 1;
+    this.settings.streakRewardCounter += chaosMultiplier;
     if (this.settings.streakRewardCounter >= thresholds.streakInterval) {
       this.settings.streakRewardCounter = 0;
       const pendingReward = this.createPendingReward(rewardTier, "streak");
