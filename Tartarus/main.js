@@ -97,123 +97,146 @@ var debugLog = DebugLogger.getInstance();
 var BOSSES = [
   {
     tier: 1,
-    name: "Shadow of Apathy",
+    name: "The Sirens",
     rank: "Doomscroller",
-    description: "The weight of inertia that keeps you scrolling instead of starting",
-    lore: "Born from forgotten promises and unopened gym bags, the Shadow feeds on potential unrealized.",
-    hpFormula: "weeklyTarget \xD7 1.1"
+    description: "Enchanting voices that lure you toward distraction and inaction",
+    lore: "Their song promises comfort in scrolling, in one more episode, in starting tomorrow. Resist or be dashed upon the rocks.",
+    hpFormula: "weeklyTarget \xD7 1.1",
+    image: "Tartarus/assets/bosses/The Sirens.png"
   },
   {
     tier: 2,
-    name: "Siren's Call",
-    rank: "Armchair General",
-    description: "Distraction's sweet song that pulls focus from committed work",
-    lore: "She sings of easier paths, of just one more video, of starting tomorrow instead.",
-    hpFormula: "weeklyTarget \xD7 1.2"
+    name: "Harpy",
+    rank: "Apprentice",
+    description: "Snatchers of focus that steal your time before you notice",
+    lore: "Swift and relentless, the Harpies descend when your guard drops. They feast on wasted hours.",
+    hpFormula: "weeklyTarget \xD7 1.2",
+    image: "Tartarus/assets/bosses/Harpy.png"
   },
   {
     tier: 3,
-    name: "Hydra of Habits",
-    rank: "Apprentice",
-    description: "The complexity of managing multiple routines simultaneously",
-    lore: "Cut one head and two grow back. Each habit demands its own attention.",
-    hpFormula: "weeklyTarget \xD7 1.3"
+    name: "Minotaur",
+    rank: "Citizen",
+    description: "The beast at the center of the labyrinth of routine",
+    lore: "Lost in corridors of habit, the path forward is never clear. The Minotaur waits for those who stop moving.",
+    hpFormula: "weeklyTarget \xD7 1.4",
+    image: "Tartarus/assets/bosses/Minotaur.png"
   },
   {
     tier: 4,
-    name: "Minotaur's Maze",
-    rank: "Citizen",
-    description: "The confusion and routine that traps even dedicated practitioners",
-    lore: "Lost in corridors of habit, the path forward is never clear.",
-    hpFormula: "weeklyTarget \xD7 1.7"
+    name: "Cyclops",
+    rank: "Scholar",
+    description: "Brute strength of laziness — one-eyed, seeing only the easy path",
+    lore: "The Cyclops sees only what is directly before him. He cannot imagine a better future, and neither can you if you stand still.",
+    hpFormula: "weeklyTarget \xD7 1.6",
+    image: "Tartarus/assets/bosses/Cyclops.png"
   },
   {
     tier: 5,
-    name: "Medusa's Gaze",
-    rank: "Scholar",
+    name: "Medusa",
+    rank: "Samurai",
     description: "The paralysis that comes from overthinking or fear of failure",
-    lore: "One glance and you are frozen, unable to act, unable to move.",
-    hpFormula: "weeklyTarget \xD7 1.9"
+    lore: "One glance and you are frozen, unable to act, unable to move. Only those who act without hesitation survive her gaze.",
+    hpFormula: "weeklyTarget \xD7 1.8",
+    image: "Tartarus/assets/bosses/Medusa.png"
   },
   {
     tier: 6,
-    name: "Nemean Lion",
-    rank: "Samurai",
-    description: "Seemingly invulnerable obstacles that require persistent effort",
-    lore: "Its hide cannot be pierced by ordinary means. Only discipline cuts through.",
-    hpFormula: "weeklyTarget \xD7 2.1"
+    name: "Scylla",
+    rank: "Templar",
+    description: "The six-headed terror that attacks from every direction at once",
+    lore: "Each head is a different demand on your time. She strikes when you try to do everything and master nothing.",
+    hpFormula: "weeklyTarget \xD7 2.0",
+    image: "Tartarus/assets/bosses/Scylla.png"
   },
   {
     tier: 7,
-    name: "Chimera",
-    rank: "Templar",
-    description: "Multi-headed beast requiring balanced attention across all domains",
-    lore: "Lion, goat, and serpent - each head demands mastery of a different art.",
-    hpFormula: "weeklyTarget \xD7 2.3"
+    name: "Charybdis",
+    rank: "Stoic",
+    description: "The whirlpool that swallows entire weeks without warning",
+    lore: "Three times a day she drinks the sea and spews it back. So too does your time vanish into the void of purposelessness.",
+    hpFormula: "weeklyTarget \xD7 2.2",
+    image: "Tartarus/assets/bosses/Charybdis.png"
   },
   {
     tier: 8,
-    name: "Cerberus",
-    rank: "Stoic",
-    description: "Guardian of transformation testing if habits have become identity",
-    lore: "Three heads, three tests. Past the gate lies transformation.",
-    hpFormula: "weeklyTarget \xD7 2.5"
+    name: "Nemean Lion",
+    rank: "Olympian",
+    description: "Seemingly invulnerable obstacles that require persistent effort",
+    lore: "Its hide cannot be pierced by ordinary means. Only discipline, applied daily and without mercy, cuts through.",
+    hpFormula: "weeklyTarget \xD7 2.4",
+    image: "Tartarus/assets/bosses/Nemean Lion.png"
   },
   {
     tier: 9,
-    name: "Scylla & Charybdis",
-    rank: "Olympian",
-    description: "The impossible choice between competing priorities",
-    lore: "Between the rock and the whirlpool, both must somehow be honored.",
-    hpFormula: "weeklyTarget \xD7 2.7"
+    name: "Lernaean Hydra",
+    rank: "Sage",
+    description: "Cut one excuse and two grow back — the endless regeneration of weakness",
+    lore: "For every bad habit you slay, two more emerge. Only by cauterizing the root — with fire and discipline — can you prevail.",
+    hpFormula: "weeklyTarget \xD7 2.6",
+    image: "Tartarus/assets/bosses/Lernaean Hydra.png"
   },
   {
     tier: 10,
-    name: "The Furies",
-    rank: "Sage",
-    description: "Internal voices of guilt and shame attacking even the successful",
-    lore: "They whisper your failures, remind you of every skip, every weakness.",
-    hpFormula: "weeklyTarget \xD7 2.9"
+    name: "Cerberus",
+    rank: "Titan",
+    description: "Guardian of transformation — three heads testing body, mind, and spirit",
+    lore: "Three heads, three tests. Past the gate lies transformation. But Cerberus lets no one pass who has not earned it.",
+    hpFormula: "weeklyTarget \xD7 2.8",
+    image: "Tartarus/assets/bosses/Cerberus.png"
   },
   {
     tier: 11,
-    name: "Typhon",
-    rank: "Titan",
-    description: "The force of chaos threatening to undo all progress",
-    lore: "Father of all monsters, he seeks to return you to the beginning.",
-    hpFormula: "weeklyTarget \xD7 3.1"
+    name: "The Furies",
+    rank: "Archon",
+    description: "Internal voices of guilt and shame attacking even the successful",
+    lore: "They whisper your failures, remind you of every skip, every weakness. Even victory does not silence them.",
+    hpFormula: "weeklyTarget \xD7 3.0",
+    image: "Tartarus/assets/bosses/The Furies.png"
   },
   {
     tier: 12,
-    name: "Kronos",
-    rank: "Archon",
-    description: "Time itself as an enemy, testing sustained intensity",
-    lore: "The Titan who devours his children. Can you maintain as weeks become months?",
-    hpFormula: "weeklyTarget \xD7 3.3"
+    name: "Typhon",
+    rank: "Grand Master",
+    description: "Father of all monsters — the force of chaos threatening to undo all progress",
+    lore: "The mightiest of all monsters. He seeks to return you to the beginning, to erase everything you have built.",
+    hpFormula: "weeklyTarget \xD7 3.2",
+    image: "Tartarus/assets/bosses/Typhon.png"
   },
   {
     tier: 13,
-    name: "Chaos Primordial",
+    name: "Chaos",
+    rank: "Conqueror",
+    description: "The primordial void from which all monsters are born",
+    lore: "Before creation, before order, only Chaos. To master it is to master yourself. Defeating Chaos doubles all rewards for one month.",
+    hpFormula: "weeklyTarget \xD7 3.5",
+    image: "Tartarus/assets/bosses/Chaos.png"
+  },
+  {
+    tier: 14,
+    name: "Tartarus",
     rank: "Master of All",
-    description: "The ultimate test of unshakeable discipline",
-    lore: "Before creation, before order, only Chaos. To master it is to master yourself.",
-    hpFormula: "weeklyTarget \xD7 3.6"
+    description: "The prison itself — the final test of unshakeable discipline",
+    lore: "You have conquered every beast. Now you face the abyss that held them all. Defeat Tartarus and be free from punishment forever.",
+    hpFormula: "weeklyTarget \xD7 3.8",
+    image: "Tartarus/assets/bosses/Tartarus.png"
   }
 ];
 var RANK_TIER_COLORS = {
-  1: "#6B7280",
-  2: "#EF4444",
-  3: "#F59E0B",
-  4: "#10B981",
-  5: "#3B82F6",
-  6: "#8B5CF6",
-  7: "#EC4899",
-  8: "#F97316",
-  9: "#06B6D4",
-  10: "#A855F7",
-  11: "#DC2626",
-  12: "#7C3AED",
-  13: "#c9a227"   // Royal gold
+  1: "#6B7280",   // The Sirens — grey
+  2: "#EF4444",   // Harpy — red
+  3: "#F59E0B",   // Minotaur — amber
+  4: "#10B981",   // Cyclops — emerald
+  5: "#3B82F6",   // Medusa — blue
+  6: "#8B5CF6",   // Scylla — violet
+  7: "#EC4899",   // Charybdis — pink
+  8: "#F97316",   // Nemean Lion — orange
+  9: "#06B6D4",   // Lernaean Hydra — cyan
+  10: "#A855F7",  // Cerberus — purple
+  11: "#DC2626",  // The Furies — crimson
+  12: "#7C3AED",  // Typhon — indigo
+  13: "#c9a227",  // Chaos — royal gold
+  14: "#1a1410"   // Tartarus — abyss black
 };
 function getBossForTier(tier) {
   return BOSSES.find((b) => b.tier === tier) || null;
@@ -238,7 +261,7 @@ function getRankNameForTier(tier, settings) {
   return boss.rank;
 }
 function calculateBossHP(weeklyTarget, tier, settings, lowestWeeklyTarget) {
-  const maxTier = settings?.maxTier ?? 13;
+  const maxTier = settings?.maxTier ?? 14;
   if (settings?.useAutoDynamicHP && lowestWeeklyTarget !== void 0) {
     const tier1HP = lowestWeeklyTarget * 4;
     const maxTierHP = weeklyTarget * (settings.autoDynamicHPMaxMultiplier ?? 1.5);
@@ -309,8 +332,8 @@ var DEFAULT_SETTINGS = {
   // Boss customization defaults
   customBosses: [],
   customTartarusTasks: [],
-  tartarusImage: null,
-  tartarusBackgroundImage: null,
+  tartarusImage: "Tartarus/assets/bosses/Tartarus.png",
+  tartarusBackgroundImage: "Tartarus/assets/backgrounds/Tartarus-background.png",
   hadesWrathApplied: false,
   // HP threshold boss images
   bossStartOfDayHP: null,
@@ -326,7 +349,7 @@ var DEFAULT_SETTINGS = {
   // Tier 1 = weeklyTarget × 1.1 (manual mode)
   bossHPMultiplierMax: 2.4,
   // Max tier = weeklyTarget × 2.4 (manual mode)
-  maxTier: 13,
+  maxTier: 14,
   // 13 bosses, 1 tier each
   rankGraceHP: 20,
   rankGraceDays: 3,
@@ -1235,8 +1258,8 @@ var TartarusView = class extends import_obsidian.ItemView {
               z-index: 0;
               overflow: hidden;
               pointer-events: none;
-              -webkit-mask-image: linear-gradient(to bottom, white 0%, white 25%, transparent 100%);
-              mask-image: linear-gradient(to bottom, white 0%, white 25%, transparent 100%);
+              -webkit-mask-image: linear-gradient(to bottom, white 0%, white 47%, transparent 100%);
+              mask-image: linear-gradient(to bottom, white 0%, white 47%, transparent 100%);
             `
           }
         });
@@ -1249,7 +1272,7 @@ var TartarusView = class extends import_obsidian.ItemView {
               display: block;
               object-fit: cover;
               filter: contrast(1.1) brightness(0.7) sepia(0.15);
-              animation: fadeSlideIn 0.8s ease-out;
+              animation: fadeSlideIn 0.56s ease-out;
             `
           }
         }).onerror = function() { tartImgWrap.remove(); };
@@ -1575,8 +1598,8 @@ var TartarusView = class extends import_obsidian.ItemView {
               z-index: 0;
               overflow: hidden;
               pointer-events: none;
-              -webkit-mask-image: linear-gradient(to bottom, white 0%, white 25%, transparent 100%);
-              mask-image: linear-gradient(to bottom, white 0%, white 25%, transparent 100%);
+              -webkit-mask-image: linear-gradient(to bottom, white 0%, white 47%, transparent 100%);
+              mask-image: linear-gradient(to bottom, white 0%, white 47%, transparent 100%);
             `
           }
         });
@@ -1589,7 +1612,7 @@ var TartarusView = class extends import_obsidian.ItemView {
               display: block;
               object-fit: cover;
               filter: contrast(1.05) brightness(0.9);
-              animation: fadeSlideIn 0.8s ease-out;
+              animation: fadeSlideIn 0.56s ease-out;
             `
           }
         }).onerror = function() { bossImgWrap.remove(); };
@@ -1705,14 +1728,16 @@ var TartarusView = class extends import_obsidian.ItemView {
       }
     });
 
-    // HP bar track
+    // HP bar track — matches penance bar style
     const hpTrack = hpBarContainer.createDiv({
       attr: {
         style: `
           position: relative;
-          height: 10px;
-          background: rgba(146, 141, 133, 0.15);
+          height: 6px;
+          background: rgba(150, 123, 77, 0.15);
+          border-radius: 3px;
           overflow: hidden;
+          border: 1px solid rgba(150, 123, 77, 0.2);
         `
       }
     });
@@ -1726,20 +1751,22 @@ var TartarusView = class extends import_obsidian.ItemView {
             left: 0; top: 0; bottom: 0;
             width: ${startOfDayPercent}%;
             background: rgba(150, 123, 77, 0.35);
+            border-radius: 3px;
             transition: width 0.8s ease;
           `
         }
       });
     }
 
-    // Main HP fill - Leather tone
+    // Main HP fill — gradient matching penance bar style
     hpTrack.createDiv({
       attr: {
         style: `
           position: absolute;
           left: 0; top: 0; bottom: 0;
           width: ${hpFillPercent}%;
-          background: ${colors.leather};
+          background: linear-gradient(90deg, ${colors.danger}, ${colors.leather});
+          border-radius: 3px;
           transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         `
       }
@@ -4241,7 +4268,7 @@ var DeveloperDashboardView = class extends import_obsidian.ItemView {
     const rankName = getRankNameForTier(settings.currentTier, settings);
     const hpPercent = Math.round(settings.bossCurrentHP / settings.bossMaxHP * 100);
     const rows = [
-      ["Current Tier", `${settings.currentTier}/${settings.maxTier || 13}`],
+      ["Current Tier", `${settings.currentTier}/${settings.maxTier || 14}`],
       ["Boss Name", boss?.name || "Unknown"],
       ["Rank Title", rankName],
       ["HP State", `${settings.bossCurrentHP}/${settings.bossMaxHP} (${hpPercent}%)`],
@@ -4461,7 +4488,7 @@ var DeveloperDashboardView = class extends import_obsidian.ItemView {
     });
 
     // Add tier options — capped to actual number of bosses
-    const maxTierOpt = Math.min(settings.maxTier || 13, BOSSES.length);
+    const maxTierOpt = Math.min(settings.maxTier || 14, BOSSES.length);
     for (let t = 1; t <= maxTierOpt; t++) {
       const boss = getCustomizedBossForTier(t, settings);
       const opt = tierSelect.createEl("option", {
@@ -4822,7 +4849,7 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
         `
       }
     });
-    statusBar.createEl("span", { text: `Tier ${this.plugin.settings.currentTier}/${this.plugin.settings.maxTier || 13}` });
+    statusBar.createEl("span", { text: `Tier ${this.plugin.settings.currentTier}/${this.plugin.settings.maxTier || 14}` });
     statusBar.createEl("span", { text: `HP ${this.plugin.settings.bossCurrentHP}/${this.plugin.settings.bossMaxHP} (${hpPercent}%)` });
     statusBar.createEl("span", {
       text: this.plugin.settings.systemState === "paused" ? "PAUSED" : this.plugin.settings.inTartarus ? "TARTARUS" : "ACTIVE",
@@ -5293,8 +5320,8 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
         })
       );
     }
-    new import_obsidian.Setting(containerEl).setName("Maximum tier").setDesc("The highest tier in the progression system (default 13 = 13 bosses)").addText(
-      (t) => t.setPlaceholder("13").setValue(String(this.plugin.settings.maxTier)).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName("Maximum tier").setDesc("The highest tier in the progression system (default 14 = 14 bosses)").addText(
+      (t) => t.setPlaceholder("14").setValue(String(this.plugin.settings.maxTier)).onChange(async (v) => {
         const num = parseInt(v);
         if (!isNaN(num) && num >= 2 && num <= 100) {
           this.plugin.settings.maxTier = num;
@@ -5321,7 +5348,7 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
         this.plugin.settings.autoDynamicHPMaxMultiplier = 1.5;
         this.plugin.settings.bossHPMultiplierMin = 1.1;
         this.plugin.settings.bossHPMultiplierMax = 2.4;
-        this.plugin.settings.maxTier = 13;
+        this.plugin.settings.maxTier = 14;
         const stats2 = this.getWeeklyTargetStats();
         const newMaxHP = calculateBossHP(
           stats2.total,
@@ -6244,19 +6271,21 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
         bossHP: `${this.settings.bossCurrentHP}/${this.settings.bossMaxHP}`
       });
     }
-    // Migrate from 2-tier-per-boss system to 1-tier-per-boss
-    if (!this.settings._tierSystemMigrated && this.settings.currentTier > 13) {
-      // Old system: 26 tiers (2 per boss). New system: 13 tiers (1 per boss).
+    // Migrate from 2-tier-per-boss system to 1-tier-per-boss (14 bosses)
+    if (!this.settings._tierSystemMigrated && this.settings.currentTier > 14) {
+      // Old system: 26 tiers (2 per boss). New system: 14 tiers (1 per boss).
       this.settings.currentTier = Math.ceil(this.settings.currentTier / 2);
-      if (this.settings.maxTier === 14 || this.settings.maxTier === 26) {
-        this.settings.maxTier = 13;
+      if (this.settings.currentTier > 14) this.settings.currentTier = 14;
+      if (this.settings.maxTier === 26) {
+        this.settings.maxTier = 14;
       }
       // Clean up removed setting
       delete this.settings.tierAdvancedAt50Percent;
       // Migrate custom boss overrides to new tier numbers
       if (this.settings.customBosses?.length) {
         this.settings.customBosses.forEach(c => {
-          if (c.tier > 13) c.tier = Math.ceil(c.tier / 2);
+          if (c.tier > 14) c.tier = Math.ceil(c.tier / 2);
+          if (c.tier > 14) c.tier = 14;
           // Migrate ranks array to single rank
           if (c.ranks && !c.rank) {
             c.rank = c.ranks[0];
@@ -6270,10 +6299,10 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
       this.settings.bossMaxHP = calculateBossHP(stats.total, this.settings.currentTier, this.settings, stats.lowest);
       this.settings.bossCurrentHP = this.settings.bossMaxHP;
     }
-    // Also handle users who are on tier <= 13 but still have old maxTier
+    // Also handle users who are on tier <= 14 but still have old maxTier
     if (!this.settings._tierSystemMigrated) {
-      if (this.settings.maxTier === 14 || this.settings.maxTier === 26) {
-        this.settings.maxTier = 13;
+      if (this.settings.maxTier === 26) {
+        this.settings.maxTier = 14;
       }
       delete this.settings.tierAdvancedAt50Percent;
       // Migrate custom boss rank arrays to single rank
@@ -6546,7 +6575,7 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
   async checkBossDefeated() {
     const currentTier = this.settings.currentTier;
     const currentHP = this.settings.bossCurrentHP;
-    const maxTier = this.settings.maxTier || 13;
+    const maxTier = this.settings.maxTier || 14;
     if (currentHP <= 0 && currentTier < maxTier) {
       const oldTier = this.settings.currentTier;
       this.settings.currentTier = oldTier + 1;
