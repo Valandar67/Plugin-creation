@@ -1096,10 +1096,156 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
 
     this.renderNav(root, colors, { back: 2, next: 4 });
   }
-  // --- Screen 4: Olen Check (placeholder — Phase 3) ---
+  // --- Screen 4: Olen Check ---
   renderScreen4_OlenCheck(root, colors) {
-    root.createEl("h2", { text: "YOUR ACTIVITIES", attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` } });
-    root.createEl("p", { text: "Content coming in Phase 3...", attr: { style: `color: ${colors.textMuted}; text-align: center;` } });
+    root.createEl("h2", {
+      text: "YOUR ACTIVITIES",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
+    });
+
+    // Check if Olen is installed
+    const olenPlugin = this.app.plugins?.plugins?.["olen-plugin"];
+    const olenInstalled = !!olenPlugin;
+
+    if (olenInstalled) {
+      // --- Olen IS installed ---
+      const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px; text-align: center;`;
+
+      const card = root.createDiv({ attr: { style: cardStyle } });
+      card.createEl("div", {
+        text: "\u2694\uFE0F",
+        attr: { style: "font-size: 32px; margin-bottom: 12px;" }
+      });
+      card.createEl("div", {
+        text: "Olen Detected",
+        attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 8px;` }
+      });
+      card.createEl("div", {
+        text: "Olen is installed in your vault. You can import your existing activities directly into Tartarus \u2014 no need to set them up again.",
+        attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; max-width: 380px; margin: 0 auto;` }
+      });
+
+      // Import button
+      const btnWrap = root.createDiv({ attr: { style: "text-align: center; margin-top: 20px; margin-bottom: 8px;" } });
+      const importBtn = btnWrap.createEl("button", {
+        text: "IMPORT FROM OLEN",
+        attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 28px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+      });
+
+      // Status area for feedback
+      const statusEl = root.createDiv({ attr: { style: "text-align: center; margin-top: 12px; min-height: 20px;" } });
+
+      importBtn.addEventListener("click", async () => {
+        try {
+          const olenDataPath = ".obsidian/plugins/olen-plugin/data.json";
+          const olenRaw = await this.app.vault.adapter.read(olenDataPath);
+          const olenData = JSON.parse(olenRaw);
+          const olenActivities = olenData.activities || [];
+
+          if (olenActivities.length === 0) {
+            statusEl.empty();
+            statusEl.createEl("span", {
+              text: "No activities found in Olen. You can add them manually on the next screen.",
+              attr: { style: `color: ${colors.textMuted}; font-size: 13px;` }
+            });
+            return;
+          }
+
+          const existingNames = this.plugin.settings.customHabits.map(h => h.name.toLowerCase());
+          let imported = 0;
+          this._importedActivities = [];
+
+          for (const act of olenActivities) {
+            if (!act.name || !act.folder) continue;
+            if (existingNames.includes(act.name.toLowerCase())) continue;
+            const habit = {
+              id: crypto.randomUUID(),
+              name: act.name,
+              folder: act.folder,
+              field: act.property || act.name,
+              damagePerCompletion: act.damagePerCompletion || 1,
+              enabled: act.enabled !== false,
+              weeklyTarget: act.weeklyTarget || 7,
+              trackingMode: act.trackingMode || "daily"
+            };
+            this.plugin.settings.customHabits.push(habit);
+            this._importedActivities.push(habit);
+            imported++;
+          }
+
+          await this.plugin.saveSettings();
+
+          statusEl.empty();
+          if (imported > 0) {
+            statusEl.createEl("span", {
+              text: `\u2713 Imported ${imported} activit${imported === 1 ? "y" : "ies"} from Olen.`,
+              attr: { style: `color: ${colors.gold}; font-size: 13px; font-weight: bold;` }
+            });
+          } else {
+            statusEl.createEl("span", {
+              text: "All Olen activities are already imported.",
+              attr: { style: `color: ${colors.textMuted}; font-size: 13px;` }
+            });
+          }
+
+          importBtn.setText("IMPORTED \u2713");
+          importBtn.disabled = true;
+          importBtn.style.opacity = "0.6";
+          importBtn.style.cursor = "default";
+        } catch (e) {
+          statusEl.empty();
+          statusEl.createEl("span", {
+            text: "Could not read Olen data. You can add activities manually on the next screen.",
+            attr: { style: `color: ${colors.textMuted}; font-size: 13px;` }
+          });
+        }
+      });
+
+      root.createEl("p", {
+        text: "You can also skip this and configure activities manually on the next screen.",
+        attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 12px; font-style: italic; margin-top: 16px;` }
+      });
+
+    } else {
+      // --- Olen is NOT installed ---
+      root.createEl("p", {
+        text: "Tartarus works best with activities \u2014 real habits and tasks from your life that deal damage to bosses.",
+        attr: { style: `text-align: center; color: ${colors.text}; font-size: 14px; line-height: 1.7; margin-bottom: 20px;` }
+      });
+
+      const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px;`;
+      const card = root.createDiv({ attr: { style: cardStyle } });
+
+      card.createEl("div", {
+        text: "OLEN",
+        attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 2px; text-align: center; margin-bottom: 10px;` }
+      });
+      card.createEl("div", {
+        text: "Olen is a companion plugin \u2014 a mythological life-operating system that manages your habits, daily planning, and progress tracking. When paired with Tartarus, your Olen activities automatically become your weapons against each boss.",
+        attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 14px;` }
+      });
+
+      // GitHub link button
+      const linkWrap = card.createDiv({ attr: { style: "text-align: center;" } });
+      const linkBtn = linkWrap.createEl("a", {
+        text: "VIEW ON GITHUB \u2192",
+        attr: {
+          href: "",
+          style: `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: ${colors.gold}; text-decoration: none; border-bottom: 1px solid ${colors.goldBorder}; padding-bottom: 2px; cursor: pointer;`
+        }
+      });
+      linkBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        // GitHub link placeholder — update when Olen is published
+        new import_obsidian.Notice("Olen GitHub link coming soon.");
+      });
+
+      root.createEl("p", {
+        text: "Don\u2019t worry \u2014 you can set up activities manually on the next screen, no Olen required.",
+        attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 13px; line-height: 1.6; font-style: italic;` }
+      });
+    }
+
     this.renderNav(root, colors, { back: 3, next: 5 });
   }
   // --- Screen 5: Activities Setup (placeholder — Phase 3) ---
