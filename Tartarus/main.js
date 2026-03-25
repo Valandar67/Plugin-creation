@@ -25,6 +25,7 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var VIEW_TYPE_RANK = "tartarus-view";
+var VIEW_TYPE_WIZARD = "tartarus-wizard";
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 var DebugLogger = class _DebugLogger {
   constructor() {
@@ -456,6 +457,7 @@ var DEFAULT_SETTINGS = {
   // Dashboard background image (9:16 aspect ratio, vignette auto-applied)
   dashboardBgImage: "",
   // Theme settings
+  wizardCompleted: false,
   activeTheme: "auto",
   userPrimaryColor: "#613134",
   customTheme: {
@@ -901,6 +903,273 @@ function getEffectiveActivities(settings) {
     };
   });
 }
+// ===== Onboarding Wizard =====
+var TartarusWizardView = class extends import_obsidian.ItemView {
+  constructor(leaf, plugin) {
+    super(leaf);
+    this.plugin = plugin;
+    this.currentScreen = 0;
+    this.TOTAL_SCREENS = 7;
+    this._importedActivities = [];
+  }
+  getViewType() {
+    return VIEW_TYPE_WIZARD;
+  }
+  getDisplayText() {
+    return "Welcome to Tartarus";
+  }
+  getIcon() {
+    return "sword";
+  }
+  async onOpen() {
+    this.renderScreen();
+  }
+  async onClose() {
+    this.contentEl.empty();
+  }
+  goto(n) {
+    this.currentScreen = n;
+    this.renderScreen();
+  }
+  renderScreen() {
+    this.contentEl.empty();
+    const colors = resolveThemeColors(this.plugin.settings);
+    const root = this.contentEl.createDiv({
+      attr: { style: `max-width: 520px; margin: 0 auto; padding: 40px 32px; font-family: Georgia, serif; color: ${colors.text};` }
+    });
+    this.renderProgressDots(root, colors);
+    switch (this.currentScreen) {
+      case 0: this.renderScreen0_Welcome(root, colors); break;
+      case 1: this.renderScreen1_Philosophy(root, colors); break;
+      case 2: this.renderScreen2_HowItWorks(root, colors); break;
+      case 3: this.renderScreen3_TheBosses(root, colors); break;
+      case 4: this.renderScreen4_OlenCheck(root, colors); break;
+      case 5: this.renderScreen5_Activities(root, colors); break;
+      case 6: this.renderScreen6_Launch(root, colors); break;
+    }
+  }
+  renderProgressDots(root, colors) {
+    const dotsRow = root.createDiv({
+      attr: { style: "display: flex; justify-content: center; gap: 10px; margin-bottom: 32px;" }
+    });
+    for (let i = 0; i < this.TOTAL_SCREENS; i++) {
+      let style = `width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s;`;
+      if (i < this.currentScreen) {
+        style += ` background: ${colors.textMuted};`;
+      } else if (i === this.currentScreen) {
+        style += ` background: ${colors.gold}; box-shadow: 0 0 8px ${colors.gold}; transform: scale(1.2);`;
+      } else {
+        style += ` background: ${colors.goldBorder}; opacity: 0.4;`;
+      }
+      dotsRow.createDiv({ attr: { style } });
+    }
+  }
+  renderNav(parent, colors, opts) {
+    const nav = parent.createDiv({
+      attr: { style: "display: flex; justify-content: space-between; margin-top: 32px;" }
+    });
+    const btnBase = `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 24px; cursor: pointer; border-radius: 4px;`;
+    if (opts.back !== undefined) {
+      const backBtn = nav.createEl("button", {
+        text: "\u2190 BACK",
+        attr: { style: `${btnBase} background: transparent; color: ${colors.textMuted}; border: 1px solid ${colors.goldBorder};` }
+      });
+      backBtn.addEventListener("click", () => this.goto(opts.back));
+    } else {
+      nav.createDiv();
+    }
+    if (opts.next !== undefined) {
+      const nextBtn = nav.createEl("button", {
+        text: opts.nextLabel || "NEXT \u2192",
+        attr: { style: `${btnBase} background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+      });
+      nextBtn.addEventListener("click", () => {
+        if (opts.onNext) opts.onNext();
+        this.goto(opts.next);
+      });
+    }
+  }
+  // --- Screen 0: Welcome ---
+  renderScreen0_Welcome(root, colors) {
+    root.createEl("h1", {
+      text: "WELCOME TO TARTARUS",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 28px; text-align: center; color: ${colors.gold}; letter-spacing: 3px; margin-bottom: 8px;` }
+    });
+    root.createEl("p", {
+      text: "A mythological game layered on your real life",
+      attr: { style: `text-align: center; font-style: italic; color: ${colors.textMuted}; margin-bottom: 28px; font-size: 14px;` }
+    });
+    root.createEl("p", {
+      text: "Tartarus turns your habits into a hero\u2019s journey. Every activity you complete is a strike against a mythological beast. Every day you show up, you grow stronger. Every day you don\u2019t \u2014 the abyss waits.",
+      attr: { style: `line-height: 1.7; color: ${colors.text}; font-size: 14px; text-align: center;` }
+    });
+    const btnWrap = root.createDiv({ attr: { style: "text-align: center; margin-top: 36px;" } });
+    const beginBtn = btnWrap.createEl("button", {
+      text: "BEGIN \u2192",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+    });
+    beginBtn.addEventListener("click", () => this.goto(1));
+  }
+  // --- Screen 1: Philosophy ---
+  renderScreen1_Philosophy(root, colors) {
+    root.createEl("h2", {
+      text: "WHY GAMIFY YOUR LIFE",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
+    });
+    const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 16px; margin-bottom: 14px;`;
+    const cardTitle = `font-family: "Times New Roman", serif; font-size: 14px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 6px;`;
+    const cardBody = `font-size: 13px; color: ${colors.text}; line-height: 1.6;`;
+
+    const cards = [
+      { title: "Life Unfolds in Chapters", body: "Limbo, Vision, Flow, Resistance \u2014 every chapter of your life follows this cycle. Tartarus gives you the structure to push through each phase." },
+      { title: "You Set the Pace", body: "Unlike a video game with fixed timers, you determine the pacing. Progress in your real life, and the game progresses with you." },
+      { title: "The Edge of the Unknown", body: "Too easy and you get bored. Too hard and you get anxious. Tartarus keeps you at the edge \u2014 where growth happens." },
+      { title: "Engaging, Not Addicting", body: "No daily rewards that decay. No psychological tricks. Just a system that makes showing up feel meaningful \u2014 through novelty, progression, and compelling challenge." }
+    ];
+    cards.forEach(c => {
+      const card = root.createDiv({ attr: { style: cardStyle } });
+      card.createEl("div", { text: c.title, attr: { style: cardTitle } });
+      card.createEl("div", { text: c.body, attr: { style: cardBody } });
+    });
+    this.renderNav(root, colors, { back: 0, next: 2 });
+  }
+  // --- Screen 2: How It Works ---
+  renderScreen2_HowItWorks(root, colors) {
+    root.createEl("h2", {
+      text: "HOW THE GAME WORKS",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
+    });
+    const sectionStyle = `margin-bottom: 22px; text-align: center;`;
+    const iconStyle = `font-size: 28px; margin-bottom: 8px;`;
+    const titleStyle = `font-family: "Times New Roman", serif; font-size: 15px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 6px;`;
+    const descStyle = `font-size: 13px; color: ${colors.text}; line-height: 1.6; max-width: 400px; margin: 0 auto;`;
+
+    const sections = [
+      { icon: "\u2694\uFE0F", title: "Activities Deal Damage", desc: "Configure your habits and activities. Every time you complete one, it deals damage to the current boss. Your daily life IS the gameplay." },
+      { icon: "\uD83C\uDFDB\uFE0F", title: "Defeat Bosses, Rise Through Tiers", desc: "14 mythological bosses stand between you and mastery. Defeat one, advance to the next tier, and earn rewards along the way." },
+      { icon: "\u26D3\uFE0F", title: "Fall Behind, Enter Tartarus", desc: "Miss too many days and you enter the underworld \u2014 a penance system that challenges you to claw your way back. But conquer the final boss, and you\u2019re free forever." }
+    ];
+    sections.forEach(s => {
+      const sec = root.createDiv({ attr: { style: sectionStyle } });
+      sec.createEl("div", { text: s.icon, attr: { style: iconStyle } });
+      sec.createEl("div", { text: s.title, attr: { style: titleStyle } });
+      sec.createEl("div", { text: s.desc, attr: { style: descStyle } });
+    });
+    this.renderNav(root, colors, { back: 1, next: 3 });
+  }
+  // --- Screen 3: The Bosses ---
+  renderScreen3_TheBosses(root, colors) {
+    root.createEl("h2", {
+      text: "YOUR ADVERSARIES",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
+    });
+    const listWrap = root.createDiv({
+      attr: { style: `max-height: 340px; overflow-y: auto; border: 1px solid ${colors.goldBorder}; border-radius: 6px; margin-bottom: 16px;` }
+    });
+    BOSSES.forEach(boss => {
+      const tierColor = RANK_TIER_COLORS[boss.tier] || colors.textMuted;
+      const row = listWrap.createDiv({
+        attr: { style: `display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid ${colors.goldBorder}22;` }
+      });
+      row.createEl("span", {
+        text: `${boss.tier}`,
+        attr: { style: `font-family: "Times New Roman", serif; color: ${tierColor}; font-size: 14px; min-width: 28px; font-weight: bold;` }
+      });
+      row.createEl("span", {
+        text: boss.name,
+        attr: { style: `color: ${colors.text}; font-size: 14px; flex: 1;` }
+      });
+      row.createEl("span", {
+        text: boss.rank,
+        attr: { style: `color: ${colors.textMuted}; font-size: 12px; font-style: italic;` }
+      });
+    });
+
+    // Special callouts
+    const calloutStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 12px; margin-bottom: 10px; font-size: 13px; line-height: 1.5;`;
+    const c1 = root.createDiv({ attr: { style: calloutStyle } });
+    c1.createEl("span", { text: "Boss 13 \u2014 Chaos: ", attr: { style: `color: ${colors.gold}; font-weight: bold;` } });
+    c1.createEl("span", { text: "Defeat Chaos and all rewards are doubled for one month.", attr: { style: `color: ${colors.text};` } });
+    const c2 = root.createDiv({ attr: { style: calloutStyle } });
+    c2.createEl("span", { text: "Boss 14 \u2014 Tartarus: ", attr: { style: `color: ${colors.gold}; font-weight: bold;` } });
+    c2.createEl("span", { text: "Defeat the prison itself and you\u2019re free from punishment forever.", attr: { style: `color: ${colors.text};` } });
+
+    this.renderNav(root, colors, { back: 2, next: 4 });
+  }
+  // --- Screen 4: Olen Check (placeholder — Phase 3) ---
+  renderScreen4_OlenCheck(root, colors) {
+    root.createEl("h2", { text: "YOUR ACTIVITIES", attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` } });
+    root.createEl("p", { text: "Content coming in Phase 3...", attr: { style: `color: ${colors.textMuted}; text-align: center;` } });
+    this.renderNav(root, colors, { back: 3, next: 5 });
+  }
+  // --- Screen 5: Activities Setup (placeholder — Phase 3) ---
+  renderScreen5_Activities(root, colors) {
+    root.createEl("h2", { text: "ARM YOUR ACTIVITIES", attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` } });
+    root.createEl("p", { text: "Content coming in Phase 3...", attr: { style: `color: ${colors.textMuted}; text-align: center;` } });
+    this.renderNav(root, colors, { back: 4, next: 6 });
+  }
+  // --- Screen 6: Launch ---
+  renderScreen6_Launch(root, colors) {
+    const hasActivities = this.plugin.settings.customHabits.length > 0;
+    const boss = getCustomizedBossForTier(1, this.plugin.settings);
+
+    root.createEl("h2", {
+      text: "THE JOURNEY BEGINS",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
+    });
+
+    if (hasActivities) {
+      root.createEl("p", {
+        text: `${this.plugin.settings.customHabits.length} activities armed. Your first boss awaits.`,
+        attr: { style: `text-align: center; color: ${colors.text}; font-size: 14px; margin-bottom: 16px;` }
+      });
+    } else {
+      root.createEl("p", {
+        text: "No activities configured yet \u2014 add them in Settings when you\u2019re ready.",
+        attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 14px; margin-bottom: 16px;` }
+      });
+    }
+
+    if (boss) {
+      const bossCard = root.createDiv({
+        attr: { style: `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 16px; text-align: center; margin-bottom: 20px;` }
+      });
+      bossCard.createEl("div", {
+        text: `Tier 1: ${boss.name}`,
+        attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 6px;` }
+      });
+      bossCard.createEl("div", {
+        text: boss.description,
+        attr: { style: `font-size: 13px; color: ${colors.textMuted}; font-style: italic;` }
+      });
+    }
+
+    root.createEl("p", {
+      text: "Every habit is a weapon. Every day is a battle. You determine the pace.",
+      attr: { style: `text-align: center; color: ${colors.text}; font-size: 14px; line-height: 1.7; margin-bottom: 28px;` }
+    });
+
+    const nav = root.createDiv({ attr: { style: "display: flex; justify-content: space-between; margin-top: 16px;" } });
+    const btnBase = `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 24px; cursor: pointer; border-radius: 4px;`;
+    const backBtn = nav.createEl("button", {
+      text: "\u2190 BACK",
+      attr: { style: `${btnBase} background: transparent; color: ${colors.textMuted}; border: 1px solid ${colors.goldBorder};` }
+    });
+    backBtn.addEventListener("click", () => this.goto(5));
+    const launchBtn = nav.createEl("button", {
+      text: "ENTER TARTARUS \u2192",
+      attr: { style: `${btnBase} background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold}; font-size: 13px; letter-spacing: 2px; padding: 14px 28px;` }
+    });
+    launchBtn.addEventListener("click", async () => {
+      this.plugin.settings.wizardCompleted = true;
+      await this.plugin.saveSettings();
+      new import_obsidian.Notice("Welcome to Tartarus.");
+      this.leaf.detach();
+      await this.plugin.activateView();
+    });
+  }
+};
+
 var TartarusView = class extends import_obsidian.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
@@ -6133,6 +6402,10 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
       (leaf) => new TartarusView(leaf, this)
     );
     this.registerView(
+      VIEW_TYPE_WIZARD,
+      (leaf) => new TartarusWizardView(leaf, this)
+    );
+    this.registerView(
       VIEW_TYPE_DEV_DASHBOARD,
       (leaf) => new DeveloperDashboardView(leaf, this)
     );
@@ -6243,6 +6516,11 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
       id: "open-dev-dashboard",
       name: "[DEV] Open Developer Dashboard",
       callback: () => this.activateDevDashboard()
+    });
+    this.addCommand({
+      id: "rerun-tartarus-wizard",
+      name: "Rerun setup wizard",
+      callback: () => this.activateWizard()
     });
     this.addSettingTab(new TartarusSettingTab(this.app, this));
   }
@@ -6434,6 +6712,11 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
         tasks
       }));
       debugLog.log("META", "Migrated flat customTartarusTasks to grouped format");
+    }
+    // Skip wizard for existing users who already have data
+    if (!this.settings.wizardCompleted && (this.settings.currentTier > 1 || this.settings.customHabits.length > 0)) {
+      this.settings.wizardCompleted = true;
+      debugLog.log("META", "Existing user detected — wizard marked complete");
     }
     await this.saveSettings();
   }
@@ -6773,6 +7056,10 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     await this.saveData(this.settings);
   }
   async activateView() {
+    if (!this.settings.wizardCompleted) {
+      await this.activateWizard();
+      return;
+    }
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(VIEW_TYPE_RANK)[0];
     if (!leaf) {
@@ -6782,6 +7069,14 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
       leaf = rightLeaf;
     }
     await workspace.revealLeaf(leaf);
+  }
+  async activateWizard() {
+    const { workspace } = this.app;
+    // Close any existing wizard views
+    workspace.getLeavesOfType(VIEW_TYPE_WIZARD).forEach(l => l.detach());
+    const leaf = workspace.getLeaf("tab");
+    await leaf.setViewState({ type: VIEW_TYPE_WIZARD, active: true });
+    workspace.revealLeaf(leaf);
   }
   refreshRankView() {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_RANK);
