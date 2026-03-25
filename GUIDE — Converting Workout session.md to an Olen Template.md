@@ -766,7 +766,7 @@ The workout template (`workout.tpl` / `Workout.js`) has been updated from v5.0 t
 - Buttons have `border-radius: 10px` with subtle gradients and box-shadows
 - Primary buttons: linear gradient (#9a8c7a → #7a6c5a) with glow shadow
 - Secondary buttons: translucent background (rgba 3%) with thin borders
-- Modals use glass background: `rgba(12,10,16,0.95)` with `backdrop-filter: blur(40px)`
+- Modals use glass background: `rgba(0,0,0,0.95)` with `backdrop-filter: blur(40px)`
 - Modal overlay: `backdrop-filter: blur(12px)` (up from 4px)
 - Week grid cells: rounded (8px), softer borders (6% opacity)
 - Set rows: rounded (10px), transparent backgrounds

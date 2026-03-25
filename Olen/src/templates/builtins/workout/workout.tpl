@@ -84,14 +84,14 @@ if (!document.getElementById("olen-tpl-workout-v6")) {
     .otw-container input[type="number"] { -moz-appearance: textfield; }
     @keyframes otw-breathe { 0%, 100% { box-shadow: inset 0 0 16px rgba(154,140,122,0.02); } 50% { box-shadow: inset 0 0 24px rgba(154,140,122,0.04); } }
     @keyframes otw-pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-    .otw-card { background: rgba(12,10,16,0.6); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); border: 1px solid rgba(154,140,122,0.08); padding: 16px; position: relative; margin-bottom: 12px; border-radius: 16px; }
+    .otw-card { background: rgba(0,0,0,0.6); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); border: 1px solid rgba(154,140,122,0.08); padding: 16px; position: relative; margin-bottom: 12px; border-radius: 16px; }
     .otw-card-breathe { animation: otw-breathe 6s ease-in-out infinite; }
     .otw-header { text-align: center; padding: 16px; }
     .otw-title { margin: 0; color: #9a8c7a; font-size: 18px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; }
     .otw-progress-label { color: #4d473e; font-size: 11px; margin-top: 6px; }
     .otw-section-label { color: #4d473e; font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; text-align: center; margin: 16px 0 8px; }
     .otw-week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-    .otw-week-day { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 3px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.06); border-radius: 8px; }
+    .otw-week-day { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 3px; background: rgba(0,0,0,0.4); border: 1px solid rgba(154,140,122,0.06); border-radius: 8px; }
     .otw-week-day.today { border-color: rgba(154,140,122,0.2); }
     .otw-week-day .otw-day-label { font-size: 8px; color: #4d473e; letter-spacing: 1px; text-transform: uppercase; }
     .otw-week-day .otw-day-num { font-size: 12px; font-weight: 600; color: #4d473e; }
@@ -110,12 +110,12 @@ if (!document.getElementById("olen-tpl-workout-v6")) {
     .otw-btn-dashed:active { border-color: rgba(154,140,122,0.3); color: #9a8c7a; }
     .otw-nav-row { display: flex; gap: 10px; margin-top: 20px; }
     .otw-nav-row .otw-btn { flex: 1; text-align: center; }
-    .otw-set-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.06); margin-bottom: 4px; border-radius: 10px; }
+    .otw-set-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(154,140,122,0.06); margin-bottom: 4px; border-radius: 10px; }
     .otw-set-row.completed { opacity: 0.5; }
     .otw-checkbox { width: 24px; height: 24px; border: 1px solid rgba(154,140,122,0.15); border-radius: 8px !important; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0a0a0a; font-weight: bold; transition: all 0.2s; flex-shrink: 0; }
     .otw-checkbox.checked { background: #7a9a7d; border-color: #7a9a7d; }
     .otw-input { padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid rgba(154,140,122,0.1); border-radius: 8px !important; color: #9a8c7a; text-align: center; font-size: 14px; font-weight: 600; width: 50px; -webkit-appearance: none; appearance: none; }
-    .otw-ctrl-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 8px !important; color: #9a8c7a; cursor: pointer; font-size: 15px; flex-shrink: 0; -webkit-appearance: none; appearance: none; }
+    .otw-ctrl-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 8px !important; color: #9a8c7a; cursor: pointer; font-size: 15px; flex-shrink: 0; -webkit-appearance: none; appearance: none; }
     .otw-ctrl-btn:active { background: rgba(154,140,122,0.2); }
     .otw-warmup-badge { font-size: 9px; color: #6a8a9a; padding: 2px 6px; background: rgba(106,138,154,0.1); border-radius: 6px; }
     .otw-strength-bar { height: 4px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; margin-top: 6px; }
@@ -124,16 +124,16 @@ if (!document.getElementById("olen-tpl-workout-v6")) {
     .otw-pr-box { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: rgba(168,152,96,0.06); border: 1px solid rgba(168,152,96,0.15); border-radius: 8px; margin-top: 8px; }
     .otw-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(0px); transition: background 0.4s ease, backdrop-filter 0.4s ease; }
     .otw-modal-overlay.visible { background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); }
-    .otw-modal-content { background: rgba(12,10,16,0.95); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); padding: 24px 18px; border: 1px solid rgba(154,140,122,0.1); border-radius: 18px; max-width: 500px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; gap: 14px; position: relative; opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; overflow-y: auto; }
+    .otw-modal-content { background: rgba(0,0,0,0.95); backdrop-filter: blur(40px) saturate(150%); -webkit-backdrop-filter: blur(40px) saturate(150%); padding: 24px 18px; border: 1px solid rgba(154,140,122,0.1); border-radius: 18px; max-width: 500px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; gap: 14px; position: relative; opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; overflow-y: auto; }
     .otw-modal-overlay.visible .otw-modal-content { opacity: 1; transform: translateY(0); }
-    .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: rgba(12,10,16,0.4); border-radius: 12px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; border: 1px solid rgba(154,140,122,0.06); }
+    .otw-feel-btn { display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: rgba(0,0,0,0.4); border-radius: 12px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; border: 1px solid rgba(154,140,122,0.06); }
     .otw-feel-btn:active { background: rgba(154,140,122,0.08); }
-    .otw-muscle-toggle { padding: 10px 16px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 10px !important; color: #9a8c7a; font-size: 12px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
+    .otw-muscle-toggle { padding: 10px 16px; background: rgba(0,0,0,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 10px !important; color: #9a8c7a; font-size: 12px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
     .otw-muscle-toggle.active { background: rgba(154,140,122,0.2) !important; border-color: rgba(154,140,122,0.3) !important; }
     .otw-muscle-toggle:active { transform: translateY(-1px); }
     .otw-subgroup-container { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; opacity: 0; padding: 0 12px; }
     .otw-subgroup-container.expanded { max-height: 200px; opacity: 1; padding: 12px; }
-    .otw-sub-toggle { padding: 7px 12px; background: rgba(12,10,16,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 8px !important; color: #6a5a4a; font-size: 11px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
+    .otw-sub-toggle { padding: 7px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(154,140,122,0.08); border-radius: 8px !important; color: #6a5a4a; font-size: 11px; cursor: pointer; transition: all 0.3s ease; -webkit-appearance: none; appearance: none; }
     .otw-sub-toggle.active { background: rgba(154,140,122,0.15); border-color: rgba(154,140,122,0.25); color: #9a8c7a; }
   `;
   document.head.appendChild(style);
@@ -1096,7 +1096,7 @@ function renderMuscleStrengthGrid(parent, groupStrength, muscleLevels) {
 
   for (const [group, data] of Object.entries(groupStrength)) {
     const row = document.createElement("div");
-    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(12,10,16,0.4);border:1px solid rgba(154,140,122,0.06);border-radius:10px;cursor:pointer;transition:border-color 0.15s;`;
+    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,0,0,0.4);border:1px solid rgba(154,140,122,0.06);border-radius:10px;cursor:pointer;transition:border-color 0.15s;`;
     row.addEventListener("mouseenter", () => { row.style.borderColor = "rgba(154,140,122,0.18)"; });
     row.addEventListener("mouseleave", () => { row.style.borderColor = "rgba(154,140,122,0.06)"; });
 
@@ -1171,7 +1171,7 @@ function showMuscleGroupPopup(group, groupData, muscleLevels) {
         const rLabel = REGION_LABELS[region] || region;
 
         const rRow = document.createElement("div");
-        rRow.style.cssText = `display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(12,10,16,0.4);border:1px solid rgba(154,140,122,0.06);border-radius:8px;`;
+        rRow.style.cssText = `display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:4px;background:rgba(0,0,0,0.4);border:1px solid rgba(154,140,122,0.06);border-radius:8px;`;
 
         const rName = document.createElement("div");
         rName.style.cssText = `min-width:80px;font-size:10px;color:${THEME.colorMuted};letter-spacing:1px;`;
