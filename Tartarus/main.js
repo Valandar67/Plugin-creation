@@ -446,6 +446,11 @@ var DEFAULT_SETTINGS = {
   claimedRewards: [],
   bankedRewards: [],
   lastRewardCheck: null,
+  // Token-based activity rewards
+  rewardTokens: 0,
+  rewardCategories: [],
+  // Array of { id, name, tokenCost, color, rewards: [{ id, name, emoji, imagePath }] }
+  purchasedRewards: [],
   // Chaos boss bonus (tier 13): double rewards for 1 month
   chaosDoubleRewardsUntil: null,
   // Tartarus boss bonus (tier 14): free from punishment
@@ -899,7 +904,8 @@ function getEffectiveActivities(settings) {
       damagePerCompletion: override.damagePerCompletion ?? activity.damagePerCompletion,
       weeklyTarget: override.weeklyTarget ?? activity.weeklyTarget,
       trackingMode: override.trackingMode ?? activity.trackingMode,
-      damagePerWeek: override.damagePerWeek ?? activity.damagePerWeek
+      damagePerWeek: override.damagePerWeek ?? activity.damagePerWeek,
+      tokensPerCompletion: override.tokensPerCompletion ?? activity.tokensPerCompletion ?? 1
     };
   });
 }
@@ -2473,14 +2479,15 @@ var TartarusView = class extends import_obsidian.ItemView {
       });
     }
 
-    const activityRemaining = rewardProgress.activityThreshold - rewardProgress.activityProgress;
+    // Token balance display
     rewardSection.createEl("div", {
-      text: `Next activity reward: ${activityRemaining} more completion${activityRemaining !== 1 ? "s" : ""}`,
+      text: `\u{1FA99} ${settings.rewardTokens || 0} reward tokens`,
       attr: {
         style: `
           font-family: "Georgia", serif;
-          font-size: 12px;
-          color: ${colors.textMuted};
+          font-size: 13px;
+          font-weight: 600;
+          color: ${colors.gold};
           margin-bottom: 4px;
         `
       }
@@ -2874,14 +2881,16 @@ var TartarusView = class extends import_obsidian.ItemView {
       }
     };
 
+    // Token box instead of activity reward box
     createRewardBox(container, {
-      title: 'Activity',
-      current: rewardProgress.activityProgress,
-      total: rewardProgress.activityThreshold,
-      remaining: activityRemaining,
-      isClaimable: activityClaimable,
+      title: 'Tokens',
+      current: settings.rewardTokens || 0,
+      total: undefined,
+      remaining: undefined,
+      isClaimable: false,
       type: 'activity',
-      poolOptions: actOptions
+      subtitle: `\u{1FA99} ${settings.rewardTokens || 0}`,
+      poolOptions: []
     });
 
     createRewardBox(container, {
@@ -4206,41 +4215,24 @@ var BossRewardModal = class extends import_obsidian.Modal {
   }
 };
 
-var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
-  constructor(app, plugin) {
+// ===== Reward Category Settings Modal =====
+var RewardCategorySettingsModal = class extends import_obsidian.Modal {
+  constructor(app, plugin, onSave) {
     super(app);
     this.plugin = plugin;
+    this.onSave = onSave;
   }
-
   onOpen() {
     const { contentEl } = this;
     const settings = this.plugin.settings;
     contentEl.empty();
-
-    // Resolve theme colors
     const colors = resolveThemeColors(settings);
-
-    // Add modal styles
-    contentEl.style.maxWidth = "500px";
+    contentEl.style.maxWidth = "520px";
     contentEl.style.background = colors.bg;
     contentEl.style.padding = "20px";
 
-    const tierDisplayNames = {
-      micro: "Micro",
-      mini: "Mini",
-      standard: "Standard",
-      quality: "Quality",
-      premium: "Premium"
-    };
-    const typeDisplayNames = {
-      activity: "Activity",
-      boss: "Boss",
-      streak: "Streak"
-    };
-
-    // Header
     contentEl.createEl("div", {
-      text: "Reward Armory",
+      text: "Reward Categories",
       attr: {
         style: `
           font-family: "Times New Roman", serif;
@@ -4255,7 +4247,433 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
       }
     });
 
-    // Earned/Active Rewards Carousel
+    if (!settings.rewardCategories) settings.rewardCategories = [];
+
+    const categoriesContainer = contentEl.createDiv();
+
+    const renderCategories = () => {
+      categoriesContainer.empty();
+      settings.rewardCategories.forEach((cat, catIndex) => {
+        const catBox = categoriesContainer.createDiv({
+          attr: {
+            style: `
+              margin-bottom: 16px;
+              padding: 14px;
+              border: 2px solid ${cat.color || colors.gold};
+              background: ${colors.bgLight};
+              border-radius: 4px;
+            `
+          }
+        });
+
+        // Category header row
+        const catHeader = catBox.createDiv({
+          attr: { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;" }
+        });
+        catHeader.createEl("div", {
+          text: `${cat.name || "Unnamed"} - ${cat.tokenCost || 0} tokens`,
+          attr: {
+            style: `
+              font-family: "Times New Roman", serif;
+              font-size: 14px;
+              font-weight: 600;
+              letter-spacing: 1px;
+              color: ${cat.color || colors.gold};
+            `
+          }
+        });
+        const deleteBtn = catHeader.createEl("button", {
+          text: "Delete",
+          attr: {
+            style: `
+              padding: 4px 10px;
+              min-height: 30px;
+              background: transparent;
+              color: ${colors.textMuted};
+              border: 1px solid ${colors.textMuted};
+              cursor: pointer;
+              font-family: "Times New Roman", serif;
+              font-size: 10px;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+            `
+          }
+        });
+        deleteBtn.onclick = async () => {
+          settings.rewardCategories.splice(catIndex, 1);
+          await this.plugin.saveSettings();
+          renderCategories();
+        };
+
+        // Category fields
+        new import_obsidian.Setting(catBox).setName("Category name").addText(
+          (t) => t.setPlaceholder("e.g. Common, Legendary").setValue(cat.name || "").onChange(async (v) => {
+            cat.name = v;
+            await this.plugin.saveSettings();
+          })
+        );
+        new import_obsidian.Setting(catBox).setName("Token cost").addText(
+          (t) => t.setPlaceholder("10").setValue(String(cat.tokenCost || "")).onChange(async (v) => {
+            cat.tokenCost = Number(v) || 0;
+            await this.plugin.saveSettings();
+          })
+        );
+        const colorSetting = new import_obsidian.Setting(catBox).setName("Color");
+        const colorPickerInput = colorSetting.controlEl.createEl("input", {
+          attr: {
+            type: "color",
+            value: cat.color || "#c9a227",
+            style: "width: 40px; height: 32px; border: none; padding: 0; cursor: pointer; background: none;"
+          }
+        });
+        colorPickerInput.oninput = async () => {
+          cat.color = colorPickerInput.value;
+          await this.plugin.saveSettings();
+          renderCategories();
+        };
+
+        // Rewards in this category
+        catBox.createEl("div", {
+          text: "REWARDS",
+          attr: { style: "font-size: 0.7em; font-weight: 600; letter-spacing: 1.5px; margin: 12px 0 8px 0; color: " + colors.textMuted + ";" }
+        });
+
+        if (!cat.rewards) cat.rewards = [];
+        cat.rewards.forEach((reward, rwdIndex) => {
+          const rwdRow = catBox.createDiv({
+            attr: {
+              style: `
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                margin-bottom: 8px;
+                padding: 8px;
+                background: ${colors.bg};
+                border: 1px solid ${colors.goldBorder};
+                border-radius: 3px;
+              `
+            }
+          });
+          // Emoji/image preview
+          rwdRow.createEl("div", {
+            text: reward.emoji || "🎁",
+            attr: { style: "font-size: 20px; width: 28px; text-align: center; flex-shrink: 0;" }
+          });
+
+          const fieldsCol = rwdRow.createDiv({ attr: { style: "flex: 1; display: flex; flex-direction: column; gap: 4px;" } });
+
+          // Name input
+          const nameInput = fieldsCol.createEl("input", {
+            attr: {
+              type: "text",
+              placeholder: "Reward name",
+              value: reward.name || "",
+              style: `
+                background: transparent;
+                border: 1px solid ${colors.goldBorder};
+                color: ${colors.text};
+                padding: 4px 8px;
+                font-family: "Georgia", serif;
+                font-size: 12px;
+                width: 100%;
+              `
+            }
+          });
+          nameInput.oninput = async () => {
+            reward.name = nameInput.value;
+            await this.plugin.saveSettings();
+          };
+
+          // Emoji + image path row
+          const emojiImgRow = fieldsCol.createDiv({ attr: { style: "display: flex; gap: 6px;" } });
+          const emojiInput = emojiImgRow.createEl("input", {
+            attr: {
+              type: "text",
+              placeholder: "Emoji",
+              value: reward.emoji || "",
+              style: `
+                background: transparent;
+                border: 1px solid ${colors.goldBorder};
+                color: ${colors.text};
+                padding: 4px 6px;
+                font-size: 12px;
+                width: 50px;
+              `
+            }
+          });
+          emojiInput.oninput = async () => {
+            reward.emoji = emojiInput.value;
+            await this.plugin.saveSettings();
+          };
+
+          const imgInput = emojiImgRow.createEl("input", {
+            attr: {
+              type: "text",
+              placeholder: "Image path (optional)",
+              value: reward.imagePath || "",
+              style: `
+                background: transparent;
+                border: 1px solid ${colors.goldBorder};
+                color: ${colors.text};
+                padding: 4px 6px;
+                font-family: "Georgia", serif;
+                font-size: 11px;
+                flex: 1;
+              `
+            }
+          });
+          imgInput.oninput = async () => {
+            reward.imagePath = imgInput.value;
+            await this.plugin.saveSettings();
+          };
+
+          // Delete reward button
+          const rwdDelBtn = rwdRow.createEl("button", {
+            text: "\u00D7",
+            attr: {
+              style: `
+                padding: 2px 8px;
+                min-height: 28px;
+                background: transparent;
+                color: ${colors.textMuted};
+                border: 1px solid ${colors.textMuted};
+                cursor: pointer;
+                font-size: 14px;
+                flex-shrink: 0;
+              `
+            }
+          });
+          rwdDelBtn.onclick = async () => {
+            cat.rewards.splice(rwdIndex, 1);
+            await this.plugin.saveSettings();
+            renderCategories();
+          };
+        });
+
+        // Add reward button
+        const addRwdBtn = catBox.createEl("button", {
+          text: "+ Add Reward",
+          attr: {
+            style: `
+              padding: 6px 14px;
+              min-height: 34px;
+              background: transparent;
+              color: ${cat.color || colors.gold};
+              border: 1px dashed ${cat.color || colors.gold};
+              cursor: pointer;
+              font-family: "Times New Roman", serif;
+              font-size: 11px;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+              width: 100%;
+              margin-top: 4px;
+            `
+          }
+        });
+        addRwdBtn.onclick = async () => {
+          cat.rewards.push({
+            id: `rwd-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            name: "",
+            emoji: "🎁",
+            imagePath: ""
+          });
+          await this.plugin.saveSettings();
+          renderCategories();
+        };
+      });
+    };
+
+    renderCategories();
+
+    // Add new category button
+    const addCatBtn = contentEl.createEl("button", {
+      text: "+ Add New Category",
+      attr: {
+        style: `
+          padding: 10px 20px;
+          min-height: 44px;
+          background: transparent;
+          color: ${colors.gold};
+          border: 1px dashed ${colors.gold};
+          cursor: pointer;
+          font-family: "Times New Roman", serif;
+          font-size: 12px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          width: 100%;
+          margin-top: 8px;
+          margin-bottom: 16px;
+        `
+      }
+    });
+    addCatBtn.onclick = async () => {
+      settings.rewardCategories.push({
+        id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        name: "",
+        tokenCost: 10,
+        color: "#c9a227",
+        rewards: []
+      });
+      await this.plugin.saveSettings();
+      renderCategories();
+    };
+
+    // Close button
+    const closeBtn = contentEl.createEl("button", {
+      text: "Done",
+      attr: {
+        style: `
+          padding: 10px 24px;
+          min-height: 44px;
+          background: ${colors.gold};
+          color: ${colors.bg};
+          border: none;
+          cursor: pointer;
+          font-family: "Times New Roman", serif;
+          font-size: 12px;
+          font-weight: 600;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          width: 100%;
+        `
+      }
+    });
+    closeBtn.onclick = () => {
+      if (this.onSave) this.onSave();
+      this.close();
+    };
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// ===== Reward Log Modal (Token-based) =====
+var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    const settings = this.plugin.settings;
+    contentEl.empty();
+
+    const colors = resolveThemeColors(settings);
+    contentEl.style.maxWidth = "520px";
+    contentEl.style.background = colors.bg;
+    contentEl.style.padding = "20px";
+
+    const rewardTier = getRewardTierForPlayerTier(settings.currentTier);
+    const tierDisplayNames = {
+      micro: "Micro",
+      mini: "Mini",
+      standard: "Standard",
+      quality: "Quality",
+      premium: "Premium"
+    };
+
+    // ===== TOP BAR: Settings (left) | Title (center) | Tokens (right) =====
+    const topBar = contentEl.createDiv({
+      attr: {
+        style: `
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        `
+      }
+    });
+
+    // Settings button (upper left)
+    const settingsBtn = topBar.createEl("button", {
+      text: "\u2699",
+      attr: {
+        style: `
+          padding: 6px 10px;
+          min-height: 36px;
+          background: transparent;
+          color: ${colors.textMuted};
+          border: 1px solid ${colors.goldBorder};
+          cursor: pointer;
+          font-size: 18px;
+          line-height: 1;
+          transition: all 0.2s ease;
+        `
+      }
+    });
+    settingsBtn.onmouseenter = () => { settingsBtn.style.color = colors.gold; settingsBtn.style.borderColor = colors.gold; };
+    settingsBtn.onmouseleave = () => { settingsBtn.style.color = colors.textMuted; settingsBtn.style.borderColor = colors.goldBorder; };
+    settingsBtn.onclick = () => {
+      this.close();
+      new RewardCategorySettingsModal(this.app, this.plugin, () => {
+        new _RewardLogModal(this.app, this.plugin).open();
+      }).open();
+    };
+
+    // Title (center)
+    topBar.createEl("div", {
+      text: "Reward Armory",
+      attr: {
+        style: `
+          font-family: "Times New Roman", serif;
+          font-size: 18px;
+          font-weight: 600;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: ${colors.gold};
+        `
+      }
+    });
+
+    // Token count (upper right)
+    const tokenDisplay = topBar.createDiv({
+      attr: {
+        style: `
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: ${colors.bgLight};
+          border: 1px solid ${colors.gold};
+          border-radius: 3px;
+        `
+      }
+    });
+    tokenDisplay.createEl("span", {
+      text: "\u{1FA99}",
+      attr: { style: "font-size: 16px;" }
+    });
+    tokenDisplay.createEl("span", {
+      text: String(settings.rewardTokens || 0),
+      attr: {
+        style: `
+          font-family: "Georgia", serif;
+          font-size: 14px;
+          font-weight: 600;
+          color: ${colors.gold};
+        `
+      }
+    });
+
+    // ===== Current tier indicator =====
+    const bossInfo = getCustomizedBossForTier(settings.currentTier, settings);
+    contentEl.createEl("div", {
+      text: `Tier ${settings.currentTier} \u2022 ${tierDisplayNames[rewardTier]} \u2022 ${bossInfo?.rank || "Unranked"}`,
+      attr: {
+        style: `
+          font-family: "Georgia", serif;
+          font-size: 11px;
+          color: ${colors.textMuted};
+          text-align: center;
+          margin-bottom: 20px;
+          letter-spacing: 0.5px;
+        `
+      }
+    });
+
+    // ===== Streak/Boss pending rewards carousel (kept for compatibility) =====
     const earnedRewards = [
       ...settings.pendingRewards.map(r => ({ ...r, status: 'pending' })),
       ...settings.bankedRewards.map(r => ({ ...r, status: 'banked' })),
@@ -4264,7 +4682,7 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
 
     if (earnedRewards.length > 0) {
       contentEl.createEl("div", {
-        text: "Your Rewards",
+        text: "Streak & Boss Rewards",
         attr: {
           style: `
             font-family: "Times New Roman", serif;
@@ -4273,12 +4691,11 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
             letter-spacing: 1.5px;
             text-transform: uppercase;
             color: ${colors.goldMuted};
-            margin-bottom: 12px;
+            margin-bottom: 10px;
           `
         }
       });
 
-      // Carousel for earned rewards
       const carousel = contentEl.createDiv({
         attr: {
           style: `
@@ -4288,21 +4705,19 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
             padding: 8px 0 16px 0;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
           `
         }
       });
       carousel.style.scrollbarWidth = "none";
 
       earnedRewards.forEach((reward) => {
-        // Look up option: try stored selectedOptionId first, then fall back to pool lookup
         let option = null;
         if (reward.selectedOptionId) {
-          const rwdPools = getRewardPoolsForType(settings, reward.rewardType || "activity");
+          const rwdPools = getRewardPoolsForType(settings, reward.rewardType || "streak");
           const pool = rwdPools.find(p => p.tier === reward.rewardTier);
           option = pool?.options?.find(o => o.id === reward.selectedOptionId) || null;
         }
-        // For claimed rewards without pool match, reconstruct from stored data
         if (!option && reward.description) {
           option = { description: reward.description, emoji: reward.emoji || "", image: reward.image || "" };
         }
@@ -4329,7 +4744,6 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
         card.onmouseenter = () => { card.style.transform = "translateY(-4px)"; };
         card.onmouseleave = () => { card.style.transform = "translateY(0)"; };
 
-        // Image section
         const imageSection = card.createDiv({
           attr: {
             style: `
@@ -4344,52 +4758,30 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
 
         if (option?.image) {
           const img = imageSection.createEl("img", {
-            attr: {
-              src: option.image,
-              style: "max-width: 50px; max-height: 50px; object-fit: contain;"
-            }
+            attr: { src: option.image, style: "max-width: 50px; max-height: 50px; object-fit: contain;" }
           });
           img.onerror = () => {
             img.remove();
-            imageSection.createEl("div", { text: option?.emoji || "🎁", attr: { style: "font-size: 28px;" } });
+            imageSection.createEl("div", { text: option?.emoji || "\u{1F381}", attr: { style: "font-size: 28px;" } });
           };
         } else {
-          imageSection.createEl("div", { text: option?.emoji || "🎁", attr: { style: "font-size: 28px;" } });
+          imageSection.createEl("div", { text: option?.emoji || "\u{1F381}", attr: { style: "font-size: 28px;" } });
         }
 
-        // Text section
         const textSection = card.createDiv({
-          attr: {
-            style: `
-              padding: 8px;
-              border-top: 1px solid ${colors.greenBorder};
-            `
-          }
+          attr: { style: `padding: 8px; border-top: 1px solid ${colors.greenBorder};` }
         });
 
         const name = option?.description || `${tierDisplayNames[reward.rewardTier]} Reward`;
         textSection.createEl("div", {
           text: name.length > 16 ? name.substring(0, 14) + "..." : name,
-          attr: {
-            style: `
-              font-family: "Georgia", serif;
-              font-size: 10px;
-              color: ${colors.text};
-              margin-bottom: 4px;
-            `
-          }
+          attr: { style: `font-family: "Georgia", serif; font-size: 10px; color: ${colors.text}; margin-bottom: 4px;` }
         });
 
         const statusText = reward.status === 'pending' ? 'Claim' : reward.status === 'banked' ? 'Banked' : 'Active';
         textSection.createEl("div", {
           text: statusText,
-          attr: {
-            style: `
-              font-family: "Georgia", serif;
-              font-size: 9px;
-              color: ${statusColors[reward.status]};
-            `
-          }
+          attr: { style: `font-family: "Georgia", serif; font-size: 9px; color: ${statusColors[reward.status]};` }
         });
 
         card.onclick = () => {
@@ -4424,153 +4816,177 @@ var RewardLogModal = class _RewardLogModal extends import_obsidian.Modal {
       });
     }
 
-    // Available Rewards Grid — show from all 3 pools for current tier
-    const rewardProgress = this.plugin.getRewardProgress();
-    const allPoolTypes = ["activity", "streak", "boss"];
-    const allCurrentOptions = [];
-    allPoolTypes.forEach(pType => {
-      const pools = getRewardPoolsForType(settings, pType);
-      const p = pools.find(p2 => p2.tier === rewardProgress.rewardTier);
-      if (p?.options) p.options.forEach(o => allCurrentOptions.push({ ...o, _poolType: pType }));
-    });
+    // ===== TOKEN REWARDS - Categories and purchasable rewards =====
+    const categories = settings.rewardCategories || [];
+    if (categories.length > 0) {
+      contentEl.createEl("div", {
+        text: "Rewards",
+        attr: {
+          style: `
+            font-family: "Times New Roman", serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: ${colors.goldMuted};
+            margin-bottom: 12px;
+          `
+        }
+      });
 
-    contentEl.createEl("div", {
-      text: `Available ${tierDisplayNames[rewardProgress.rewardTier]} Rewards`,
-      attr: {
-        style: `
-          font-family: "Times New Roman", serif;
-          font-size: 12px;
-          font-weight: 500;
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-          color: ${colors.greenMuted};
-          margin-bottom: 12px;
-        `
-      }
-    });
+      const currentTokens = settings.rewardTokens || 0;
 
-    const activityRemaining = rewardProgress.activityThreshold - rewardProgress.activityProgress;
-    contentEl.createEl("div", {
-      text: `${activityRemaining} activities until next reward`,
-      attr: {
-        style: `
-          font-family: "Georgia", serif;
-          font-size: 11px;
-          font-style: italic;
-          color: ${colors.textMuted};
-          margin-bottom: 16px;
-        `
-      }
-    });
+      categories.forEach((cat) => {
+        if (!cat.rewards || cat.rewards.length === 0) return;
 
-    // Grid view for available rewards
-    const grid = contentEl.createDiv({
-      attr: {
-        style: `
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-          margin-bottom: 20px;
-        `
-      }
-    });
+        const canAfford = currentTokens >= (cat.tokenCost || 0);
 
-    if (allCurrentOptions.length > 0) {
-      allCurrentOptions.forEach((option) => {
-        const card = grid.createDiv({
+        // Category header
+        contentEl.createEl("div", {
+          text: `${cat.name || "Unnamed"} \u2014 ${cat.tokenCost || 0} \u{1FA99}`,
           attr: {
             style: `
-              background: ${colors.bgLight};
-              border: 1px solid ${colors.greenBorder};
-              filter: grayscale(0.6) brightness(0.8);
-              opacity: 0.7;
-              transition: all 0.2s ease;
-            `
-          }
-        });
-        card.onmouseenter = () => {
-          card.style.filter = "grayscale(0.3) brightness(0.9)";
-          card.style.opacity = "0.9";
-        };
-        card.onmouseleave = () => {
-          card.style.filter = "grayscale(0.6) brightness(0.8)";
-          card.style.opacity = "0.7";
-        };
-
-        // Image section
-        const imageSection = card.createDiv({
-          attr: {
-            style: `
-              height: 60px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              position: relative;
+              font-family: "Times New Roman", serif;
+              font-size: 12px;
+              font-weight: 600;
+              letter-spacing: 1px;
+              color: ${cat.color || colors.gold};
+              margin-bottom: 8px;
+              margin-top: 12px;
             `
           }
         });
 
-        if (option.image) {
-          const img = imageSection.createEl("img", {
+        // Grid of rewards in this category
+        const grid = contentEl.createDiv({
+          attr: {
+            style: `
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 10px;
+              margin-bottom: 12px;
+            `
+          }
+        });
+
+        cat.rewards.forEach((reward) => {
+          const card = grid.createDiv({
             attr: {
-              src: option.image,
-              style: "max-width: 40px; max-height: 40px; object-fit: contain;"
+              style: `
+                background: ${colors.bgLight};
+                border: 1px solid ${canAfford ? (cat.color || colors.gold) : colors.goldBorder};
+                cursor: ${canAfford ? "pointer" : "default"};
+                transition: all 0.2s ease;
+                ${!canAfford ? "filter: grayscale(0.6) brightness(0.6); opacity: 0.5;" : ""}
+              `
             }
           });
-          img.onerror = () => {
-            img.remove();
-            imageSection.createEl("div", { text: option.emoji || "🎁", attr: { style: "font-size: 24px;" } });
-          };
-        } else {
-          imageSection.createEl("div", { text: option.emoji || "🎁", attr: { style: "font-size: 24px;" } });
-        }
 
-        // Lock icon
-        imageSection.createEl("div", {
-          text: "🔒",
-          attr: {
-            style: `
-              position: absolute;
-              top: 4px;
-              right: 4px;
-              font-size: 10px;
-              opacity: 0.6;
-            `
+          if (canAfford) {
+            card.onmouseenter = () => {
+              card.style.transform = "translateY(-3px)";
+              card.style.borderColor = cat.color || colors.gold;
+              card.style.boxShadow = `0 4px 12px ${(cat.color || colors.gold)}33`;
+            };
+            card.onmouseleave = () => {
+              card.style.transform = "translateY(0)";
+              card.style.boxShadow = "none";
+            };
           }
-        });
 
-        // Text section
-        const textSection = card.createDiv({
-          attr: {
-            style: `
-              padding: 6px;
-              border-top: 1px solid ${colors.greenBorder};
-            `
+          // Image/emoji section
+          const imageSection = card.createDiv({
+            attr: {
+              style: `
+                height: 60px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+              `
+            }
+          });
+
+          if (reward.imagePath) {
+            const img = imageSection.createEl("img", {
+              attr: {
+                src: reward.imagePath,
+                style: "max-width: 40px; max-height: 40px; object-fit: contain;"
+              }
+            });
+            img.onerror = () => {
+              img.remove();
+              imageSection.createEl("div", { text: reward.emoji || "\u{1F381}", attr: { style: "font-size: 24px;" } });
+            };
+          } else {
+            imageSection.createEl("div", { text: reward.emoji || "\u{1F381}", attr: { style: "font-size: 24px;" } });
           }
-        });
 
-        textSection.createEl("div", {
-          text: option.description.length > 14 ? option.description.substring(0, 12) + "..." : option.description,
-          attr: {
-            style: `
-              font-family: "Georgia", serif;
-              font-size: 9px;
-              color: ${colors.textMuted};
-            `
+          if (!canAfford) {
+            imageSection.createEl("div", {
+              text: "\u{1F512}",
+              attr: {
+                style: `
+                  position: absolute;
+                  top: 4px;
+                  right: 4px;
+                  font-size: 10px;
+                  opacity: 0.6;
+                `
+              }
+            });
+          }
+
+          // Text section
+          const textSection = card.createDiv({
+            attr: {
+              style: `
+                padding: 6px;
+                border-top: 1px solid ${canAfford ? (cat.color || colors.goldBorder) : colors.goldBorder};
+              `
+            }
+          });
+
+          const displayName = reward.name || "Reward";
+          textSection.createEl("div", {
+            text: displayName.length > 14 ? displayName.substring(0, 12) + "..." : displayName,
+            attr: {
+              style: `
+                font-family: "Georgia", serif;
+                font-size: 9px;
+                color: ${canAfford ? colors.text : colors.textMuted};
+              `
+            }
+          });
+
+          // Purchase on click
+          if (canAfford) {
+            card.onclick = async () => {
+              settings.rewardTokens -= (cat.tokenCost || 0);
+              if (!settings.purchasedRewards) settings.purchasedRewards = [];
+              settings.purchasedRewards.push({
+                id: `purchased-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                rewardName: reward.name,
+                categoryName: cat.name,
+                emoji: reward.emoji,
+                imagePath: reward.imagePath,
+                tokenCost: cat.tokenCost,
+                purchasedAt: new Date().toISOString()
+              });
+              await this.plugin.saveSettings();
+              this.plugin.refreshRankView();
+              new import_obsidian.Notice(`\u{1F381} Purchased: ${reward.name || "Reward"} (-${cat.tokenCost} tokens)`);
+              this.onOpen();
+            };
           }
         });
       });
     }
 
     // Empty state
-    const rewardProgressCheck = this.plugin.getRewardProgress ? this.plugin.getRewardProgress() : null;
-    const hasAvailableRewards = rewardProgressCheck && ["activity", "streak", "boss"].some(type => {
-      const pools = getRewardPoolsForType(settings, type);
-      return pools.some(p => p.options && p.options.length > 0);
-    });
-    if (earnedRewards.length === 0 && !hasAvailableRewards) {
+    if (earnedRewards.length === 0 && categories.length === 0) {
       contentEl.createEl("div", {
-        text: "No rewards yet. Keep completing activities to earn rewards!",
+        text: "No rewards configured yet. Use the settings button to add reward categories!",
         attr: {
           style: `
             padding: 20px;
@@ -5572,6 +5988,7 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
               folder: act.folder,
               field: act.property || act.name,
               damagePerCompletion: act.damagePerCompletion || 1,
+              tokensPerCompletion: act.tokensPerCompletion || 1,
               enabled: act.enabled !== false,
               weeklyTarget: act.weeklyTarget || 7,
               trackingMode: act.trackingMode || "daily"
@@ -5596,6 +6013,7 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
           folder: "",
           field: "",
           damagePerCompletion: 1,
+          tokensPerCompletion: 1,
           enabled: true,
           weeklyTarget: 7
         });
@@ -5637,6 +6055,7 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
       new import_obsidian.Setting(box).setName("Folder").setDesc("Folder with YYYY-MM-DD notes").addText((t) => t.setPlaceholder("Personal Life/01 Workout").setValue(habit.folder).onChange(async (v) => { habit.folder = v; await this.plugin.saveSettings(); }));
       new import_obsidian.Setting(box).setName("Property").addText((t) => t.setPlaceholder("Workout").setValue(habit.field).onChange(async (v) => { habit.field = v; await this.plugin.saveSettings(); }));
       new import_obsidian.Setting(box).setName("Damage/completion").addText((t) => t.setValue(String(habit.damagePerCompletion)).onChange(async (v) => { habit.damagePerCompletion = Number(v) || 1; await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
+      new import_obsidian.Setting(box).setName("Tokens/completion").setDesc("Reward tokens earned per completion").addText((t) => t.setValue(String(habit.tokensPerCompletion || 1)).onChange(async (v) => { habit.tokensPerCompletion = Number(v) || 1; await this.plugin.saveSettings(); }));
       new import_obsidian.Setting(box).setName("Weekly target").addText((t) => t.setValue(String(habit.weeklyTarget || 7)).onChange(async (v) => { habit.weeklyTarget = Number(v) || 7; await this.plugin.saveSettings(); this.plugin.refreshRankView(); }));
       new import_obsidian.Setting(box).setName("Tracking mode").addDropdown(
         (d) => d.addOption("daily", "Daily").addOption("weekly", "Weekly").setValue(habit.trackingMode || "daily").onChange(async (v) => { habit.trackingMode = v; await this.plugin.saveSettings(); this.plugin.refreshRankView(); })
@@ -6108,10 +6527,27 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
    * Render the reward pools configuration section — 3 separate pools.
    */
   renderRewardPoolsSection(containerEl) {
-    new import_obsidian.Setting(containerEl).setName("Reward Pools").setDesc("Configure separate rewards for activities, streaks, and boss defeats").setHeading();
+    // Token-based activity rewards section
+    new import_obsidian.Setting(containerEl).setName("Activity Reward Tokens").setDesc("Activities now award tokens. Configure tokens per activity in the Habits section. Configure reward categories in the Reward Armory (settings gear icon).").setHeading();
+
+    new import_obsidian.Setting(containerEl).setName("Current token balance").setDesc(`You have ${this.plugin.settings.rewardTokens || 0} tokens`).addButton(
+      (btn) => btn.setButtonText("Open Reward Armory").setCta().onClick(() => {
+        new RewardLogModal(this.app, this.plugin).open();
+      })
+    );
+
+    new import_obsidian.Setting(containerEl).setName("Configure reward categories").setDesc("Set up reward categories with names, costs, colors, and rewards").addButton(
+      (btn) => btn.setButtonText("Edit Categories").onClick(() => {
+        new RewardCategorySettingsModal(this.app, this.plugin, () => {
+          this.display();
+        }).open();
+      })
+    );
+
+    // Streak and boss pools section
+    new import_obsidian.Setting(containerEl).setName("Streak & Boss Reward Pools").setDesc("Configure rewards for streaks and boss defeats (these still use the choose-your-reward system)").setHeading();
 
     const poolTypes = [
-      { key: "activityRewardPools", label: "Activity Rewards", icon: "\u{1F3AF}", desc: "Earned from activity milestones" },
       { key: "streakRewardPools", label: "Streak Rewards", icon: "\u{1F525}", desc: "Earned from consecutive weeks" },
       { key: "bossRewardPools", label: "Boss Rewards", icon: "\u2694\uFE0F", desc: "Earned from defeating bosses" }
     ];
@@ -6292,14 +6728,13 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
       });
     });
 
-    new import_obsidian.Setting(containerEl).setName("Reset all reward pools").setDesc("Restore all pools to default placeholders").addButton(
-      (btn) => btn.setButtonText("Reset All Pools").setWarning().onClick(async () => {
-        this.plugin.settings.activityRewardPools = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.activityRewardPools));
+    new import_obsidian.Setting(containerEl).setName("Reset streak & boss pools").setDesc("Restore streak and boss pools to default placeholders").addButton(
+      (btn) => btn.setButtonText("Reset Pools").setWarning().onClick(async () => {
         this.plugin.settings.streakRewardPools = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.streakRewardPools));
         this.plugin.settings.bossRewardPools = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.bossRewardPools));
         await this.plugin.saveSettings();
         this.display();
-        new import_obsidian.Notice("All reward pools reset to defaults");
+        new import_obsidian.Notice("Streak and boss reward pools reset to defaults");
       })
     );
   }
@@ -6464,7 +6899,8 @@ var TartarusSettingTab = class extends import_obsidian.PluginSettingTab {
     else if (field === "weeklyTarget") override.weeklyTarget = value;
     else if (field === "trackingMode") override.trackingMode = value;
     else if (field === "damagePerWeek") override.damagePerWeek = value;
-    const hasCustomizations = override.name || override.folder || override.field || override.damagePerCompletion !== void 0 || override.weeklyTarget !== void 0 || override.trackingMode || override.damagePerWeek !== void 0;
+    else if (field === "tokensPerCompletion") override.tokensPerCompletion = value;
+    const hasCustomizations = override.name || override.folder || override.field || override.damagePerCompletion !== void 0 || override.weeklyTarget !== void 0 || override.trackingMode || override.damagePerWeek !== void 0 || override.tokensPerCompletion !== void 0;
     if (!hasCustomizations) {
       this.plugin.settings.activityOverrides = this.plugin.settings.activityOverrides.filter(
         (o) => o.originalName !== originalName
@@ -6717,6 +7153,9 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
         if (habit.damagePerCompletion === void 0) {
           habit.damagePerCompletion = 1;
         }
+        if (habit.tokensPerCompletion === void 0) {
+          habit.tokensPerCompletion = 1;
+        }
         if (habit.weeklyTarget === void 0) {
           habit.weeklyTarget = 7;
         }
@@ -6740,6 +7179,10 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     if (data.lastProcessedTotalHP !== void 0) {
       delete data.lastProcessedTotalHP;
     }
+    // Migration: ensure token reward fields exist
+    if (this.settings.rewardTokens === void 0) this.settings.rewardTokens = 0;
+    if (!this.settings.rewardCategories) this.settings.rewardCategories = [];
+    if (!this.settings.purchasedRewards) this.settings.purchasedRewards = [];
     if (!this.settings.lastCompletionCounts || Object.keys(this.settings.lastCompletionCounts).length === 0) {
       this.settings.lastCompletionCounts = {};
       const allActivities = [
@@ -6991,6 +7434,7 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     let totalNewDamage = 0;
     let totalNewCompletions = 0;
     let totalNewDiscipline = 0;
+    let totalNewTokens = 0;
     for (const activity of allActivities) {
       const activityKey = "_originalName" in activity ? activity._originalName : "id" in activity ? activity.id : activity.name;
       const disciplineKey = `${activityKey}_discipline`;
@@ -7027,6 +7471,9 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
           const disciplineDamage = newDiscipline * activity.damagePerCompletion * 2;
           totalNewDamage += regularDamage + disciplineDamage;
           totalNewCompletions += newCompletions;
+          // Calculate reward tokens for this activity
+          const activityTokens = activity.tokensPerCompletion || 1;
+          totalNewTokens += newCompletions * activityTokens;
         }
       } else if (newCompletions < 0) {
         this.settings.lastCompletionCounts[activityKey] = currentCount;
@@ -7049,7 +7496,7 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
         message += ` [${this.settings.consecutivePerfectWeeks}wk streak +${bonusPercent}%]`;
       }
       new import_obsidian.Notice(message);
-      await this.trackActivityReward(totalNewCompletions);
+      await this.trackActivityReward(totalNewCompletions, totalNewTokens);
     }
   }
   async dealDamage(damage) {
@@ -7263,28 +7710,18 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
    * Track activity completions for activity rewards.
    * Awards a reward when the threshold is reached based on current tier.
    */
-  async trackActivityReward(newCompletions) {
-    if (!this.settings.pendingRewards) this.settings.pendingRewards = [];
-    if (!this.settings.claimedRewards) this.settings.claimedRewards = [];
-    if (!this.settings.bankedRewards) this.settings.bankedRewards = [];
-    const rewardTier = getRewardTierForPlayerTier(this.settings.currentTier);
-    const thresholds = REWARD_THRESHOLDS[rewardTier];
+  async trackActivityReward(newCompletions, tokensEarned) {
+    if (typeof this.settings.rewardTokens !== "number") this.settings.rewardTokens = 0;
     const chaosMultiplier = isChaosDoubleActive(this.settings) ? 2 : 1;
-    this.settings.activityRewardCounter += newCompletions * chaosMultiplier;
-    while (this.settings.activityRewardCounter >= thresholds.activityInterval) {
-      this.settings.activityRewardCounter -= thresholds.activityInterval;
-      const pendingReward = this.createPendingReward(rewardTier, "activity");
-      this.settings.pendingRewards.push(pendingReward);
-      debugLog.log("DMG", "Activity reward earned!", { rewardTier, type: "activity" });
-      if (!this._rewardModalOpen) {
-        this._rewardModalOpen = true;
-        const modal = new RewardSelectionModal(this.app, this, pendingReward, () => {
-          this._rewardModalOpen = false;
-          this.refreshRankView();
-        });
-        modal.onClose = () => { this._rewardModalOpen = false; };
-        modal.open();
+    const finalTokens = Math.round(tokensEarned * chaosMultiplier);
+    if (finalTokens > 0) {
+      this.settings.rewardTokens += finalTokens;
+      debugLog.log("DMG", "Reward tokens earned!", { tokensEarned: finalTokens, total: this.settings.rewardTokens });
+      let tokenMsg = `\u{1FA99} +${finalTokens} reward token${finalTokens !== 1 ? "s" : ""} earned! (${this.settings.rewardTokens} total)`;
+      if (chaosMultiplier > 1) {
+        tokenMsg += ` [Chaos 2x]`;
       }
+      new import_obsidian.Notice(tokenMsg);
     }
   }
   /**
