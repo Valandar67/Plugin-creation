@@ -915,7 +915,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
     super(leaf);
     this.plugin = plugin;
     this.currentScreen = 0;
-    this.TOTAL_SCREENS = 7;
+    this.TOTAL_SCREENS = 5;
     this._importedActivities = [];
   }
   getViewType() {
@@ -949,9 +949,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
       case 1: this.renderScreen1_Philosophy(root, colors); break;
       case 2: this.renderScreen2_HowItWorks(root, colors); break;
       case 3: this.renderScreen3_TheBosses(root, colors); break;
-      case 4: this.renderScreen4_OlenCheck(root, colors); break;
-      case 5: this.renderScreen5_Activities(root, colors); break;
-      case 6: this.renderScreen6_Launch(root, colors); break;
+      case 4: this.renderScreen6_Launch(root, colors); break;
     }
   }
   renderProgressDots(root, colors) {
@@ -1119,9 +1117,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
     });
     const actBtn = actCard.createEl("button", { text: "CONFIGURE ACTIVITIES", attr: { style: configBtnStyle } });
     actBtn.addEventListener("click", () => {
-      this.leaf.detach();
-      this.app.setting.open();
-      this.app.setting.openTabById("tartarus-plugin");
+      new WizardActivitiesModal(this.app, this.plugin).open();
     });
 
     // --- Streaks section ---
@@ -1133,9 +1129,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
     });
     const streakBtn = streakCard.createEl("button", { text: "CONFIGURE STREAK REWARDS", attr: { style: configBtnStyle } });
     streakBtn.addEventListener("click", () => {
-      this.leaf.detach();
-      this.app.setting.open();
-      this.app.setting.openTabById("tartarus-plugin");
+      new WizardRewardsModal(this.app, this.plugin).open();
     });
 
     // --- Tartarus section ---
@@ -1147,7 +1141,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
     });
     const penBtn = tartCard.createEl("button", { text: "CONFIGURE PENANCE TASKS", attr: { style: configBtnStyle } });
     penBtn.addEventListener("click", () => {
-      new PenanceModal(this.app, this.plugin).open();
+      new WizardTartarusModal(this.app, this.plugin).open();
     });
 
     this.renderNav(root, colors, { back: 1, next: 3 });
@@ -1191,165 +1185,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
 
     this.renderNav(root, colors, { back: 2, next: 4 });
   }
-  // --- Screen 4: Olen Check ---
-  renderScreen4_OlenCheck(root, colors) {
-    root.createEl("h2", {
-      text: "YOUR ACTIVITIES",
-      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
-    });
-
-    // Check if Olen is installed
-    const olenPlugin = this.app.plugins?.plugins?.["olen-plugin"];
-    const olenInstalled = !!olenPlugin;
-
-    if (olenInstalled) {
-      // --- Olen IS installed ---
-      const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px; text-align: center;`;
-
-      const card = root.createDiv({ attr: { style: cardStyle } });
-      card.createEl("div", {
-        text: "\u2694\uFE0F",
-        attr: { style: "font-size: 32px; margin-bottom: 12px;" }
-      });
-      card.createEl("div", {
-        text: "Olen Detected",
-        attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 8px;` }
-      });
-      card.createEl("div", {
-        text: "Olen is installed in your vault. You can import your existing activities directly into Tartarus \u2014 no need to set them up again.",
-        attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; max-width: 380px; margin: 0 auto;` }
-      });
-
-      // Import button
-      const btnWrap = root.createDiv({ attr: { style: "text-align: center; margin-top: 20px; margin-bottom: 8px;" } });
-      const importBtn = btnWrap.createEl("button", {
-        text: "IMPORT FROM OLEN",
-        attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 28px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
-      });
-
-      // Status area for feedback
-      const statusEl = root.createDiv({ attr: { style: "text-align: center; margin-top: 12px; min-height: 20px;" } });
-
-      importBtn.addEventListener("click", async () => {
-        try {
-          const olenDataPath = ".obsidian/plugins/olen-plugin/data.json";
-          const olenRaw = await this.app.vault.adapter.read(olenDataPath);
-          const olenData = JSON.parse(olenRaw);
-          const olenActivities = olenData.activities || [];
-
-          if (olenActivities.length === 0) {
-            statusEl.empty();
-            statusEl.createEl("span", {
-              text: "No activities found in Olen. You can add them manually on the next screen.",
-              attr: { style: `color: ${colors.textMuted}; font-size: 13px;` }
-            });
-            return;
-          }
-
-          const existingNames = this.plugin.settings.customHabits.map(h => h.name.toLowerCase());
-          let imported = 0;
-          this._importedActivities = [];
-
-          for (const act of olenActivities) {
-            if (!act.name || !act.folder) continue;
-            if (existingNames.includes(act.name.toLowerCase())) continue;
-            const habit = {
-              id: crypto.randomUUID(),
-              name: act.name,
-              folder: act.folder,
-              field: act.property || act.name,
-              damagePerCompletion: act.damagePerCompletion || 1,
-              enabled: act.enabled !== false,
-              weeklyTarget: act.weeklyTarget || 7,
-              trackingMode: act.trackingMode || "daily"
-            };
-            this.plugin.settings.customHabits.push(habit);
-            this._importedActivities.push(habit);
-            imported++;
-          }
-
-          await this.plugin.saveSettings();
-
-          statusEl.empty();
-          if (imported > 0) {
-            statusEl.createEl("span", {
-              text: `\u2713 Imported ${imported} activit${imported === 1 ? "y" : "ies"} from Olen.`,
-              attr: { style: `color: ${colors.gold}; font-size: 13px; font-weight: bold;` }
-            });
-          } else {
-            statusEl.createEl("span", {
-              text: "All Olen activities are already imported.",
-              attr: { style: `color: ${colors.textMuted}; font-size: 13px;` }
-            });
-          }
-
-          importBtn.setText("IMPORTED \u2713");
-          importBtn.disabled = true;
-          importBtn.style.opacity = "0.6";
-          importBtn.style.cursor = "default";
-        } catch (e) {
-          statusEl.empty();
-          statusEl.createEl("span", {
-            text: "Could not read Olen data. You can add activities manually on the next screen.",
-            attr: { style: `color: ${colors.textMuted}; font-size: 13px;` }
-          });
-        }
-      });
-
-      root.createEl("p", {
-        text: "You can also skip this and configure activities manually on the next screen.",
-        attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 12px; font-style: italic; margin-top: 16px;` }
-      });
-
-    } else {
-      // --- Olen is NOT installed ---
-      root.createEl("p", {
-        text: "Tartarus works best with activities \u2014 real habits and tasks from your life that deal damage to bosses.",
-        attr: { style: `text-align: center; color: ${colors.text}; font-size: 14px; line-height: 1.7; margin-bottom: 20px;` }
-      });
-
-      const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px;`;
-      const card = root.createDiv({ attr: { style: cardStyle } });
-
-      card.createEl("div", {
-        text: "OLEN",
-        attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 2px; text-align: center; margin-bottom: 10px;` }
-      });
-      card.createEl("div", {
-        text: "Olen is a companion plugin \u2014 a mythological life-operating system that manages your habits, daily planning, and progress tracking. When paired with Tartarus, your Olen activities automatically become your weapons against each boss.",
-        attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 14px;` }
-      });
-
-      // GitHub link button
-      const linkWrap = card.createDiv({ attr: { style: "text-align: center;" } });
-      const linkBtn = linkWrap.createEl("a", {
-        text: "VIEW ON GITHUB \u2192",
-        attr: {
-          href: "",
-          style: `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: ${colors.gold}; text-decoration: none; border-bottom: 1px solid ${colors.goldBorder}; padding-bottom: 2px; cursor: pointer;`
-        }
-      });
-      linkBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        // GitHub link placeholder — update when Olen is published
-        new import_obsidian.Notice("Olen GitHub link coming soon.");
-      });
-
-      root.createEl("p", {
-        text: "Don\u2019t worry \u2014 you can set up activities manually on the next screen, no Olen required.",
-        attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 13px; line-height: 1.6; font-style: italic;` }
-      });
-    }
-
-    this.renderNav(root, colors, { back: 3, next: 5 });
-  }
-  // --- Screen 5: Activities Setup (placeholder — Phase 3) ---
-  renderScreen5_Activities(root, colors) {
-    root.createEl("h2", { text: "ARM YOUR ACTIVITIES", attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` } });
-    root.createEl("p", { text: "Content coming in Phase 3...", attr: { style: `color: ${colors.textMuted}; text-align: center;` } });
-    this.renderNav(root, colors, { back: 4, next: 6 });
-  }
-  // --- Screen 6: Launch ---
+  // --- Screen 4: Launch ---
   renderScreen6_Launch(root, colors) {
     const hasActivities = this.plugin.settings.customHabits.length > 0;
     const boss = getCustomizedBossForTier(1, this.plugin.settings);
@@ -1396,7 +1232,7 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
       text: "\u2190 BACK",
       attr: { style: `${btnBase} background: transparent; color: ${colors.textMuted}; border: 1px solid ${colors.goldBorder};` }
     });
-    backBtn.addEventListener("click", () => this.goto(5));
+    backBtn.addEventListener("click", () => this.goto(3));
     const launchBtn = nav.createEl("button", {
       text: "ENTER TARTARUS \u2192",
       attr: { style: `${btnBase} background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold}; font-size: 13px; letter-spacing: 2px; padding: 14px 28px;` }
@@ -3621,6 +3457,415 @@ var TartarusView = class extends import_obsidian.ItemView {
     });
   }
 };
+// ===== Wizard Configuration Modals =====
+var WizardActivitiesModal = class extends import_obsidian.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    const colors = resolveThemeColors(this.plugin.settings);
+    contentEl.style.cssText = `background: ${colors.bg}; color: ${colors.text}; max-width: 560px; padding: 0;`;
+    const wrap = contentEl.createDiv({ attr: { style: `padding: 24px 28px; max-height: 70vh; overflow-y: auto;` } });
+    wrap.createEl("h2", {
+      text: "YOUR ACTIVITIES",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 20px;` }
+    });
+
+    const olenPlugin = this.app.plugins?.plugins?.["olen-plugin"];
+    const olenInstalled = !!olenPlugin;
+
+    if (olenInstalled) {
+      const card = wrap.createDiv({ attr: { style: `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px; text-align: center;` } });
+      card.createEl("div", { text: "\u2694\uFE0F", attr: { style: "font-size: 32px; margin-bottom: 12px;" } });
+      card.createEl("div", { text: "Olen Detected", attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 8px;` } });
+      card.createEl("div", { text: "Olen is installed in your vault. You can import your existing activities directly into Tartarus \u2014 no need to set them up again.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; max-width: 380px; margin: 0 auto;` } });
+
+      const btnWrap = wrap.createDiv({ attr: { style: "text-align: center; margin-top: 20px; margin-bottom: 8px;" } });
+      const importBtn = btnWrap.createEl("button", {
+        text: "IMPORT FROM OLEN",
+        attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 28px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+      });
+      const statusEl = wrap.createDiv({ attr: { style: "text-align: center; margin-top: 12px; min-height: 20px;" } });
+
+      importBtn.addEventListener("click", async () => {
+        try {
+          const olenDataPath = ".obsidian/plugins/olen-plugin/data.json";
+          const olenRaw = await this.app.vault.adapter.read(olenDataPath);
+          const olenData = JSON.parse(olenRaw);
+          const olenActivities = olenData.activities || [];
+          if (olenActivities.length === 0) {
+            statusEl.empty();
+            statusEl.createEl("span", { text: "No activities found in Olen.", attr: { style: `color: ${colors.textMuted}; font-size: 13px;` } });
+            return;
+          }
+          const existingNames = this.plugin.settings.customHabits.map(h => h.name.toLowerCase());
+          let imported = 0;
+          for (const act of olenActivities) {
+            if (!act.name || !act.folder) continue;
+            if (existingNames.includes(act.name.toLowerCase())) continue;
+            this.plugin.settings.customHabits.push({
+              id: crypto.randomUUID(),
+              name: act.name,
+              folder: act.folder,
+              field: act.property || act.name,
+              damagePerCompletion: act.damagePerCompletion || 1,
+              tokensPerCompletion: act.tokensPerCompletion || 1,
+              enabled: act.enabled !== false,
+              weeklyTarget: act.weeklyTarget || 7,
+              trackingMode: act.trackingMode || "daily"
+            });
+            imported++;
+          }
+          await this.plugin.saveSettings();
+          statusEl.empty();
+          if (imported > 0) {
+            statusEl.createEl("span", { text: `\u2713 Imported ${imported} activit${imported === 1 ? "y" : "ies"} from Olen.`, attr: { style: `color: ${colors.gold}; font-size: 13px; font-weight: bold;` } });
+          } else {
+            statusEl.createEl("span", { text: "All Olen activities are already imported.", attr: { style: `color: ${colors.textMuted}; font-size: 13px;` } });
+          }
+          importBtn.setText("IMPORTED \u2713");
+          importBtn.disabled = true;
+          importBtn.style.opacity = "0.6";
+          importBtn.style.cursor = "default";
+          this.renderHabitsList(wrap, colors);
+        } catch (e) {
+          statusEl.empty();
+          statusEl.createEl("span", { text: "Could not read Olen data.", attr: { style: `color: ${colors.textMuted}; font-size: 13px;` } });
+        }
+      });
+    } else {
+      const card = wrap.createDiv({ attr: { style: `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px; text-align: center;` } });
+      card.createEl("div", { text: "OLEN", attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 2px; text-align: center; margin-bottom: 10px;` } });
+      card.createEl("div", { text: "Olen is a comprehensive life-management plugin for Obsidian that integrates habit tracking, dynamic daily scheduling, focused work sessions, and detailed progress analytics to help you build discipline and organize your personal growth.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 10px;` } });
+      card.createEl("div", { text: "Made by the same developer.", attr: { style: `font-size: 12px; color: ${colors.textMuted}; font-style: italic; text-align: center;` } });
+    }
+
+    // Custom habits section
+    this.renderHabitsList(wrap, colors);
+
+    // Close button
+    const closeWrap = wrap.createDiv({ attr: { style: "text-align: center; margin-top: 20px;" } });
+    const closeBtn = closeWrap.createEl("button", {
+      text: "DONE",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 32px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+    });
+    closeBtn.addEventListener("click", () => this.close());
+  }
+  renderHabitsList(wrap, colors) {
+    const listId = "wizard-habits-list";
+    let existingList = wrap.querySelector(`#${listId}`);
+    if (existingList) existingList.remove();
+
+    const listWrap = wrap.createDiv({ attr: { id: listId, style: "margin-top: 16px;" } });
+    listWrap.createEl("div", { text: "CUSTOM HABITS", attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; color: ${colors.textMuted}; margin-bottom: 10px;` } });
+
+    const addBtnWrap = listWrap.createDiv({ attr: { style: "text-align: center; margin-bottom: 12px;" } });
+    const addBtn = addBtnWrap.createEl("button", {
+      text: "+ ADD HABIT",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; padding: 8px 20px; cursor: pointer; border-radius: 4px; background: transparent; color: ${colors.gold}; border: 1px solid ${colors.goldBorder};` }
+    });
+    addBtn.addEventListener("click", async () => {
+      this.plugin.settings.customHabits.push({
+        id: crypto.randomUUID(),
+        name: "New habit",
+        folder: "",
+        field: "",
+        damagePerCompletion: 1,
+        tokensPerCompletion: 1,
+        enabled: true,
+        weeklyTarget: 7
+      });
+      await this.plugin.saveSettings();
+      this.renderHabitsList(wrap, colors);
+    });
+
+    const inputStyle = `width: 100%; padding: 6px 8px; border-radius: 4px; border: 1px solid ${colors.goldBorder}; background: ${colors.bg}; color: ${colors.text}; font-size: 12px; font-family: Georgia, serif; box-sizing: border-box;`;
+    const labelStyle = `font-size: 11px; color: ${colors.textMuted}; margin-bottom: 3px; letter-spacing: 0.5px;`;
+
+    this.plugin.settings.customHabits.forEach((habit, index) => {
+      const box = listWrap.createDiv({ attr: { style: `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 12px; margin-bottom: 8px;` } });
+
+      const headerRow = box.createDiv({ attr: { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;" } });
+      headerRow.createEl("span", { text: habit.name || "New habit", attr: { style: `font-family: "Times New Roman", serif; font-size: 13px; color: ${colors.gold}; letter-spacing: 0.5px;` } });
+      const delBtn = headerRow.createEl("button", {
+        text: "\u2715",
+        attr: { style: `background: transparent; border: none; color: ${colors.textMuted}; cursor: pointer; font-size: 14px; padding: 2px 6px;` }
+      });
+      delBtn.addEventListener("click", async () => {
+        this.plugin.settings.customHabits.splice(index, 1);
+        await this.plugin.saveSettings();
+        this.renderHabitsList(wrap, colors);
+      });
+
+      const grid = box.createDiv({ attr: { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" } });
+
+      const makeField = (label, value, onChange) => {
+        const cell = grid.createDiv();
+        cell.createEl("div", { text: label, attr: { style: labelStyle } });
+        const inp = cell.createEl("input", { attr: { type: "text", value: value || "", style: inputStyle } });
+        inp.addEventListener("change", async (e) => { await onChange(e.target.value); });
+      };
+
+      makeField("Name", habit.name, async (v) => { habit.name = v; await this.plugin.saveSettings(); headerRow.querySelector("span").textContent = v; });
+      makeField("Folder", habit.folder, async (v) => { habit.folder = v; await this.plugin.saveSettings(); });
+      makeField("Property", habit.field, async (v) => { habit.field = v; await this.plugin.saveSettings(); });
+      makeField("Damage/completion", String(habit.damagePerCompletion), async (v) => { habit.damagePerCompletion = Number(v) || 1; await this.plugin.saveSettings(); });
+      makeField("Tokens/completion", String(habit.tokensPerCompletion || 1), async (v) => { habit.tokensPerCompletion = Number(v) || 1; await this.plugin.saveSettings(); });
+      makeField("Weekly target", String(habit.weeklyTarget || 7), async (v) => { habit.weeklyTarget = Number(v) || 7; await this.plugin.saveSettings(); });
+    });
+
+    if (this.plugin.settings.customHabits.length === 0) {
+      listWrap.createEl("div", { text: "No habits configured yet.", attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 13px; font-style: italic; padding: 12px;` } });
+    }
+  }
+  onClose() { this.contentEl.empty(); }
+};
+
+var WizardRewardsModal = class extends import_obsidian.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    const colors = resolveThemeColors(this.plugin.settings);
+    contentEl.style.cssText = `background: ${colors.bg}; color: ${colors.text}; max-width: 560px; padding: 0;`;
+    const wrap = contentEl.createDiv({ attr: { style: `padding: 24px 28px; max-height: 70vh; overflow-y: auto;` } });
+    wrap.createEl("h2", {
+      text: "STREAK & BOSS REWARDS",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 20px;` }
+    });
+
+    wrap.createEl("p", {
+      text: "Configure the rewards you can earn from consecutive perfect weeks (streaks) and defeating bosses.",
+      attr: { style: `text-align: center; font-size: 13px; color: ${colors.text}; line-height: 1.6; margin-bottom: 20px;` }
+    });
+
+    const inputStyle = `width: 100%; padding: 6px 8px; border-radius: 4px; border: 1px solid ${colors.goldBorder}; background: ${colors.bg}; color: ${colors.text}; font-size: 12px; font-family: Georgia, serif; box-sizing: border-box;`;
+    const labelStyle = `font-size: 11px; color: ${colors.textMuted}; margin-bottom: 3px; letter-spacing: 0.5px;`;
+
+    const tierDisplayNames = {
+      micro: "Micro (Tiers 1-2)",
+      mini: "Mini (Tiers 3-5)",
+      standard: "Standard (Tiers 6-8)",
+      quality: "Quality (Tiers 9-11)",
+      premium: "Premium (Tiers 12-13)"
+    };
+    const tiers = ["micro", "mini", "standard", "quality", "premium"];
+    const poolTypes = [
+      { key: "streakRewardPools", label: "Streak Rewards", icon: "\uD83D\uDD25" },
+      { key: "bossRewardPools", label: "Boss Rewards", icon: "\u2694\uFE0F" }
+    ];
+
+    poolTypes.forEach(({ key, label, icon }) => {
+      const section = wrap.createDiv({ attr: { style: `margin-bottom: 16px; border: 1px solid ${colors.goldBorder}; border-radius: 6px; overflow: hidden;` } });
+      const sectionHeader = section.createDiv({ attr: { style: `display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: ${colors.bgLight}; cursor: pointer;` } });
+      const sectionArrow = sectionHeader.createEl("span", { text: "\u25B6", attr: { style: "font-size: 10px; width: 12px;" } });
+      sectionHeader.createEl("span", { text: `${icon}  ${label}`, attr: { style: `font-family: "Times New Roman", serif; font-size: 13px; color: ${colors.gold}; letter-spacing: 1px;` } });
+      const sectionBody = section.createDiv({ attr: { style: "display: none; padding: 10px 14px;" } });
+      sectionHeader.addEventListener("click", () => {
+        const isOpen = sectionBody.style.display !== "none";
+        sectionBody.style.display = isOpen ? "none" : "block";
+        sectionArrow.textContent = isOpen ? "\u25B6" : "\u25BC";
+      });
+
+      tiers.forEach((tier) => {
+        const pools = this.plugin.settings[key] || [];
+        const pool = pools.find((p) => p.tier === tier) || { tier, options: [] };
+
+        const tierBlock = sectionBody.createDiv({ attr: { style: `margin-bottom: 10px; border: 1px solid ${colors.goldBorder}; border-radius: 4px; overflow: hidden;` } });
+        const tierHeader = tierBlock.createDiv({ attr: { style: `display: flex; justify-content: space-between; padding: 8px 12px; background: ${colors.bg}; cursor: pointer;` } });
+        tierHeader.createEl("span", { text: `${tierDisplayNames[tier]} (${pool.options.length})`, attr: { style: `font-size: 12px; color: ${colors.text};` } });
+        const tierArrow = tierHeader.createEl("span", { text: "\u25B6", attr: { style: "font-size: 9px;" } });
+        const tierBody = tierBlock.createDiv({ attr: { style: "display: none; padding: 8px 12px;" } });
+        tierHeader.addEventListener("click", () => {
+          const isOpen = tierBody.style.display !== "none";
+          tierBody.style.display = isOpen ? "none" : "block";
+          tierArrow.textContent = isOpen ? "\u25B6" : "\u25BC";
+        });
+
+        pool.options.forEach((option, optIdx) => {
+          const optBox = tierBody.createDiv({ attr: { style: `padding: 8px; margin-bottom: 6px; border: 1px solid ${colors.goldBorder}; border-radius: 4px;` } });
+          const optGrid = optBox.createDiv({ attr: { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 6px;" } });
+
+          const makeField = (label, value, onChange) => {
+            const cell = optGrid.createDiv();
+            cell.createEl("div", { text: label, attr: { style: labelStyle } });
+            const inp = cell.createEl("input", { attr: { type: "text", value: value || "", style: inputStyle } });
+            inp.addEventListener("change", async (e) => { await onChange(e.target.value); });
+          };
+          makeField("Name", option.description, async (v) => { option.description = v; await this.plugin.saveSettings(); });
+          makeField("Emoji", option.emoji || "", async (v) => { option.emoji = v; await this.plugin.saveSettings(); });
+
+          const imgCell = optBox.createDiv({ attr: { style: "margin-top: 6px;" } });
+          imgCell.createEl("div", { text: "Image URL", attr: { style: labelStyle } });
+          const imgInp = imgCell.createEl("input", { attr: { type: "text", value: option.image || "", style: inputStyle } });
+          imgInp.addEventListener("change", async (e) => { option.image = e.target.value; await this.plugin.saveSettings(); });
+
+          const delWrap = optBox.createDiv({ attr: { style: "text-align: right; margin-top: 6px;" } });
+          const delBtn = delWrap.createEl("button", { text: "Delete", attr: { style: `font-size: 11px; padding: 3px 10px; cursor: pointer; background: transparent; color: ${colors.textMuted}; border: 1px solid ${colors.goldBorder}; border-radius: 3px;` } });
+          delBtn.addEventListener("click", async () => {
+            pool.options.splice(optIdx, 1);
+            let pools2 = this.plugin.settings[key] || [];
+            let p = pools2.find(pp => pp.tier === tier);
+            if (p) p.options = pool.options;
+            await this.plugin.saveSettings();
+            this.onOpen();
+          });
+        });
+
+        if (pool.options.length < 7) {
+          const addWrap = tierBody.createDiv({ attr: { style: "text-align: center; margin-top: 6px;" } });
+          const addBtn = addWrap.createEl("button", { text: "+ Add Reward", attr: { style: `font-size: 11px; padding: 5px 14px; cursor: pointer; background: transparent; color: ${colors.gold}; border: 1px solid ${colors.goldBorder}; border-radius: 3px;` } });
+          addBtn.addEventListener("click", async () => {
+            let pools2 = this.plugin.settings[key];
+            if (!pools2) { pools2 = []; this.plugin.settings[key] = pools2; }
+            let p = pools2.find(pp => pp.tier === tier);
+            if (!p) { p = { tier, options: [] }; pools2.push(p); }
+            p.options.push({ id: `${key.slice(0,3)}-${tier}-${Date.now()}`, description: "[New reward]", emoji: "\uD83C\uDF81", image: "" });
+            await this.plugin.saveSettings();
+            this.onOpen();
+          });
+        }
+      });
+    });
+
+    const closeWrap = wrap.createDiv({ attr: { style: "text-align: center; margin-top: 20px;" } });
+    const closeBtn = closeWrap.createEl("button", {
+      text: "DONE",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 32px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+    });
+    closeBtn.addEventListener("click", () => this.close());
+  }
+  onClose() { this.contentEl.empty(); }
+};
+
+var WizardTartarusModal = class extends import_obsidian.Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    const colors = resolveThemeColors(this.plugin.settings);
+    contentEl.style.cssText = `background: ${colors.bg}; color: ${colors.text}; max-width: 560px; padding: 0;`;
+    const wrap = contentEl.createDiv({ attr: { style: `padding: 24px 28px; max-height: 70vh; overflow-y: auto;` } });
+    wrap.createEl("h2", {
+      text: "PENANCE TASKS",
+      attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 20px;` }
+    });
+
+    wrap.createEl("p", {
+      text: "Configure the tasks you must complete to escape Tartarus. Tasks are organized by boss tier range.",
+      attr: { style: `text-align: center; font-size: 13px; color: ${colors.text}; line-height: 1.6; margin-bottom: 20px;` }
+    });
+
+    const inputStyle = `width: 100%; padding: 6px 8px; border-radius: 4px; border: 1px solid ${colors.goldBorder}; background: ${colors.bg}; color: ${colors.text}; font-size: 12px; font-family: Georgia, serif; box-sizing: border-box;`;
+
+    const tartarusRanges = [
+      { range: "low", label: "Low (Tiers 1-4)" },
+      { range: "mid", label: "Mid (Tiers 5-9)" },
+      { range: "high", label: "High (Tiers 10+)" }
+    ];
+
+    tartarusRanges.forEach(({ range, label }) => {
+      const section = wrap.createDiv({ attr: { style: `margin-bottom: 12px; border: 1px solid ${colors.goldBorder}; border-radius: 6px; overflow: hidden;` } });
+      const sectionHeader = section.createDiv({ attr: { style: `display: flex; justify-content: space-between; padding: 10px 14px; background: ${colors.bgLight}; cursor: pointer;` } });
+      sectionHeader.createEl("span", { text: label, attr: { style: `font-family: "Times New Roman", serif; font-size: 13px; color: ${colors.gold}; letter-spacing: 1px;` } });
+      const arrow = sectionHeader.createEl("span", { text: "\u25B6", attr: { style: "font-size: 9px;" } });
+      const body = section.createDiv({ attr: { style: "display: none; padding: 10px 14px;" } });
+      sectionHeader.addEventListener("click", () => {
+        const isOpen = body.style.display !== "none";
+        body.style.display = isOpen ? "none" : "block";
+        arrow.textContent = isOpen ? "\u25B6" : "\u25BC";
+      });
+
+      const customEntry = this.plugin.settings.customTartarusTasks?.find(t => t.tierRange === range && t.tasks);
+      const tasks = customEntry?.tasks?.length ? customEntry.tasks : (DEFAULT_TARTARUS_TASKS[range] || []);
+
+      tasks.forEach((task, taskIndex) => {
+        const row = body.createDiv({ attr: { style: "display: flex; gap: 8px; align-items: center; margin-bottom: 6px;" } });
+        row.createEl("span", { text: `${taskIndex + 1}.`, attr: { style: `font-size: 12px; color: ${colors.textMuted}; min-width: 20px;` } });
+        const inp = row.createEl("input", { attr: { type: "text", value: task.description, style: `${inputStyle} flex: 1;` } });
+        inp.addEventListener("change", async (e) => {
+          this.updateTask(range, taskIndex, e.target.value);
+          await this.plugin.saveSettings();
+        });
+        const rmBtn = row.createEl("button", { text: "\u2715", attr: { style: `background: transparent; border: none; color: ${colors.textMuted}; cursor: pointer; font-size: 14px; padding: 2px 6px;` } });
+        rmBtn.addEventListener("click", async () => {
+          this.removeTask(range, taskIndex);
+          await this.plugin.saveSettings();
+          this.onOpen();
+        });
+      });
+
+      const btnRow = body.createDiv({ attr: { style: "display: flex; gap: 8px; margin-top: 8px;" } });
+      const addBtn = btnRow.createEl("button", { text: "+ Add Task", attr: { style: `font-size: 11px; padding: 5px 14px; cursor: pointer; background: transparent; color: ${colors.gold}; border: 1px solid ${colors.goldBorder}; border-radius: 3px;` } });
+      addBtn.addEventListener("click", async () => {
+        this.addTask(range);
+        await this.plugin.saveSettings();
+        this.onOpen();
+      });
+      const resetBtn = btnRow.createEl("button", { text: "Reset", attr: { style: `font-size: 11px; padding: 5px 14px; cursor: pointer; background: transparent; color: ${colors.textMuted}; border: 1px solid ${colors.goldBorder}; border-radius: 3px;` } });
+      resetBtn.addEventListener("click", async () => {
+        this.plugin.settings.customTartarusTasks = (this.plugin.settings.customTartarusTasks || []).filter((t) => t.tierRange !== range);
+        await this.plugin.saveSettings();
+        this.onOpen();
+      });
+
+      if (tasks.length === 0) {
+        body.createEl("div", { text: "No tasks configured. Add some penance tasks.", attr: { style: `text-align: center; color: ${colors.textMuted}; font-size: 12px; font-style: italic; padding: 8px;` } });
+      }
+    });
+
+    const closeWrap = wrap.createDiv({ attr: { style: "text-align: center; margin-top: 20px;" } });
+    const closeBtn = closeWrap.createEl("button", {
+      text: "DONE",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; padding: 10px 32px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
+    });
+    closeBtn.addEventListener("click", () => this.close());
+  }
+  updateTask(tierRange, taskIndex, description) {
+    if (!this.plugin.settings.customTartarusTasks) this.plugin.settings.customTartarusTasks = [];
+    let customEntry = this.plugin.settings.customTartarusTasks.find((t) => t.tierRange === tierRange);
+    if (!customEntry) {
+      customEntry = { tierRange, tasks: (DEFAULT_TARTARUS_TASKS[tierRange] || []).map((t) => ({ id: t.id, description: t.description })) };
+      this.plugin.settings.customTartarusTasks.push(customEntry);
+    }
+    if (taskIndex < customEntry.tasks.length) {
+      customEntry.tasks[taskIndex].description = description;
+      customEntry.tasks[taskIndex].id = `custom-${taskIndex}-${Date.now()}`;
+    }
+  }
+  addTask(tierRange) {
+    if (!this.plugin.settings.customTartarusTasks) this.plugin.settings.customTartarusTasks = [];
+    let customEntry = this.plugin.settings.customTartarusTasks.find((t) => t.tierRange === tierRange);
+    if (!customEntry) {
+      customEntry = { tierRange, tasks: (DEFAULT_TARTARUS_TASKS[tierRange] || []).map((t) => ({ id: t.id, description: t.description })) };
+      this.plugin.settings.customTartarusTasks.push(customEntry);
+    }
+    customEntry.tasks.push({ id: `custom-${Date.now()}`, description: "New penance task" });
+  }
+  removeTask(tierRange, taskIndex) {
+    if (!this.plugin.settings.customTartarusTasks) return;
+    let customEntry = this.plugin.settings.customTartarusTasks.find((t) => t.tierRange === tierRange);
+    if (!customEntry) {
+      customEntry = { tierRange, tasks: (DEFAULT_TARTARUS_TASKS[tierRange] || []).map((t) => ({ id: t.id, description: t.description })) };
+      this.plugin.settings.customTartarusTasks.push(customEntry);
+    }
+    if (taskIndex < customEntry.tasks.length) customEntry.tasks.splice(taskIndex, 1);
+    if (customEntry.tasks.length === 0) {
+      this.plugin.settings.customTartarusTasks = this.plugin.settings.customTartarusTasks.filter((t) => t.tierRange !== tierRange);
+    }
+  }
+  onClose() { this.contentEl.empty(); }
+};
+
 var PenanceModal = class extends import_obsidian.Modal {
   constructor(app, plugin) {
     super(app);
