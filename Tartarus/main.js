@@ -995,48 +995,107 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
       });
     }
   }
-  // --- Screen 0: Welcome ---
+  // --- Screen 0: Welcome + Theme Selector ---
   renderScreen0_Welcome(root, colors) {
     root.createEl("h1", {
       text: "WELCOME TO TARTARUS",
       attr: { style: `font-family: "Times New Roman", serif; font-size: 28px; text-align: center; color: ${colors.gold}; letter-spacing: 3px; margin-bottom: 8px;` }
     });
     root.createEl("p", {
-      text: "A mythological game layered on your real life",
+      text: "Welcome to the Tartarus game!",
       attr: { style: `text-align: center; font-style: italic; color: ${colors.textMuted}; margin-bottom: 28px; font-size: 14px;` }
     });
+
+    // Theme selector
     root.createEl("p", {
-      text: "Tartarus turns your habits into a hero\u2019s journey. Every activity you complete is a strike against a mythological beast. Every day you show up, you grow stronger. Every day you don\u2019t \u2014 the abyss waits.",
-      attr: { style: `line-height: 1.7; color: ${colors.text}; font-size: 14px; text-align: center;` }
+      text: "Select your theme",
+      attr: { style: `text-align: center; color: ${colors.text}; font-size: 15px; font-family: "Times New Roman", serif; letter-spacing: 1px; margin-bottom: 16px;` }
     });
-    const btnWrap = root.createDiv({ attr: { style: "text-align: center; margin-top: 36px;" } });
+
+    const THEME_OPTIONS = {
+      "age-of-concern": { label: "Age of Concern", primary: "#613134", secondary: "#faddb3", accent: "#967b4d", muted: "#928d85" },
+      "dark-knight": { label: "Dark Knight", primary: "#1a1a2e", secondary: "#e0e0e0", accent: "#4a7c8f", muted: "#6c6c7e" },
+      "forest-spirit": { label: "Forest Spirit", primary: "#2d4a3e", secondary: "#d4e8c2", accent: "#7a9a5d", muted: "#8a9a85" },
+      "obsidian-gold": { label: "Obsidian Gold", primary: "#1a1a1a", secondary: "#f0d060", accent: "#c9a227", muted: "#808080" },
+      "blood-moon": { label: "Blood Moon", primary: "#4a1020", secondary: "#f0c0a0", accent: "#c04040", muted: "#8a6060" },
+      "ocean-depths": { label: "Ocean Depths", primary: "#0f2a3f", secondary: "#b8d8e8", accent: "#3a7ca5", muted: "#7090a0" },
+      "amethyst": { label: "Amethyst", primary: "#2d1b4e", secondary: "#e0d0f0", accent: "#8a5cf6", muted: "#7a6a8a" },
+      "parchment": { label: "Parchment", primary: "#5a4a3a", secondary: "#f5ead0", accent: "#a0804a", muted: "#9a8a7a" },
+    };
+
+    const currentTheme = this.plugin.settings.activeTheme || "age-of-concern";
+    const gridWrap = root.createDiv({
+      attr: { style: "display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 420px; margin: 0 auto 28px auto;" }
+    });
+
+    Object.entries(THEME_OPTIONS).forEach(([key, preset]) => {
+      const isSelected = currentTheme === key;
+      const swatch = gridWrap.createDiv({
+        attr: {
+          style: `display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 6px; cursor: pointer; border: 2px solid ${isSelected ? preset.accent : preset.primary + "44"}; background: ${_darkenHex(preset.primary, 0.35)}; transition: all 0.2s;`
+        }
+      });
+      // Color dots
+      const dotsWrap = swatch.createDiv({ attr: { style: "display: flex; gap: 4px;" } });
+      [preset.primary, preset.secondary, preset.accent, preset.muted].forEach(c => {
+        dotsWrap.createDiv({ attr: { style: `width: 12px; height: 12px; border-radius: 50%; background: ${c};` } });
+      });
+      swatch.createEl("span", {
+        text: preset.label,
+        attr: { style: `font-size: 12px; color: ${preset.secondary}; font-family: "Times New Roman", serif; letter-spacing: 0.5px;` }
+      });
+      if (isSelected) {
+        swatch.createEl("span", { text: "\u2713", attr: { style: `color: ${preset.accent}; font-size: 14px; margin-left: auto;` } });
+      }
+      swatch.addEventListener("click", async () => {
+        this.plugin.settings.activeTheme = key;
+        this.plugin.settings.customTheme = { primary: preset.primary, secondary: preset.secondary, accent: preset.accent, muted: preset.muted };
+        await this.plugin.saveSettings();
+        this.plugin.refreshRankView();
+        this.renderScreen();
+      });
+    });
+
+    const btnWrap = root.createDiv({ attr: { style: "text-align: center; margin-top: 12px;" } });
     const beginBtn = btnWrap.createEl("button", {
       text: "BEGIN \u2192",
       attr: { style: `font-family: "Times New Roman", serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; padding: 14px 36px; cursor: pointer; border-radius: 4px; background: ${colors.bg}; color: ${colors.gold}; border: 1px solid ${colors.gold};` }
     });
     beginBtn.addEventListener("click", () => this.goto(1));
   }
-  // --- Screen 1: Philosophy ---
+  // --- Screen 1: What is Tartarus ---
   renderScreen1_Philosophy(root, colors) {
     root.createEl("h2", {
-      text: "WHY GAMIFY YOUR LIFE",
+      text: "TARTARUS",
       attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
     });
-    const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 16px; margin-bottom: 14px;`;
-    const cardTitle = `font-family: "Times New Roman", serif; font-size: 14px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 6px;`;
-    const cardBody = `font-size: 13px; color: ${colors.text}; line-height: 1.6;`;
+    const paraStyle = `font-size: 14px; color: ${colors.text}; line-height: 1.8; margin-bottom: 18px; text-align: left;`;
 
-    const cards = [
-      { title: "Life Unfolds in Chapters", body: "Limbo, Vision, Flow, Resistance \u2014 every chapter of your life follows this cycle. Tartarus gives you the structure to push through each phase." },
-      { title: "You Set the Pace", body: "Unlike a video game with fixed timers, you determine the pacing. Progress in your real life, and the game progresses with you." },
-      { title: "The Edge of the Unknown", body: "Too easy and you get bored. Too hard and you get anxious. Tartarus keeps you at the edge \u2014 where growth happens." },
-      { title: "Engaging, Not Addicting", body: "No daily rewards that decay. No psychological tricks. Just a system that makes showing up feel meaningful \u2014 through novelty, progression, and compelling challenge." }
-    ];
-    cards.forEach(c => {
-      const card = root.createDiv({ attr: { style: cardStyle } });
-      card.createEl("div", { text: c.title, attr: { style: cardTitle } });
-      card.createEl("div", { text: c.body, attr: { style: cardBody } });
+    root.createEl("p", {
+      text: "Most habit trackers give you in\u2011app rewards that feel like Monopoly money, or a streak counter that\u2019s just a number. Neither one really changes whether you show up tomorrow.",
+      attr: { style: paraStyle }
     });
+    root.createEl("p", {
+      text: "This one works more like a game, but without the fake currency.",
+      attr: { style: paraStyle }
+    });
+    root.createEl("p", {
+      text: "You set the habits you want to track. Each time you complete one, you deal damage to a boss\u2014a stand\u2011in for your own inertia. The boss\u2019s health scales to how many habits you\u2019re tracking, so it stays proportional whether you\u2019re doing three things or twelve.",
+      attr: { style: paraStyle }
+    });
+    root.createEl("p", {
+      text: "Miss too many days and you don\u2019t just lose a streak. You go to Tartarus. While you\u2019re there, you stop earning rewards and you have to complete a set of penance tasks\u2014tasks you choose ahead of time\u2014before you can get back to your boss. The idea is simple: if you slip, you pay a real cost, but one you\u2019ve defined yourself.",
+      attr: { style: paraStyle }
+    });
+    root.createEl("p", {
+      text: "When you do earn something\u2014by defeating a boss, hitting a streak, or just logging a tough habit\u2014it goes into a reward log. You decide when to claim it. No loot boxes, or useless cosmetics.",
+      attr: { style: paraStyle }
+    });
+    root.createEl("p", {
+      text: "It\u2019s just a structure. The point is to give your habits stakes and make the cost of skipping something real\u2014without relying on gimmicks.",
+      attr: { style: `${paraStyle} color: ${colors.textMuted}; font-style: italic;` }
+    });
+
     this.renderNav(root, colors, { back: 0, next: 2 });
   }
   // --- Screen 2: How It Works ---
@@ -1045,22 +1104,52 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
       text: "HOW THE GAME WORKS",
       attr: { style: `font-family: "Times New Roman", serif; text-align: center; color: ${colors.gold}; letter-spacing: 2px; margin-bottom: 24px;` }
     });
-    const sectionStyle = `margin-bottom: 22px; text-align: center;`;
-    const iconStyle = `font-size: 28px; margin-bottom: 8px;`;
-    const titleStyle = `font-family: "Times New Roman", serif; font-size: 15px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 6px;`;
-    const descStyle = `font-size: 13px; color: ${colors.text}; line-height: 1.6; max-width: 400px; margin: 0 auto;`;
 
-    const sections = [
-      { icon: "\u2694\uFE0F", title: "Activities Deal Damage", desc: "Configure your habits and activities. Every time you complete one, it deals damage to the current boss. Your daily life IS the gameplay." },
-      { icon: "\uD83C\uDFDB\uFE0F", title: "Defeat Bosses, Rise Through Tiers", desc: "14 mythological bosses stand between you and mastery. Defeat one, advance to the next tier, and earn rewards along the way." },
-      { icon: "\u26D3\uFE0F", title: "Fall Behind, Enter Tartarus", desc: "Miss too many days and you enter the underworld \u2014 a penance system that challenges you to claw your way back. But conquer the final boss, and you\u2019re free forever." }
-    ];
-    sections.forEach(s => {
-      const sec = root.createDiv({ attr: { style: sectionStyle } });
-      sec.createEl("div", { text: s.icon, attr: { style: iconStyle } });
-      sec.createEl("div", { text: s.title, attr: { style: titleStyle } });
-      sec.createEl("div", { text: s.desc, attr: { style: descStyle } });
+    const cardStyle = `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 18px; margin-bottom: 16px;`;
+    const bulletTitle = `font-family: "Times New Roman", serif; font-size: 14px; color: ${colors.gold}; letter-spacing: 1px; margin-bottom: 8px;`;
+    const bulletDesc = `font-size: 13px; color: ${colors.text}; line-height: 1.7;`;
+    const configBtnStyle = `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 18px; cursor: pointer; border-radius: 4px; background: transparent; color: ${colors.gold}; border: 1px solid ${colors.goldBorder}; margin-top: 12px; display: inline-block;`;
+
+    // --- Activities section ---
+    const actCard = root.createDiv({ attr: { style: cardStyle } });
+    actCard.createEl("div", { text: "\u2694\uFE0F ACTIVITIES DEAL DAMAGE", attr: { style: bulletTitle } });
+    actCard.createEl("div", {
+      text: "Each activity you complete deals 1 damage point to the current boss and gives you a number of tokens you\u2019ve configured.",
+      attr: { style: bulletDesc }
     });
+    const actBtn = actCard.createEl("button", { text: "CONFIGURE ACTIVITIES", attr: { style: configBtnStyle } });
+    actBtn.addEventListener("click", () => {
+      this.leaf.detach();
+      this.app.setting.open();
+      this.app.setting.openTabById("tartarus-plugin");
+    });
+
+    // --- Streaks section ---
+    const streakCard = root.createDiv({ attr: { style: cardStyle } });
+    streakCard.createEl("div", { text: "\uD83D\uDD25 TOKENS & STREAKS", attr: { style: bulletTitle } });
+    streakCard.createEl("div", {
+      text: "These tokens can be redeemed later for rewards. If you\u2019re doing well for your current level, a good week gives you a streak. Consecutive perfect weeks increase your damage multiplier and earn you streak rewards.",
+      attr: { style: bulletDesc }
+    });
+    const streakBtn = streakCard.createEl("button", { text: "CONFIGURE STREAK REWARDS", attr: { style: configBtnStyle } });
+    streakBtn.addEventListener("click", () => {
+      this.leaf.detach();
+      this.app.setting.open();
+      this.app.setting.openTabById("tartarus-plugin");
+    });
+
+    // --- Tartarus section ---
+    const tartCard = root.createDiv({ attr: { style: cardStyle } });
+    tartCard.createEl("div", { text: "\u26D3\uFE0F FALL BEHIND, ENTER TARTARUS", attr: { style: bulletTitle } });
+    tartCard.createEl("div", {
+      text: "If you\u2019re slacking for 3 consecutive days without meeting your targets, you enter Tartarus. While there, you stop earning rewards and must complete penance tasks you\u2019ve defined before you can return.",
+      attr: { style: bulletDesc }
+    });
+    const penBtn = tartCard.createEl("button", { text: "CONFIGURE PENANCE TASKS", attr: { style: configBtnStyle } });
+    penBtn.addEventListener("click", () => {
+      new PenanceModal(this.app, this.plugin).open();
+    });
+
     this.renderNav(root, colors, { back: 1, next: 3 });
   }
   // --- Screen 3: The Bosses ---
