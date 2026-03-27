@@ -30,7 +30,7 @@ function renderEudaimoniaCard(
   engine: OlenEngine,
   staggerIndex: number
 ): void {
-  const card = container.createDiv({ cls: "olen-card" });
+  const card = container.createDiv({ cls: "olen-card olen-eudaimonia-card" });
   card.style.setProperty("--i", String(staggerIndex));
 
   // Header: title + XP

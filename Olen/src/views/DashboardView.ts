@@ -23,7 +23,6 @@ import { renderQuoteFooter } from "../components/QuoteFooter";
 import { renderDayTimeline } from "../components/DayTimeline";
 import { renderWeightNotification } from "../components/WeightProgress";
 import { renderProgressAnalytics } from "../components/ProgressAnalytics";
-import { renderStatsRow } from "../components/StatsRow";
 import { renderSessionCollage } from "../components/SessionCollage";
 import { renderMementoMoriCompact } from "../components/MementoMori";
 import { shouldShowSundayBanner, renderSundayBanner, renderOptOutModal } from "../components/SundayCheckin";
@@ -152,10 +151,6 @@ export class DashboardView extends ItemView {
 
         case "analytics":
           renderProgressAnalytics(root, settings, engine, staggerIdx++);
-          break;
-
-        case "statsrow":
-          renderStatsRow(root, settings, engine, staggerIdx++);
           break;
 
         case "collage":
