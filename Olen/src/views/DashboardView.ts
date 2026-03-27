@@ -21,18 +21,15 @@ import { renderActivityGrid } from "../components/ActivityGrid";
 import { renderTempleChips } from "../components/TempleChips";
 import { renderQuoteFooter } from "../components/QuoteFooter";
 import { renderDayTimeline } from "../components/DayTimeline";
-import { renderStrengthHeatmap, showMuscleProgressPopup, showOverallProgressPopup, showMuscleSelector } from "../components/StrengthHeatmap";
 import { renderWeightNotification } from "../components/WeightProgress";
 import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import { renderStatsRow } from "../components/StatsRow";
-import { renderMonthlyHeatmap } from "../components/MonthlyHeatmap";
 import { renderSessionCollage } from "../components/SessionCollage";
 import { renderMementoMoriCompact } from "../components/MementoMori";
 import { shouldShowSundayBanner, renderSundayBanner, renderOptOutModal } from "../components/SundayCheckin";
 import { openSundayModal } from "../modals/SundayModal";
 // MyWhyModal is no longer used — tapping "My Why" navigates to DreamBoardView
 import { showTaskModal } from "../modals/TaskModal";
-import type { MuscleGroupId } from "../constants";
 
 export class DashboardView extends ItemView {
   plugin: OlenPlugin;
@@ -119,27 +116,6 @@ export class DashboardView extends ItemView {
           });
           break;
 
-        case "heatmap":
-          renderStrengthHeatmap(root, settings, engine, completionData, staggerIdx++, {
-            onMuscleClick: (muscleId: MuscleGroupId) => {
-              showMuscleProgressPopup(muscleId, settings, completionData);
-            },
-            onProgressClick: () => {
-              showOverallProgressPopup(settings, completionData);
-            },
-            onStartWorkout: () => {
-              showMuscleSelector((selected) => {
-                // Start workout with selected muscles — enter workout workspace
-                this.handleEnterWorkspace("workout");
-              });
-            },
-          }, this.app);
-          // Weight notification (shows only when due)
-          renderWeightNotification(root, settings, staggerIdx, () => {
-            this.handleLogWeight();
-          });
-          break;
-
         case "eudaimonia":
           renderEudaimoniaBar(root, settings, engine, staggerIdx);
           staggerIdx += 2; // eudaimonia card + stat cards
@@ -180,10 +156,6 @@ export class DashboardView extends ItemView {
 
         case "statsrow":
           renderStatsRow(root, settings, engine, staggerIdx++);
-          break;
-
-        case "monthlyheatmap":
-          renderMonthlyHeatmap(root, settings, engine, staggerIdx++);
           break;
 
         case "collage":
