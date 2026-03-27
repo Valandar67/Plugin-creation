@@ -266,8 +266,8 @@
   inset: 0;
   background:
     linear-gradient(180deg,
-      rgba(0, 0, 0, 0.15) 0%,
-      rgba(0, 0, 0, 0.05) 40%,
+      transparent 0%,
+      transparent 40%,
       rgba(0, 0, 0, 0.1) 70%,
       rgba(0, 0, 0, 0.3) 100%
     );
@@ -2534,12 +2534,14 @@
 
 /* Softer card borders */
 .olen-card,
-.olen-card-compact {
+.olen-card-compact,
+.olen-stat-card {
   border-color: rgba(255, 255, 255, 0.04);
 }
 
 .olen-card:hover,
-.olen-card-compact:hover {
+.olen-card-compact:hover,
+.olen-stat-card:hover {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -2551,6 +2553,27 @@
 /* Stat cards use the theme's card background */
 .olen-stat-card {
   background: var(--card-bg);
+}
+
+.olen-stat-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-sm);
+  padding: 1px;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ============================================================
