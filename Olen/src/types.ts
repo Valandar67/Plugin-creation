@@ -116,17 +116,6 @@ export interface DirectiveSuggestion {
   priority: number;
 }
 
-// --- Boss ---
-
-export interface BossDefinition {
-  tier: number;
-  name: string;
-  rank: string;
-  description: string;
-  lore: string;
-  hpFormula: string;
-}
-
 // --- Temple ---
 
 export interface TempleTask {
@@ -444,10 +433,12 @@ export interface OlenSettings {
     spirit: number;
   };
 
-  // Boss (synced from TrackHabitRank)
+  // Boss (synced from Tartarus)
   currentTier: number;
   bossMaxHP: number;
   bossCurrentHP: number;
+  bossName: string;
+  bossRank: string;
   inTartarus: boolean;
   tartarusPenanceTasks: TartarusPenanceTask[];
   tartarusStartDate: string | null;

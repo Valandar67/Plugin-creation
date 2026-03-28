@@ -33,12 +33,6 @@ export function renderSessionCollage(
   for (let i = 0; i < recentSessions.length; i++) {
     const session = recentSessions[i];
     const sessionCard = collageContainer.createDiv({ cls: "olen-collage-card" });
-    sessionCard.style.setProperty("--scatter", String(i));
-
-    // Category accent strip
-    const accentColor = settings.categoryColors[session.category] ?? "#928d85";
-    const accent = sessionCard.createDiv({ cls: "olen-collage-accent" });
-    accent.style.background = accentColor;
 
     // Session info
     const info = sessionCard.createDiv({ cls: "olen-collage-info" });

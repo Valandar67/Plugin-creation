@@ -29,7 +29,7 @@ export function renderBossStatusCard(
   const row = card.createDiv({ cls: "olen-boss-row" });
 
   const info = row.createDiv({ cls: "olen-boss-info" });
-  info.createEl("div", { cls: "olen-boss-name", text: status.boss.name });
+  info.createEl("div", { cls: "olen-boss-name", text: status.name });
   info.createEl("div", {
     cls: "olen-boss-tier",
     text: `Tier ${status.tier} · ${status.rank}`,

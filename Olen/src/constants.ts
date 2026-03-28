@@ -3,7 +3,6 @@
 // ============================================================
 
 import type {
-  BossDefinition,
   ActivityConfig,
   OlenSettings,
   DevConfig,
@@ -38,31 +37,6 @@ export const VIEW_TYPE_WORKSPACE = "olen-workspace-view";
 export const VIEW_TYPE_ACTIVITY_DASHBOARD = "olen-activity-dashboard-view";
 export const VIEW_TYPE_ONBOARDING = "olen-onboarding-view";
 export const VIEW_TYPE_DREAMBOARD = "olen-dreamboard-view";
-
-// --- Boss Definitions (13 tiers) ---
-
-export const BOSSES: BossDefinition[] = [
-  { tier: 1, name: "Shadow of Apathy", rank: "Doomscroller", description: "The weight of inertia that keeps you scrolling instead of starting", lore: "Born from forgotten promises and unopened gym bags, the Shadow feeds on potential unrealized.", hpFormula: "weeklyTarget × 1.1" },
-  { tier: 2, name: "Siren's Call", rank: "Armchair General", description: "Distraction's sweet song that pulls focus from committed work", lore: "She sings of easier paths, of just one more video, of starting tomorrow instead.", hpFormula: "weeklyTarget × 1.2" },
-  { tier: 3, name: "Hydra of Habits", rank: "Apprentice", description: "The complexity of managing multiple routines simultaneously", lore: "Cut one head and two grow back. Each habit demands its own attention.", hpFormula: "weeklyTarget × 1.3" },
-  { tier: 4, name: "Minotaur's Maze", rank: "Citizen", description: "The confusion and routine that traps even dedicated practitioners", lore: "Lost in corridors of habit, the path forward is never clear.", hpFormula: "weeklyTarget × 1.7" },
-  { tier: 5, name: "Medusa's Gaze", rank: "Scholar", description: "The paralysis that comes from overthinking or fear of failure", lore: "One glance and you are frozen, unable to act, unable to move.", hpFormula: "weeklyTarget × 1.9" },
-  { tier: 6, name: "Nemean Lion", rank: "Samurai", description: "Seemingly invulnerable obstacles that require persistent effort", lore: "Its hide cannot be pierced by ordinary means. Only discipline cuts through.", hpFormula: "weeklyTarget × 2.1" },
-  { tier: 7, name: "Chimera", rank: "Templar", description: "Multi-headed beast requiring balanced attention across all domains", lore: "Lion, goat, and serpent — each head demands mastery of a different art.", hpFormula: "weeklyTarget × 2.3" },
-  { tier: 8, name: "Cerberus", rank: "Stoic", description: "Guardian of transformation testing if habits have become identity", lore: "Three heads, three tests. Past the gate lies transformation.", hpFormula: "weeklyTarget × 2.5" },
-  { tier: 9, name: "Scylla & Charybdis", rank: "Olympian", description: "The impossible choice between competing priorities", lore: "Between the rock and the whirlpool, both must somehow be honored.", hpFormula: "weeklyTarget × 2.7" },
-  { tier: 10, name: "The Furies", rank: "Sage", description: "Internal voices of guilt and shame attacking even the successful", lore: "They whisper your failures, remind you of every skip, every weakness.", hpFormula: "weeklyTarget × 2.9" },
-  { tier: 11, name: "Typhon", rank: "Titan", description: "The force of chaos threatening to undo all progress", lore: "Father of all monsters, he seeks to return you to the beginning.", hpFormula: "weeklyTarget × 3.1" },
-  { tier: 12, name: "Kronos", rank: "Archon", description: "Time itself as an enemy, testing sustained intensity", lore: "The Titan who devours his children. Can you maintain as weeks become months?", hpFormula: "weeklyTarget × 3.3" },
-  { tier: 13, name: "Chaos Primordial", rank: "Master of All", description: "The ultimate test of unshakeable discipline", lore: "Before creation, before order, only Chaos. To master it is to master yourself.", hpFormula: "weeklyTarget × 3.6" },
-];
-
-export const RANK_TIER_COLORS: Record<number, string> = {
-  1: "#6B7280", 2: "#EF4444", 3: "#F59E0B", 4: "#10B981",
-  5: "#3B82F6", 6: "#928d85", 7: "#EC4899", 8: "#F97316",
-  9: "#06B6D4", 10: "#c9a84c", 11: "#DC2626", 12: "#928d85",
-  13: "#c9a227",
-};
 
 // --- Chapter Progression ---
 
@@ -283,10 +257,12 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
     spirit: 0,
   },
 
-  // Boss
+  // Boss (synced from Tartarus)
   currentTier: 1,
   bossMaxHP: 35,
   bossCurrentHP: 35,
+  bossName: "",
+  bossRank: "",
   inTartarus: false,
   tartarusPenanceTasks: [],
   tartarusStartDate: null,

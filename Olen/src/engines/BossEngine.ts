@@ -1,19 +1,17 @@
 // ============================================================
 // Olen — Boss Engine
-// Reads boss state and provides boss-related calculations
+// Reads boss state from settings (synced from Tartarus)
 // ============================================================
 
-import type { OlenSettings, BossDefinition } from "../types";
-import { BOSSES, RANK_TIER_COLORS } from "../constants";
+import type { OlenSettings } from "../types";
 
 export interface BossStatus {
-  boss: BossDefinition;
+  name: string;
+  rank: string;
   currentHP: number;
   maxHP: number;
   percent: number;
   tier: number;
-  rank: string;
-  tierColor: string;
   inTartarus: boolean;
   isDangerZone: boolean;
 }
@@ -25,30 +23,19 @@ export class BossEngine {
     this.settings = settings;
   }
 
-  getBossForTier(tier: number): BossDefinition | null {
-    return BOSSES.find((b) => b.tier === tier) ?? null;
-  }
-
-  getCurrentBoss(): BossDefinition | null {
-    return this.getBossForTier(this.settings.currentTier);
-  }
-
   getBossStatus(): BossStatus {
     const tier = this.settings.currentTier;
-    const boss = this.getCurrentBoss() ?? BOSSES[0];
     const currentHP = this.settings.bossCurrentHP;
     const maxHP = this.settings.bossMaxHP;
     const percent = maxHP > 0 ? Math.round((currentHP / maxHP) * 100) : 0;
-    const tierColor = RANK_TIER_COLORS[tier] ?? "#6B7280";
 
     return {
-      boss,
+      name: this.settings.bossName || `Tier ${tier} Boss`,
+      rank: this.settings.bossRank || `Tier ${tier}`,
       currentHP,
       maxHP,
       percent,
       tier,
-      rank: boss.rank,
-      tierColor,
       inTartarus: this.settings.inTartarus,
       isDangerZone: this.isDangerZone(),
     };

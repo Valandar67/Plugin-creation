@@ -2535,13 +2535,15 @@
 /* Softer card borders */
 .olen-card,
 .olen-card-compact,
-.olen-stat-card {
+.olen-stat-card,
+.olen-collage-card {
   border-color: rgba(255, 255, 255, 0.04);
 }
 
 .olen-card:hover,
 .olen-card-compact:hover,
-.olen-stat-card:hover {
+.olen-stat-card:hover,
+.olen-collage-card:hover {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -2554,6 +2556,9 @@
 .olen-stat-card {
   background-color: var(--card-bg);
   background-image: var(--glass-sheen);
+  -webkit-backdrop-filter: var(--card-blur);
+  backdrop-filter: var(--card-blur);
+  overflow: hidden;
 }
 
 .olen-stat-card::before {
@@ -2683,21 +2688,15 @@
 .olen-collage-card {
   position: relative;
   background: var(--card-bg);
+  background-image: var(--glass-sheen);
+  -webkit-backdrop-filter: var(--card-blur);
+  backdrop-filter: var(--card-blur);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   padding: 12px;
   min-width: 140px;
   flex: 1;
-  transform: rotate(calc(var(--scatter, 0) * 0.5deg - 1deg));
-}
-
-.olen-collage-accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .olen-collage-info {
@@ -2711,8 +2710,8 @@
 .olen-collage-type {
   display: inline-block;
   font-size: 10px;
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
   padding: 2px 6px;
   border-radius: 8px;
   margin-top: 4px;

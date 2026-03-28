@@ -18,7 +18,6 @@ import {
   type PerformanceTier,
 } from "../data/sundayDialogues";
 import { createJournalEntry } from "../utils/journal";
-import { BOSSES } from "../constants";
 
 export interface SundayModalCallbacks {
   onComplete: () => void;
@@ -148,8 +147,7 @@ function analyzeWeeklyPerformance(
   const strongCategory = categoryRates[categoryRates.length - 1]?.cat || "body";
 
   // Boss info
-  const boss = BOSSES.find((b) => b.tier === settings.currentTier);
-  const bossName = boss?.name || "Unknown";
+  const bossName = settings.bossName || `Tier ${settings.currentTier} Boss`;
   const bossHpPercent = settings.bossMaxHP > 0
     ? Math.round((settings.bossCurrentHP / settings.bossMaxHP) * 100)
     : 100;

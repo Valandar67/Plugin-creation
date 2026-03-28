@@ -238,6 +238,17 @@ export default class OlenPlugin extends Plugin {
     if (s.bossCurrentHP !== undefined) this.settings.bossCurrentHP = s.bossCurrentHP;
     if (s.inTartarus !== undefined) this.settings.inTartarus = s.inTartarus;
 
+    // Boss name/rank — resolve from customBosses overrides if available
+    const customOverride = Array.isArray(s.customBosses)
+      ? s.customBosses.find((c: any) => c.tier === this.settings.currentTier)
+      : null;
+    if (customOverride?.name || s.currentBossName) {
+      this.settings.bossName = customOverride?.name || s.currentBossName;
+    }
+    if (customOverride?.rank || s.currentBossRank) {
+      this.settings.bossRank = customOverride?.rank || s.currentBossRank;
+    }
+
     // Tartarus details
     if (s.tartarusPenanceTasks !== undefined) this.settings.tartarusPenanceTasks = s.tartarusPenanceTasks;
     if (s.tartarusStartDate !== undefined) this.settings.tartarusStartDate = s.tartarusStartDate;
