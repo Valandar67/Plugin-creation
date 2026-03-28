@@ -139,7 +139,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
     weekly_rhythm_title: "WEEKLY RHYTHM",
     analytics_title: "PROGRESS",
     activity_grid_title: "ACTIVITIES",
-    temple_title: "THE TEMPLE",
+    temple_title: "ROUTINES",
     eudaimonia_title: "Eudaimonia Index",
     daymap_title: "YOUR DAY",
     begin_workspace: "ENTER WORKSPACE",
@@ -157,7 +157,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   heroHeight: 350,
   sectionOrder: [
     "hero", "heatmap", "statsrow", "eudaimonia", "directive", "daymap", "boss",
-    "weekly", "analytics", "activities", "monthlyheatmap", "collage", "temple", "quote",
+    "weekly", "analytics", "activities", "monthlyheatmap", "temple", "quote",
   ],
   hiddenSections: [],
   activityGridColumns: 2,

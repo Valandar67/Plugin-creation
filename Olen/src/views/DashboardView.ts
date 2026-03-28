@@ -23,7 +23,6 @@ import { renderQuoteFooter } from "../components/QuoteFooter";
 import { renderDayTimeline } from "../components/DayTimeline";
 import { renderWeightNotification } from "../components/WeightProgress";
 import { renderProgressAnalytics } from "../components/ProgressAnalytics";
-import { renderSessionCollage } from "../components/SessionCollage";
 import { renderMementoMoriCompact } from "../components/MementoMori";
 import { shouldShowSundayBanner, renderSundayBanner, renderOptOutModal } from "../components/SundayCheckin";
 import { openSundayModal } from "../modals/SundayModal";
@@ -116,8 +115,7 @@ export class DashboardView extends ItemView {
           break;
 
         case "eudaimonia":
-          renderEudaimoniaBar(root, settings, engine, staggerIdx);
-          staggerIdx += 2; // eudaimonia card + stat cards
+          renderEudaimoniaBar(root, settings, engine, staggerIdx++);
           break;
 
         case "daymap":
@@ -153,9 +151,7 @@ export class DashboardView extends ItemView {
           renderProgressAnalytics(root, settings, engine, staggerIdx++);
           break;
 
-        case "collage":
-          renderSessionCollage(root, this.app, settings, staggerIdx++);
-          break;
+        // collage section removed
 
         case "activities":
           renderActivityGrid(root, settings, engine, staggerIdx++, (activityId) => {

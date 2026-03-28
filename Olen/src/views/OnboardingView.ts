@@ -6,7 +6,7 @@
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { Category, WeightLogFrequency, OlenThemeMode, PreferredTime } from "../types";
-import { VIEW_TYPE_ONBOARDING } from "../constants";
+import { VIEW_TYPE_ONBOARDING, LIFE_EXPECTANCY_MALE, LIFE_EXPECTANCY_FEMALE } from "../constants";
 import { ONBOARDING_ACTIVITIES, buildActivityConfig, CATEGORY_META } from "../data/defaultActivities";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
@@ -206,36 +206,44 @@ export class OnboardingView extends ItemView {
     });
   }
 
-  // ── Intro 2: "The Tartarus System" ─────────────────────
+  // ── Intro 2: "The Tartarus Game" ─────────────────────
 
   private renderIntro2_Tartarus(root: HTMLElement): void {
     const content = root.createDiv({ cls: "olen-onboarding-screen" });
 
     content.createEl("div", {
       cls: "olen-display",
-      text: "The Tartarus System",
+      text: "The Tartarus Game",
       attr: { style: "text-align: center; margin-bottom: 12px;" },
     });
     content.createEl("div", {
       cls: "olen-body-italic",
-      text: "An RPG layer from the same developer — built to work alongside Olen.",
+      text: "Tartarus turns habit tracking into a mythological RPG, with real stakes and no unnecessary gimmicks.",
       attr: { style: "text-align: center; margin-bottom: 24px;" },
     });
+
+    // Check if Tartarus is installed
+    const tartarusPlugin = (this.app as any).plugins?.plugins?.["tartarus"]
+      ?? (this.app as any).plugins?.plugins?.["mythological-habit-tracker"];
+    const isTartarusInstalled = !!tartarusPlugin;
 
     // Explanation card
     const card = content.createDiv({ cls: "olen-card", attr: { style: "padding: 20px; margin-bottom: 24px;" } });
     card.style.setProperty("--i", "0");
 
-    card.createEl("div", {
-      cls: "olen-body",
-      text: "Tartarus turns your real discipline into a mythological RPG. Your habits deal damage to bosses, your consistency earns you ranks, and neglecting activities lets darkness creep back in.",
-      attr: { style: "margin-bottom: 16px; line-height: 1.7;" },
-    });
-    card.createEl("div", {
-      cls: "olen-body",
-      text: "Olen tracks your discipline. Tartarus turns it into a game. They complete each other.",
-      attr: { style: "font-weight: 600; margin-bottom: 16px;" },
-    });
+    if (!isTartarusInstalled) {
+      card.createEl("div", {
+        cls: "olen-body",
+        text: "Tartarus is not currently installed. Install it to unlock boss fights, mythological ranks, and penance mechanics.",
+        attr: { style: "margin-bottom: 16px; line-height: 1.7; opacity: 0.8;" },
+      });
+    } else {
+      card.createEl("div", {
+        cls: "olen-body",
+        text: "Tartarus is installed and ready. Olen tracks your discipline. Tartarus turns it into a game.",
+        attr: { style: "margin-bottom: 16px; line-height: 1.7;" },
+      });
+    }
 
     // Feature list
     const features = [
@@ -252,6 +260,17 @@ export class OnboardingView extends ItemView {
         attr: { style: "margin-bottom: 8px; opacity: 0.8;" },
       });
     }
+
+    // "View on GitHub" button
+    const ghBtn = content.createEl("a", {
+      cls: "olen-onboarding-btn olen-onboarding-btn-secondary",
+      text: "View on GitHub",
+      attr: {
+        href: "https://github.com/Val-49/Tartarus",
+        target: "_blank",
+        style: "display: inline-block; text-align: center; margin-bottom: 20px; text-decoration: none; cursor: pointer;",
+      },
+    });
 
     // Toggle
     const toggleRow = content.createDiv({
@@ -390,6 +409,46 @@ export class OnboardingView extends ItemView {
       },
     });
 
+    // Memento Mori section
+    const mementoHeader = content.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-top: 16px;" } });
+    mementoHeader.createEl("label", { cls: "olen-heading", text: "MEMENTO MORI" });
+    mementoHeader.createEl("div", {
+      cls: "olen-body-italic",
+      text: "Remember you are mortal. Used to show how much of your life has passed.",
+      attr: { style: "margin-bottom: 8px;" },
+    });
+
+    // Birthdate
+    const birthField = content.createDiv({ cls: "olen-onboarding-field" });
+    birthField.createEl("label", { cls: "olen-heading", text: "BIRTHDATE", attr: { style: "font-size: 0.8em;" } });
+    const birthInput = birthField.createEl("input", {
+      cls: "olen-onboarding-input",
+      attr: {
+        type: "text",
+        placeholder: "YYYY-MM-DD",
+        value: this.plugin.settings.personalStats.birthdate ?? "",
+      },
+    });
+
+    // Life expectancy
+    const expectField = content.createDiv({ cls: "olen-onboarding-field" });
+    expectField.createEl("label", { cls: "olen-heading", text: "LIFE EXPECTANCY (YEARS)", attr: { style: "font-size: 0.8em;" } });
+    const currentGender = this.plugin.settings.personalStats.gender;
+    const defaultExpectancy = currentGender === "female" ? LIFE_EXPECTANCY_FEMALE : LIFE_EXPECTANCY_MALE;
+    expectField.createEl("div", {
+      cls: "olen-body-italic",
+      text: `Leave empty to use default (${defaultExpectancy} years based on gender).`,
+      attr: { style: "margin-bottom: 8px; font-size: 0.8em;" },
+    });
+    const expectInput = expectField.createEl("input", {
+      cls: "olen-onboarding-input",
+      attr: {
+        type: "text",
+        placeholder: `${defaultExpectancy} (auto)`,
+        value: this.plugin.settings.personalStats.lifeExpectancy ? String(this.plugin.settings.personalStats.lifeExpectancy) : "",
+      },
+    });
+
     // Navigation
     this.renderNav(content, {
       back: 2,
@@ -402,6 +461,14 @@ export class OnboardingView extends ItemView {
         this.plugin.settings.myWhy = whyInput.value.trim();
         this.plugin.settings.aphorism = aphInput.value.trim();
         this.plugin.settings.homepage = homeInput.value.trim();
+
+        // Memento Mori
+        const birthVal = birthInput.value.trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(birthVal) || birthVal === "") {
+          this.plugin.settings.personalStats.birthdate = birthVal;
+        }
+        const expectVal = parseFloat(expectInput.value);
+        this.plugin.settings.personalStats.lifeExpectancy = (!isNaN(expectVal) && expectVal > 0) ? expectVal : 0;
 
         // Parse goals
         const lines = goalsInput.value

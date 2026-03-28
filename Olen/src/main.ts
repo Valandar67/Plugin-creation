@@ -13,7 +13,7 @@ import { OnboardingView } from "./views/OnboardingView";
 import { DreamBoardView } from "./views/DreamBoardView";
 import { OlenSettingTab } from "./settings/OlenSettings";
 import { TemplateEngine } from "./templates/TemplateEngine";
-import { getTracker } from "./tracker-bridge";
+import { getTracker, getTrackerBossState } from "./tracker-bridge";
 import { THEME_PRESETS } from "./data/themes";
 import { readObsidianAccentColor, applyAccentColor } from "./utils/accentColor";
 import { playAlertSound, vibrateAlert, stopAlertSound } from "./utils/alertSound";
@@ -232,21 +232,15 @@ export default class OlenPlugin extends Plugin {
 
     const s = tracker.settings;
 
-    // Boss state
-    if (s.currentTier !== undefined) this.settings.currentTier = s.currentTier;
-    if (s.bossMaxHP !== undefined) this.settings.bossMaxHP = s.bossMaxHP;
-    if (s.bossCurrentHP !== undefined) this.settings.bossCurrentHP = s.bossCurrentHP;
-    if (s.inTartarus !== undefined) this.settings.inTartarus = s.inTartarus;
-
-    // Boss name/rank — resolve from customBosses overrides if available
-    const customOverride = Array.isArray(s.customBosses)
-      ? s.customBosses.find((c: any) => c.tier === this.settings.currentTier)
-      : null;
-    if (customOverride?.name || s.currentBossName) {
-      this.settings.bossName = customOverride?.name || s.currentBossName;
-    }
-    if (customOverride?.rank || s.currentBossRank) {
-      this.settings.bossRank = customOverride?.rank || s.currentBossRank;
+    // Boss state — use getTrackerBossState for proper name resolution
+    const bossState = getTrackerBossState(this.app);
+    if (bossState) {
+      this.settings.currentTier = bossState.currentTier;
+      this.settings.bossMaxHP = bossState.bossMaxHP;
+      this.settings.bossCurrentHP = bossState.bossCurrentHP;
+      this.settings.inTartarus = bossState.inTartarus;
+      this.settings.bossName = bossState.bossName;
+      this.settings.bossRank = bossState.bossRank;
     }
 
     // Tartarus details

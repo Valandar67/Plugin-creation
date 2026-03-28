@@ -15,11 +15,8 @@ export function renderEudaimoniaBar(
   engine: OlenEngine,
   staggerIndex: number
 ): void {
-  // --- 1. Eudaimonia Card (segmented bar + chapter) ---
+  // --- Eudaimonia Card (segmented bar + chapter) ---
   renderEudaimoniaCard(container, settings, engine, staggerIndex);
-
-  // --- 2. Stat Cards Row (separate from the card) ---
-  renderStatCards(container, engine, staggerIndex + 1);
 }
 
 // ---- Eudaimonia Card ----
@@ -73,52 +70,3 @@ function renderEudaimoniaCard(
   });
 }
 
-// ---- Stat Cards ----
-
-function renderStatCards(
-  container: HTMLElement,
-  engine: OlenEngine,
-  staggerIndex: number
-): void {
-  const grid = container.createDiv({ cls: "olen-stats-grid" });
-  grid.style.setProperty("--i", String(staggerIndex));
-
-  const totalTasks = engine.getTotalCompletions();
-  const streak = engine.getOverallStreak();
-  const presence = engine.getDaysOfPresence();
-
-  // Objectives card
-  createStatCard(grid, "\u{1F3AF}", totalTasks, "Objectives");
-
-  // Streak card (with streak dots)
-  createStatCard(grid, "\u{1F525}", streak, "Streak", streak);
-
-  // Consistency card
-  createStatCard(grid, "\u{2728}", presence, "Consistency");
-}
-
-function createStatCard(
-  parent: HTMLElement,
-  icon: string,
-  value: number,
-  label: string,
-  streakDays?: number
-): void {
-  const card = parent.createDiv({ cls: "olen-stat-card" });
-
-  card.createEl("div", { cls: "olen-stat-card-icon", text: icon });
-  card.createEl("div", { cls: "olen-stat-card-value", text: String(value) });
-  card.createEl("div", { cls: "olen-stat-card-label", text: label });
-
-  // Streak dots (show last 7 days)
-  if (streakDays !== undefined) {
-    const dots = card.createDiv({ cls: "olen-stat-card-dots" });
-    for (let i = 0; i < 7; i++) {
-      let cls = "olen-stat-dot";
-      if (i < streakDays) {
-        cls += " olen-stat-dot-active";
-      }
-      dots.createDiv({ cls });
-    }
-  }
-}

@@ -18,7 +18,26 @@ export interface TartarusBossState {
   bossName: string;
   bossRank: string;
   inTartarus: boolean;
+  hadesWrathApplied: boolean;
 }
+
+/** Boss names by tier — mirrors Tartarus's BOSSES array */
+const TARTARUS_BOSSES: Record<number, { name: string; rank: string }> = {
+  1:  { name: "The Sirens",    rank: "Doomscroller" },
+  2:  { name: "Harpy",         rank: "Apprentice" },
+  3:  { name: "Minotaur",      rank: "Citizen" },
+  4:  { name: "Cyclops",       rank: "Scholar" },
+  5:  { name: "Medusa",        rank: "Samurai" },
+  6:  { name: "Scylla",        rank: "Templar" },
+  7:  { name: "Charybdis",     rank: "Stoic" },
+  8:  { name: "Nemean Lion",   rank: "Olympian" },
+  9:  { name: "Lernaean Hydra",rank: "Sage" },
+  10: { name: "Cerberus",      rank: "Titan" },
+  11: { name: "The Furies",    rank: "Archon" },
+  12: { name: "Typhon",        rank: "Grand Master" },
+  13: { name: "Chaos",         rank: "Conqueror" },
+  14: { name: "Tartarus",      rank: "Master of All" },
+};
 
 /**
  * Attempt to access the TartarusPlugin plugin instance.
@@ -55,16 +74,14 @@ export function getTrackerBossState(app: App): TartarusBossState | null {
   const s = tracker.settings;
   const tier = s.currentTier ?? 1;
 
-  // Resolve boss name/rank: check customBosses overrides first
+  // Resolve boss name/rank: check customBosses overrides first, then built-in lookup
   const customOverride = Array.isArray(s.customBosses)
     ? s.customBosses.find((c: any) => c.tier === tier)
     : null;
 
-  // Tartarus stores boss data in its internal BOSSES array (not in settings).
-  // Read currentBossName/currentBossRank if Tartarus exposes them,
-  // otherwise use customBosses override or fallback to "Tier N Boss".
-  const bossName = customOverride?.name || s.currentBossName || `Tier ${tier} Boss`;
-  const bossRank = customOverride?.rank || s.currentBossRank || `Tier ${tier}`;
+  const baseBoss = TARTARUS_BOSSES[tier];
+  const bossName = customOverride?.name || s.currentBossName || baseBoss?.name || `Tier ${tier} Boss`;
+  const bossRank = customOverride?.rank || s.currentBossRank || baseBoss?.rank || `Tier ${tier}`;
 
   return {
     currentTier: tier,
@@ -73,6 +90,7 @@ export function getTrackerBossState(app: App): TartarusBossState | null {
     bossName,
     bossRank,
     inTartarus: s.inTartarus ?? false,
+    hadesWrathApplied: s.hadesWrathApplied ?? false,
   };
 }
 

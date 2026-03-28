@@ -89,7 +89,7 @@ export function renderDirectiveCard(
     if (command.type === "penance") {
       card.createEl("div", { cls: "olen-directive-temple-tag olen-directive-tartarus-tag", text: "TARTARUS" });
     } else if (command.type === "temple") {
-      card.createEl("div", { cls: "olen-directive-temple-tag", text: "TEMPLE" });
+      card.createEl("div", { cls: "olen-directive-temple-tag", text: "ROUTINE" });
     } else if (command.type === "weight") {
       card.createEl("div", { cls: "olen-directive-temple-tag olen-directive-weight-tag", text: "HEALTH" });
     }

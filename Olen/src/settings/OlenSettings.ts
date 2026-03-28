@@ -178,6 +178,30 @@ export class OlenSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    // Homepage widget keywords info
+    const widgetInfo = body.createDiv({
+      attr: { style: "padding: 12px 16px; margin-top: 8px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);" },
+    });
+    widgetInfo.createEl("div", {
+      text: "Homepage Widgets",
+      attr: { style: "font-weight: 600; margin-bottom: 8px; font-size: 0.9em;" },
+    });
+    widgetInfo.createEl("div", {
+      text: "Use these code block keywords in your homepage to embed mini widgets:",
+      attr: { style: "font-size: 0.8em; color: var(--text-muted); margin-bottom: 8px;" },
+    });
+    const keywords = [
+      { keyword: "olen-directive", desc: "Shows the current directive suggestion" },
+      { keyword: "olen-day", desc: "Shows your day timeline" },
+      { keyword: "olen-stats", desc: "Shows quick stats overview" },
+      { keyword: "open-olen", desc: "Button to open the Olen dashboard" },
+    ];
+    for (const kw of keywords) {
+      const row = widgetInfo.createDiv({ attr: { style: "display: flex; gap: 8px; margin-bottom: 4px; align-items: baseline;" } });
+      row.createEl("code", { text: kw.keyword, attr: { style: "font-size: 0.8em; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;" } });
+      row.createEl("span", { text: `— ${kw.desc}`, attr: { style: "font-size: 0.78em; color: var(--text-muted);" } });
+    }
   }
 
   // --- Personal Stats ---
@@ -853,7 +877,7 @@ export class OlenSettingTab extends PluginSettingTab {
   // --- Temple ---
 
   private renderTempleSection(container: HTMLElement): void {
-    const body = this.createCollapsibleSection(container, "Temple Upkeep", "\u{1F3DB}\uFE0F");
+    const body = this.createCollapsibleSection(container, "Routines", "\u{1F3DB}\uFE0F");
 
     for (let i = 0; i < this.plugin.settings.templeTasks.length; i++) {
       const task = this.plugin.settings.templeTasks[i];
@@ -885,7 +909,7 @@ export class OlenSettingTab extends PluginSettingTab {
     }
 
     new Setting(body).addButton((btn) =>
-      btn.setButtonText("+ Add Temple Task").onClick(async () => {
+      btn.setButtonText("+ Add Routine").onClick(async () => {
         this.plugin.settings.templeTasks.push({
           id: `temple-${Date.now()}`,
           name: "New Task",
