@@ -713,13 +713,18 @@ export class OnboardingView extends ItemView {
       });
 
       for (const template of group.activities) {
-        const existing = this.plugin.settings.activities.find((a) => a.id === template.id);
+        let existing = this.plugin.settings.activities.find((a) => a.id === template.id);
         const isEnabled = existing ? existing.enabled : false;
 
         // If not yet in settings, add it as disabled — user must opt in
+        // Guard against duplicates from re-renders
         if (!existing) {
           const newActivity = buildActivityConfig(template, group.category);
-          this.plugin.settings.activities.push(newActivity);
+          // Double-check before pushing (prevents duplicates on re-render)
+          if (!this.plugin.settings.activities.some((a) => a.id === template.id)) {
+            this.plugin.settings.activities.push(newActivity);
+            existing = newActivity;
+          }
         }
 
         const row = groupEl.createDiv({ cls: "olen-onboarding-activity-row" });
@@ -1420,6 +1425,8 @@ export class OnboardingView extends ItemView {
       await this.plugin.saveSettings();
       new Notice("Welcome to Olen. Your journey begins.");
       this.leaf.detach();
+      // Give workspace time to process leaf detachment before opening dashboard
+      await new Promise(resolve => setTimeout(resolve, 50));
       await this.plugin.activateDashboard();
     });
   }

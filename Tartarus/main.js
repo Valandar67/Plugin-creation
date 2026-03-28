@@ -1731,7 +1731,7 @@ var TartarusView = class extends import_obsidian.ItemView {
         attr: {
           style: `
             font-family: "Times New Roman", serif;
-            font-size: 2.4em;
+            font-size: 1.6em;
             font-weight: 600;
             letter-spacing: 8px;
             margin-bottom: 8px;
@@ -2090,13 +2090,13 @@ var TartarusView = class extends import_obsidian.ItemView {
         }
       });
 
-      // Boss name is PRIMARY (large, commanding) with fade-in
+      // Boss name is PRIMARY (commanding) with fade-in
       titleArea.createEl("div", {
         text: boss?.name || "No Boss",
         attr: {
           style: `
             font-family: "Times New Roman", serif;
-            font-size: 2.2em;
+            font-size: 1.6em;
             font-weight: 600;
             letter-spacing: 3px;
             margin-bottom: 8px;
