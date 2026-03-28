@@ -103,7 +103,7 @@ var BOSSES = [
     description: "Enchanting voices that lure you toward distraction and inaction",
     lore: "Their song promises comfort in scrolling, in one more episode, in starting tomorrow. Resist or be dashed upon the rocks.",
     hpFormula: "weeklyTarget \xD7 1.1",
-    image: "Tartarus/assets/bosses/The Sirens.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/The Sirens.png"
   },
   {
     tier: 2,
@@ -112,7 +112,7 @@ var BOSSES = [
     description: "Snatchers of focus that steal your time before you notice",
     lore: "Swift and relentless, the Harpies descend when your guard drops. They feast on wasted hours.",
     hpFormula: "weeklyTarget \xD7 1.2",
-    image: "Tartarus/assets/bosses/Harpy.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Harpy.png"
   },
   {
     tier: 3,
@@ -121,7 +121,7 @@ var BOSSES = [
     description: "The beast at the center of the labyrinth of routine",
     lore: "Lost in corridors of habit, the path forward is never clear. The Minotaur waits for those who stop moving.",
     hpFormula: "weeklyTarget \xD7 1.4",
-    image: "Tartarus/assets/bosses/Minotaur.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Minotaur.png"
   },
   {
     tier: 4,
@@ -130,7 +130,7 @@ var BOSSES = [
     description: "Brute strength of laziness — one-eyed, seeing only the easy path",
     lore: "The Cyclops sees only what is directly before him. He cannot imagine a better future, and neither can you if you stand still.",
     hpFormula: "weeklyTarget \xD7 1.6",
-    image: "Tartarus/assets/bosses/Cyclops.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Cyclops.png"
   },
   {
     tier: 5,
@@ -139,7 +139,7 @@ var BOSSES = [
     description: "The paralysis that comes from overthinking or fear of failure",
     lore: "One glance and you are frozen, unable to act, unable to move. Only those who act without hesitation survive her gaze.",
     hpFormula: "weeklyTarget \xD7 1.8",
-    image: "Tartarus/assets/bosses/Medusa.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Medusa.png"
   },
   {
     tier: 6,
@@ -148,7 +148,7 @@ var BOSSES = [
     description: "The six-headed terror that attacks from every direction at once",
     lore: "Each head is a different demand on your time. She strikes when you try to do everything and master nothing.",
     hpFormula: "weeklyTarget \xD7 2.0",
-    image: "Tartarus/assets/bosses/Scylla.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Scylla.png"
   },
   {
     tier: 7,
@@ -157,7 +157,7 @@ var BOSSES = [
     description: "The whirlpool that swallows entire weeks without warning",
     lore: "Three times a day she drinks the sea and spews it back. So too does your time vanish into the void of purposelessness.",
     hpFormula: "weeklyTarget \xD7 2.2",
-    image: "Tartarus/assets/bosses/Charybdis.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Charybdis.png"
   },
   {
     tier: 8,
@@ -166,7 +166,7 @@ var BOSSES = [
     description: "Seemingly invulnerable obstacles that require persistent effort",
     lore: "Its hide cannot be pierced by ordinary means. Only discipline, applied daily and without mercy, cuts through.",
     hpFormula: "weeklyTarget \xD7 2.4",
-    image: "Tartarus/assets/bosses/Nemean Lion.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Nemean Lion.png"
   },
   {
     tier: 9,
@@ -175,7 +175,7 @@ var BOSSES = [
     description: "Cut one excuse and two grow back — the endless regeneration of weakness",
     lore: "For every bad habit you slay, two more emerge. Only by cauterizing the root — with fire and discipline — can you prevail.",
     hpFormula: "weeklyTarget \xD7 2.6",
-    image: "Tartarus/assets/bosses/Lernaean Hydra.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Lernaean Hydra.png"
   },
   {
     tier: 10,
@@ -184,7 +184,7 @@ var BOSSES = [
     description: "Guardian of transformation — three heads testing body, mind, and spirit",
     lore: "Three heads, three tests. Past the gate lies transformation. But Cerberus lets no one pass who has not earned it.",
     hpFormula: "weeklyTarget \xD7 2.8",
-    image: "Tartarus/assets/bosses/Cerberus.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Cerberus.png"
   },
   {
     tier: 11,
@@ -193,7 +193,7 @@ var BOSSES = [
     description: "Internal voices of guilt and shame attacking even the successful",
     lore: "They whisper your failures, remind you of every skip, every weakness. Even victory does not silence them.",
     hpFormula: "weeklyTarget \xD7 3.0",
-    image: "Tartarus/assets/bosses/The Furies.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/The Furies.png"
   },
   {
     tier: 12,
@@ -202,7 +202,7 @@ var BOSSES = [
     description: "Father of all monsters — the force of chaos threatening to undo all progress",
     lore: "The mightiest of all monsters. He seeks to return you to the beginning, to erase everything you have built.",
     hpFormula: "weeklyTarget \xD7 3.2",
-    image: "Tartarus/assets/bosses/Typhon.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Typhon.png"
   },
   {
     tier: 13,
@@ -211,7 +211,7 @@ var BOSSES = [
     description: "The primordial void from which all monsters are born",
     lore: "Before creation, before order, only Chaos. To master it is to master yourself. Defeating Chaos doubles all rewards for one month.",
     hpFormula: "weeklyTarget \xD7 3.5",
-    image: "Tartarus/assets/bosses/Chaos.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Chaos.png"
   },
   {
     tier: 14,
@@ -220,7 +220,7 @@ var BOSSES = [
     description: "The prison itself — the final test of unshakeable discipline",
     lore: "You have conquered every beast. Now you face the abyss that held them all. Defeat Tartarus and be free from punishment forever.",
     hpFormula: "weeklyTarget \xD7 3.8",
-    image: "Tartarus/assets/bosses/Tartarus.png"
+    image: ".obsidian/plugins/tartarus/assets/bosses/Tartarus.png"
   }
 ];
 var RANK_TIER_COLORS = {
@@ -412,8 +412,8 @@ var DEFAULT_SETTINGS = {
   // Boss customization defaults
   customBosses: [],
   customTartarusTasks: [],
-  tartarusImage: "Tartarus/assets/bosses/Tartarus.png",
-  tartarusBackgroundImage: "Tartarus/assets/backgrounds/Tartarus-background.png",
+  tartarusImage: ".obsidian/plugins/tartarus/assets/bosses/Tartarus.png",
+  tartarusBackgroundImage: ".obsidian/plugins/tartarus/assets/backgrounds/Tartarus-background.png",
   hadesWrathApplied: false,
   // HP threshold boss images
   bossStartOfDayHP: null,
@@ -1154,6 +1154,22 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
     });
     const listWrap = root.createDiv({
       attr: { style: `max-height: 340px; overflow-y: auto; border: 1px solid ${colors.goldBorder}; border-radius: 6px; margin-bottom: 16px;` }
+    });
+    // Header row
+    const headerRow = listWrap.createDiv({
+      attr: { style: `display: flex; align-items: center; padding: 6px 12px; border-bottom: 1px solid ${colors.goldBorder}44;` }
+    });
+    headerRow.createEl("span", {
+      text: "#",
+      attr: { style: `font-family: "Times New Roman", serif; color: ${colors.textMuted}; font-size: 11px; min-width: 28px; letter-spacing: 1px; text-transform: uppercase;` }
+    });
+    headerRow.createEl("span", {
+      text: "Boss",
+      attr: { style: `color: ${colors.textMuted}; font-size: 11px; flex: 1; letter-spacing: 1px; text-transform: uppercase;` }
+    });
+    headerRow.createEl("span", {
+      text: "Title",
+      attr: { style: `color: ${colors.textMuted}; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;` }
     });
     BOSSES.forEach(boss => {
       const tierColor = RANK_TIER_COLORS[boss.tier] || colors.textMuted;
@@ -3492,10 +3508,7 @@ var WizardActivitiesModal = class extends import_obsidian.Modal {
 
       importBtn.addEventListener("click", async () => {
         try {
-          const olenDataPath = ".obsidian/plugins/olen-plugin/data.json";
-          const olenRaw = await this.app.vault.adapter.read(olenDataPath);
-          const olenData = JSON.parse(olenRaw);
-          const olenActivities = olenData.activities || [];
+          const olenActivities = olenPlugin?.settings?.activities || [];
           if (olenActivities.length === 0) {
             statusEl.empty();
             statusEl.createEl("span", { text: "No activities found in Olen.", attr: { style: `color: ${colors.textMuted}; font-size: 13px;` } });
@@ -3538,9 +3551,11 @@ var WizardActivitiesModal = class extends import_obsidian.Modal {
       });
     } else {
       const card = wrap.createDiv({ attr: { style: `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px; text-align: center;` } });
-      card.createEl("div", { text: "OLEN", attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 2px; text-align: center; margin-bottom: 10px;` } });
-      card.createEl("div", { text: "Olen is a comprehensive life-management plugin for Obsidian that integrates habit tracking, dynamic daily scheduling, focused work sessions, and detailed progress analytics to help you build discipline and organize your personal growth.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 10px;` } });
-      card.createEl("div", { text: "Made by the same developer.", attr: { style: `font-size: 12px; color: ${colors.textMuted}; font-style: italic; text-align: center;` } });
+      card.createEl("div", { text: "Want something more from habit trackers?", attr: { style: `font-family: "Times New Roman", serif; font-size: 15px; color: ${colors.text}; text-align: center; margin-bottom: 6px;` } });
+      card.createEl("div", { text: "INTRODUCING OLEN", attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 2px; text-align: center; margin-bottom: 12px;` } });
+      card.createEl("div", { text: "A multilayered life-management plugin for Obsidian that helps you build discipline, organize your daily schedule, and stay connected to your core purpose.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 10px;` } });
+      card.createEl("div", { text: "Olen transforms your vault into a comprehensive dashboard for personal growth. Rather than just giving you a simple checklist, it provides a deeply interconnected system that handles your habits, daily planning, focused work sessions, and long-term motivation\u2014all in one place.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 10px;` } });
+      card.createEl("div", { text: "Made by the same guy.", attr: { style: `font-size: 12px; color: ${colors.textMuted}; font-style: italic; text-align: center;` } });
     }
 
     // Custom habits section
@@ -4434,9 +4449,13 @@ var BossRewardModal = class extends import_obsidian.Modal {
       });
 
       if (rewardOption.image) {
+        let resolvedRewardImg = rewardOption.image;
+        if (!rewardOption.image.startsWith('http://') && !rewardOption.image.startsWith('https://') && !rewardOption.image.startsWith('data:')) {
+          try { resolvedRewardImg = this.plugin.app.vault.adapter.getResourcePath(rewardOption.image); } catch (e) {}
+        }
         const img = rewardCard.createEl("img", {
           attr: {
-            src: rewardOption.image,
+            src: resolvedRewardImg,
             style: "max-width: 80px; max-height: 80px; margin-bottom: 12px; border-radius: 8px;"
           }
         });
