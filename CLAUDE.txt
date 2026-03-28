@@ -1,3 +1,4 @@
+phase 1:
 Olen 
 
 FIX the little blocks on the dashboard, objectives, stats and consistency
@@ -23,6 +24,7 @@ Tartarus turns habit tracking into a mythological RPG, with real stakes and no u
 "View on GitHub" button with this link
 https://github.com/Val-49/Tartarus
 
+phase 2:
 Tartarus 
 
 On the wizard, the activity import should only copy the activities which are enabled: 
