@@ -1,0 +1,38 @@
+Olen 
+
+FIX the little blocks on the dashboard, objectives, stats and consistency
+
+If you can't make them look like the other cards (YOUR DAY, BOSS STATUS and WEEKLY RHYTHM and e.t.c.) REMOVE THEM
+
+Same with the Recent sessions card, if you can't remove the extra saturation, remove the block entirely.
+
+Also rename "THE TEMPLE" of the dashboard to Routines, and on the settings "Temple Unkeep" to Routines 
+
+On the Olen dashboard, the block "BOSS STATUS" says generically "Tier 1 Boss", make it read the title of the game man, it should say the name, or in Tartarus, +hades wrath 
+C'mon
+
+Find the keywords that can be used in a homepage of the user as mini widgets and add them in the settings > profile > as info under the homepage settings
+
+Add Memento Mori description and setting on wizard (copy the code from the settings of the plugin), specifically on the "About You" screen
+
+On "The Tartarus System" screen, rename it "The Tartarus Game"
+Check the code, I don't think it searches for the Tartarus rightly after so much changes
+And write this description instead of the current one:
+Tartarus turns habit tracking into a mythological RPG, with real stakes and no unnecessary gimmicks.
+
+"View on GitHub" button with this link
+https://github.com/Val-49/Tartarus
+
+Tartarus 
+
+On the wizard, the activity import should only copy the activities which are enabled: 
+ "enabled": true,
+
+When Olen is absent, and the screen for that appears, make "Want something more from habit trackers" with smaller text
+
+And add 
+"View on GitHub" button with this link
+https://github.com/Val-49/Olen
+
+Add an extra setting on the "YOUR ADVERSARIES" screen, for boss progression, put the setting of "Auto calculate-HP" (copy for the plugin's settings) and set default on
+And add the extra settings if it gets turned off
