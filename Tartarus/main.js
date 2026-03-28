@@ -414,15 +414,15 @@ var DEFAULT_SETTINGS = {
   customTartarusTasks: [],
   tartarusImage: ".obsidian/plugins/tartarus/assets/bosses/Tartarus.png",
   tartarusBackgroundImage: ".obsidian/plugins/tartarus/assets/backgrounds/Tartarus-background.png",
-  hadesWrathApplied: false,
+  titansWrathApplied: false,
   // HP threshold boss images
   bossStartOfDayHP: null,
   lastHPResetDate: null,
   // Direct damage tracking
   lastCompletionCounts: {},
   // Boss HP scaling defaults
-  useAutoDynamicHP: false,
-  // Default: use manual multipliers
+  useAutoDynamicHP: true,
+  // Default: auto calculate HP
   autoDynamicHPMaxMultiplier: 1.5,
   // Max tier HP = total weekly × this
   bossHPMultiplierMin: 1.1,
@@ -866,7 +866,7 @@ function enterTartarus(settings) {
   settings.bossCurrentHP = settings.bossMaxHP;
   settings.tartarusPenanceTasks = getPenanceTasksForTier(settings.currentTier, settings);
   settings.failedThresholdDays = 0;
-  settings.hadesWrathApplied = false;
+  settings.titansWrathApplied = false;
   new import_obsidian.Notice("You have entered TARTARUS. Complete penance to escape.");
 }
 var DEFAULT_TARTARUS_TASKS = {
@@ -1198,6 +1198,66 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
     const c2 = root.createDiv({ attr: { style: calloutStyle } });
     c2.createEl("span", { text: "Boss 14 \u2014 Tartarus: ", attr: { style: `color: ${colors.gold}; font-weight: bold;` } });
     c2.createEl("span", { text: "Defeat the prison itself and you\u2019re free from punishment forever.", attr: { style: `color: ${colors.text};` } });
+
+    // Boss HP progression setting
+    const hpSection = root.createDiv({ attr: { style: `margin-top: 16px; margin-bottom: 16px;` } });
+    hpSection.createEl("div", {
+      text: "BOSS PROGRESSION",
+      attr: { style: `font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; color: ${colors.textMuted}; text-transform: uppercase; margin-bottom: 10px;` }
+    });
+
+    const renderHPControls = () => {
+      const existing = hpSection.querySelector(".hp-controls");
+      if (existing) existing.remove();
+      const hpControls = hpSection.createDiv({ cls: "hp-controls" });
+
+      const toggleRow = hpControls.createDiv({ attr: { style: `display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 6px; background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; margin-bottom: 10px;` } });
+      const toggleInfo = toggleRow.createDiv();
+      toggleInfo.createEl("div", { text: "Auto calculate HP", attr: { style: `font-family: "Times New Roman", serif; font-size: 13px; color: ${colors.text};` } });
+      toggleInfo.createEl("div", { text: "HP scales automatically with your weekly targets.", attr: { style: `font-size: 11px; color: ${colors.textMuted}; margin-top: 3px;` } });
+      const toggle = toggleRow.createEl("input", { attr: { type: "checkbox", style: `width: 18px; height: 18px; accent-color: ${colors.gold}; cursor: pointer; flex-shrink: 0; margin-left: 12px;` } });
+      toggle.checked = this.plugin.settings.useAutoDynamicHP !== false;
+      toggle.addEventListener("change", async () => {
+        this.plugin.settings.useAutoDynamicHP = toggle.checked;
+        await this.plugin.saveSettings();
+        renderHPControls();
+      });
+
+      if (!this.plugin.settings.useAutoDynamicHP) {
+        const manualWrap = hpControls.createDiv({ attr: { style: `padding: 12px 16px; border-radius: 6px; background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder};` } });
+        manualWrap.createEl("div", { text: "Manual multipliers", attr: { style: `font-size: 11px; color: ${colors.textMuted}; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;` } });
+
+        // Min multiplier (Tier 1)
+        const minRow = manualWrap.createDiv({ attr: { style: `display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;` } });
+        minRow.createEl("span", { text: "Tier 1 multiplier (easiest)", attr: { style: `font-size: 12px; color: ${colors.text};` } });
+        const minInput = minRow.createEl("input", { attr: { type: "number", min: "0.5", max: "5", step: "0.1", value: String(this.plugin.settings.bossHPMultiplierMin ?? 1.1), style: `width: 60px; padding: 4px 6px; border-radius: 4px; background: ${colors.bg}; border: 1px solid ${colors.goldBorder}; color: ${colors.text}; font-size: 12px; text-align: center;` } });
+        minInput.addEventListener("change", async () => {
+          const num = parseFloat(minInput.value);
+          if (!isNaN(num) && num >= 0.5 && num <= 5) {
+            this.plugin.settings.bossHPMultiplierMin = num;
+            await this.plugin.saveSettings();
+          }
+        });
+
+        // Max multiplier (Max Tier)
+        const maxRow = manualWrap.createDiv({ attr: { style: `display: flex; align-items: center; justify-content: space-between;` } });
+        maxRow.createEl("span", { text: "Max tier multiplier (hardest)", attr: { style: `font-size: 12px; color: ${colors.text};` } });
+        const maxInput = maxRow.createEl("input", { attr: { type: "number", min: "0.5", max: "10", step: "0.1", value: String(this.plugin.settings.bossHPMultiplierMax ?? 2.4), style: `width: 60px; padding: 4px 6px; border-radius: 4px; background: ${colors.bg}; border: 1px solid ${colors.goldBorder}; color: ${colors.text}; font-size: 12px; text-align: center;` } });
+        maxInput.addEventListener("change", async () => {
+          const num = parseFloat(maxInput.value);
+          if (!isNaN(num) && num >= 0.5 && num <= 10) {
+            this.plugin.settings.bossHPMultiplierMax = num;
+            await this.plugin.saveSettings();
+          }
+        });
+      }
+    };
+    renderHPControls();
+
+    // Ensure Auto HP is on by default for new users
+    if (this.plugin.settings.useAutoDynamicHP === undefined) {
+      this.plugin.settings.useAutoDynamicHP = true;
+    }
 
     this.renderNav(root, colors, { back: 2, next: 4 });
   }
@@ -1698,7 +1758,7 @@ var TartarusView = class extends import_obsidian.ItemView {
       const effectiveNowTart = getEffectiveNow(settings);
       const daysInTart = settings.tartarusStartDate ? Math.floor((effectiveNowTart.getTime() - new Date(settings.tartarusStartDate).getTime()) / (24 * 60 * 60 * 1e3)) : 0;
       const baseReqTart = settings.currentTier <= 4 ? 3 : settings.currentTier <= 9 ? 4 : 5;
-      const reqTart = settings.hadesWrathApplied ? settings.tartarusPenanceTasks.length : baseReqTart;
+      const reqTart = settings.titansWrathApplied ? settings.tartarusPenanceTasks.length : baseReqTart;
       const completedTart = settings.tartarusPenanceTasks.filter((t) => t.completed).length;
 
       // Days counter
@@ -1778,7 +1838,7 @@ var TartarusView = class extends import_obsidian.ItemView {
       });
 
       // Hades' Wrath warning if active
-      if (settings.hadesWrathApplied) {
+      if (settings.titansWrathApplied) {
         tartarusContent.createEl("div", {
           text: "HADES' WRATH \u2014 Tasks have been doubled",
           attr: {
@@ -2262,7 +2322,7 @@ var TartarusView = class extends import_obsidian.ItemView {
       const effectiveNow = getEffectiveNow(settings);
       const daysIn = settings.tartarusStartDate ? Math.floor((effectiveNow.getTime() - new Date(settings.tartarusStartDate).getTime()) / (24 * 60 * 60 * 1e3)) : 0;
       const baseReq = settings.currentTier <= 4 ? 3 : settings.currentTier <= 9 ? 4 : 5;
-      const requiredTasks = settings.hadesWrathApplied ? settings.tartarusPenanceTasks.length : baseReq;
+      const requiredTasks = settings.titansWrathApplied ? settings.tartarusPenanceTasks.length : baseReq;
       const completedTasks = settings.tartarusPenanceTasks.filter((t) => t.completed).length;
       const remainingTasks = requiredTasks - completedTasks;
       warningBox.createEl("div", {
@@ -3509,14 +3569,15 @@ var WizardActivitiesModal = class extends import_obsidian.Modal {
       importBtn.addEventListener("click", async () => {
         try {
           const olenActivities = olenPlugin?.settings?.activities || [];
-          if (olenActivities.length === 0) {
+          const enabledActivities = olenActivities.filter(a => a.enabled !== false && a.enabled === true);
+          if (enabledActivities.length === 0) {
             statusEl.empty();
-            statusEl.createEl("span", { text: "No activities found in Olen.", attr: { style: `color: ${colors.textMuted}; font-size: 13px;` } });
+            statusEl.createEl("span", { text: "No enabled activities found in Olen.", attr: { style: `color: ${colors.textMuted}; font-size: 13px;` } });
             return;
           }
           const existingNames = this.plugin.settings.customHabits.map(h => h.name.toLowerCase());
           let imported = 0;
-          for (const act of olenActivities) {
+          for (const act of enabledActivities) {
             if (!act.name || !act.folder) continue;
             if (existingNames.includes(act.name.toLowerCase())) continue;
             this.plugin.settings.customHabits.push({
@@ -3551,11 +3612,15 @@ var WizardActivitiesModal = class extends import_obsidian.Modal {
       });
     } else {
       const card = wrap.createDiv({ attr: { style: `background: ${colors.bgLight}; border: 1px solid ${colors.goldBorder}; border-radius: 6px; padding: 20px; margin-bottom: 16px; text-align: center;` } });
-      card.createEl("div", { text: "Want something more from habit trackers?", attr: { style: `font-family: "Times New Roman", serif; font-size: 15px; color: ${colors.text}; text-align: center; margin-bottom: 6px;` } });
+      card.createEl("div", { text: "Want something more from habit trackers?", attr: { style: `font-family: "Times New Roman", serif; font-size: 12px; color: ${colors.textMuted}; text-align: center; margin-bottom: 6px;` } });
       card.createEl("div", { text: "INTRODUCING OLEN", attr: { style: `font-family: "Times New Roman", serif; font-size: 16px; color: ${colors.gold}; letter-spacing: 2px; text-align: center; margin-bottom: 12px;` } });
       card.createEl("div", { text: "A multilayered life-management plugin for Obsidian that helps you build discipline, organize your daily schedule, and stay connected to your core purpose.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 10px;` } });
       card.createEl("div", { text: "Olen transforms your vault into a comprehensive dashboard for personal growth. Rather than just giving you a simple checklist, it provides a deeply interconnected system that handles your habits, daily planning, focused work sessions, and long-term motivation\u2014all in one place.", attr: { style: `font-size: 13px; color: ${colors.text}; line-height: 1.6; text-align: center; margin-bottom: 10px;` } });
-      card.createEl("div", { text: "Made by the same guy.", attr: { style: `font-size: 12px; color: ${colors.textMuted}; font-style: italic; text-align: center;` } });
+      card.createEl("div", { text: "Made by the same guy.", attr: { style: `font-size: 12px; color: ${colors.textMuted}; font-style: italic; text-align: center; margin-bottom: 12px;` } });
+      const olenGhBtn = card.createEl("a", {
+        text: "View on GitHub",
+        attr: { href: "https://github.com/Val-49/Olen", target: "_blank", style: `display: inline-block; font-family: "Times New Roman", serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 20px; cursor: pointer; border-radius: 4px; color: ${colors.gold}; border: 1px solid ${colors.goldBorder}; text-decoration: none;` }
+      });
     }
 
     // Custom habits section
@@ -3946,7 +4011,7 @@ var PenanceModal = class extends import_obsidian.Modal {
         settings.inTartarus = false;
         settings.tartarusPenanceTasks = [];
         settings.tartarusStartDate = null;
-        settings.hadesWrathApplied = false;
+        settings.titansWrathApplied = false;
         await this.plugin.saveSettings();
         this.plugin.refreshRankView();
         new import_obsidian.Notice("You have escaped Tartarus using 3 discipline tokens!");
@@ -3957,7 +4022,7 @@ var PenanceModal = class extends import_obsidian.Modal {
       settings.tartarusPenanceTasks = getPenanceTasksForTier(settings.currentTier, settings);
     }
     const baseRequired = settings.currentTier <= 4 ? 3 : settings.currentTier <= 9 ? 4 : 5;
-    const requiredTasks = settings.hadesWrathApplied ? settings.tartarusPenanceTasks.length : baseRequired;
+    const requiredTasks = settings.titansWrathApplied ? settings.tartarusPenanceTasks.length : baseRequired;
     contentEl.createEl("div", {
       text: `Complete ${requiredTasks} tasks to escape Tartarus`,
       attr: {
@@ -4023,7 +4088,7 @@ var PenanceModal = class extends import_obsidian.Modal {
     const daysInTartarus = settings.tartarusStartDate ? Math.floor((effectiveNow.getTime() - new Date(settings.tartarusStartDate).getTime()) / (24 * 60 * 60 * 1e3)) : 0;
     if (settings.systemState === "paused") {
       contentEl.createEl("div", {
-        text: "\u23F8\uFE0F SYSTEM PAUSED - Hades Wrath timer is frozen",
+        text: "\u23F8\uFE0F SYSTEM PAUSED - Titan's Wrath timer is frozen",
         cls: "tartarus-warning",
         attr: {
           style: `
@@ -4041,9 +4106,9 @@ var PenanceModal = class extends import_obsidian.Modal {
         }
       });
     }
-    if (!settings.hadesWrathApplied && daysInTartarus >= 2 && completedCount < requiredTasks && settings.systemState !== "paused") {
+    if (!settings.titansWrathApplied && daysInTartarus >= 2 && completedCount < requiredTasks && settings.systemState !== "paused") {
       contentEl.createEl("div", {
-        text: `\u26A0\uFE0F HADES WRATH in ${3 - daysInTartarus} day(s)! Complete tasks or they will DOUBLE!`,
+        text: `\u26A0\uFE0F TITAN'S WRATH in ${3 - daysInTartarus} day(s)! Complete tasks or they will DOUBLE!`,
         cls: "tartarus-warning",
         attr: {
           style: `
@@ -4061,9 +4126,9 @@ var PenanceModal = class extends import_obsidian.Modal {
         }
       });
     }
-    if (settings.hadesWrathApplied) {
+    if (settings.titansWrathApplied) {
       contentEl.createEl("div", {
-        text: "\u26A1 HADES WRATH ACTIVE - Tasks have been doubled!",
+        text: "\u26A1 TITAN'S WRATH ACTIVE - Tasks have been doubled!",
         cls: "tartarus-warning",
         attr: {
           style: `
@@ -4108,7 +4173,7 @@ var PenanceModal = class extends import_obsidian.Modal {
         settings.inTartarus = false;
         settings.tartarusPenanceTasks = [];
         settings.tartarusStartDate = null;
-        settings.hadesWrathApplied = false;
+        settings.titansWrathApplied = false;
         await this.plugin.saveSettings();
         this.plugin.refreshRankView();
         new import_obsidian.Notice("You have escaped Tartarus! The boss awaits...");
@@ -7909,7 +7974,7 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     }
     if (this.settings.inTartarus) {
       await this.checkHadesWrath();
-      debugLog.log("THRESH", "Death threshold check skipped (in Tartarus), checked Hades Wrath instead");
+      debugLog.log("THRESH", "Death threshold check skipped (in Tartarus), checked Titan's Wrath instead");
       return;
     }
     const belowThreshold = checkDeathThreshold(this.app, this.settings);
@@ -7937,11 +8002,11 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     }
   }
   /**
-   * Hades Wrath System: If in Tartarus and tasks not completed within 3 days,
+   * Titan's Wrath System: If in Tartarus and tasks not completed within 3 days,
    * double the penance tasks (one-time penalty).
    */
   async checkHadesWrath() {
-    if (!this.settings.inTartarus || this.settings.hadesWrathApplied) {
+    if (!this.settings.inTartarus || this.settings.titansWrathApplied) {
       return;
     }
     if (this.settings.systemState === "paused") {
@@ -7952,21 +8017,21 @@ var TartarusPlugin = class extends import_obsidian.Plugin {
     const completedCount = this.settings.tartarusPenanceTasks.filter((t) => t.completed).length;
     const requiredTasks = this.settings.currentTier <= 4 ? 3 : this.settings.currentTier <= 9 ? 4 : 5;
     if (daysInTartarus >= 3 && completedCount < requiredTasks) {
-      debugLog.log("THRESH", "HADES WRATH TRIGGERED - Tasks doubled!", { daysInTartarus, completedCount, requiredTasks });
+      debugLog.log("THRESH", "TITAN'S WRATH TRIGGERED - Tasks doubled!", { daysInTartarus, completedCount, requiredTasks });
       const incompleteTasks = this.settings.tartarusPenanceTasks.filter((t) => !t.completed);
       const duplicateTasks = incompleteTasks.map((t) => ({
         id: `${t.id}-wrath-${Date.now()}`,
-        description: `${t.description} (Hades Wrath)`,
+        description: `${t.description} (Titan's Wrath)`,
         completed: false
       }));
       this.settings.tartarusPenanceTasks = [
         ...this.settings.tartarusPenanceTasks,
         ...duplicateTasks
       ];
-      this.settings.hadesWrathApplied = true;
+      this.settings.titansWrathApplied = true;
       await this.saveSettings();
       this.refreshRankView();
-      new import_obsidian.Notice("\u26A1 HADES WRATH! Your incomplete tasks have been doubled!");
+      new import_obsidian.Notice("\u26A1 TITAN'S WRATH! Your incomplete tasks have been doubled!");
     }
   }
   async checkPerfectWeek() {

@@ -31,7 +31,7 @@ export function renderBossStatusCard(
   const info = row.createDiv({ cls: "olen-boss-info" });
   info.createEl("div", { cls: "olen-boss-name", text: status.name });
   const tierText = status.inTartarus
-    ? `Tier ${status.tier} · ${status.rank} · +Hades Wrath`
+    ? `Tier ${status.tier} · ${status.rank} · +Titan's Wrath`
     : `Tier ${status.tier} · ${status.rank}`;
   info.createEl("div", {
     cls: "olen-boss-tier",

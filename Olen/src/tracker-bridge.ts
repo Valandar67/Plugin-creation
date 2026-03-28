@@ -18,7 +18,7 @@ export interface TartarusBossState {
   bossName: string;
   bossRank: string;
   inTartarus: boolean;
-  hadesWrathApplied: boolean;
+  titansWrathApplied: boolean;
 }
 
 /** Boss names by tier — mirrors Tartarus's BOSSES array */
@@ -90,7 +90,7 @@ export function getTrackerBossState(app: App): TartarusBossState | null {
     bossName,
     bossRank,
     inTartarus: s.inTartarus ?? false,
-    hadesWrathApplied: s.hadesWrathApplied ?? false,
+    titansWrathApplied: s.titansWrathApplied ?? false,
   };
 }
 
