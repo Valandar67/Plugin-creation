@@ -239,6 +239,7 @@ export default class OlenPlugin extends Plugin {
       this.settings.bossMaxHP = bossState.bossMaxHP;
       this.settings.bossCurrentHP = bossState.bossCurrentHP;
       this.settings.inTartarus = bossState.inTartarus;
+      this.settings.titansWrathApplied = bossState.titansWrathApplied;
       this.settings.bossName = bossState.bossName;
       this.settings.bossRank = bossState.bossRank;
     }

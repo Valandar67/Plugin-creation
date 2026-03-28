@@ -6,7 +6,7 @@
 import { ItemView, WorkspaceLeaf, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { Category, WeightLogFrequency, OlenThemeMode, PreferredTime } from "../types";
-import { VIEW_TYPE_ONBOARDING, LIFE_EXPECTANCY_MALE, LIFE_EXPECTANCY_FEMALE } from "../constants";
+import { VIEW_TYPE_ONBOARDING } from "../constants";
 import { ONBOARDING_ACTIVITIES, buildActivityConfig, CATEGORY_META } from "../data/defaultActivities";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
@@ -218,7 +218,7 @@ export class OnboardingView extends ItemView {
     });
     content.createEl("div", {
       cls: "olen-body-italic",
-      text: "Tartarus turns habit tracking into a mythological RPG, with real stakes and no unnecessary gimmicks.",
+      text: "In case you want to gamify your habit tracking, Tartarus turns it into a mythological RPG with real stakes and no unnecessary gimmicks.",
       attr: { style: "text-align: center; margin-bottom: 24px;" },
     });
 
@@ -261,40 +261,44 @@ export class OnboardingView extends ItemView {
       });
     }
 
-    // "View on GitHub" button
-    const ghBtn = content.createEl("a", {
-      cls: "olen-onboarding-btn olen-onboarding-btn-secondary",
-      text: "View on GitHub",
-      attr: {
-        href: "https://github.com/Val-49/Tartarus",
-        target: "_blank",
-        style: "display: inline-block; text-align: center; margin-bottom: 20px; text-decoration: none; cursor: pointer;",
-      },
-    });
+    if (!isTartarusInstalled) {
+      // "View on GitHub" button — only when Tartarus is NOT installed
+      content.createEl("a", {
+        cls: "olen-onboarding-btn olen-onboarding-btn-secondary",
+        text: "View on GitHub",
+        attr: {
+          href: "https://github.com/Val-49/Tartarus",
+          target: "_blank",
+          style: "display: inline-block; text-align: center; margin-bottom: 20px; text-decoration: none; cursor: pointer;",
+        },
+      });
+    }
 
-    // Toggle
-    const toggleRow = content.createDiv({
-      attr: { style: "display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);" },
-    });
+    if (isTartarusInstalled) {
+      // Toggle — only when Tartarus IS installed
+      const toggleRow = content.createDiv({
+        attr: { style: "display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);" },
+      });
 
-    const toggleInfo = toggleRow.createDiv();
-    toggleInfo.createEl("div", {
-      cls: "olen-heading",
-      text: "ENABLE TARTARUS",
-    });
-    toggleInfo.createEl("div", {
-      cls: "olen-data-sm",
-      text: "Turn off for a simpler experience without bosses or ranks.",
-      attr: { style: "opacity: 0.6; margin-top: 4px;" },
-    });
+      const toggleInfo = toggleRow.createDiv();
+      toggleInfo.createEl("div", {
+        cls: "olen-heading",
+        text: "ENABLE TARTARUS",
+      });
+      toggleInfo.createEl("div", {
+        cls: "olen-data-sm",
+        text: "Turn off for a simpler experience without bosses or ranks.",
+        attr: { style: "opacity: 0.6; margin-top: 4px;" },
+      });
 
-    const toggle = toggleRow.createEl("input", {
-      attr: { type: "checkbox", style: "width: 20px; height: 20px; accent-color: var(--accent-gold, #d4a843); cursor: pointer; flex-shrink: 0; margin-left: 16px;" },
-    }) as HTMLInputElement;
-    toggle.checked = this.plugin.settings.enableTartarus !== false;
-    toggle.addEventListener("change", () => {
-      this.plugin.settings.enableTartarus = toggle.checked;
-    });
+      const toggle = toggleRow.createEl("input", {
+        attr: { type: "checkbox", style: "width: 20px; height: 20px; accent-color: var(--accent-gold, #d4a843); cursor: pointer; flex-shrink: 0; margin-left: 16px;" },
+      }) as HTMLInputElement;
+      toggle.checked = this.plugin.settings.enableTartarus !== false;
+      toggle.addEventListener("change", () => {
+        this.plugin.settings.enableTartarus = toggle.checked;
+      });
+    }
 
     this.renderNav(content, {
       back: 1,
@@ -409,46 +413,6 @@ export class OnboardingView extends ItemView {
       },
     });
 
-    // Memento Mori section
-    const mementoHeader = content.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-top: 16px;" } });
-    mementoHeader.createEl("label", { cls: "olen-heading", text: "MEMENTO MORI" });
-    mementoHeader.createEl("div", {
-      cls: "olen-body-italic",
-      text: "Remember you are mortal. Used to show how much of your life has passed.",
-      attr: { style: "margin-bottom: 8px;" },
-    });
-
-    // Birthdate
-    const birthField = content.createDiv({ cls: "olen-onboarding-field" });
-    birthField.createEl("label", { cls: "olen-heading", text: "BIRTHDATE", attr: { style: "font-size: 0.8em;" } });
-    const birthInput = birthField.createEl("input", {
-      cls: "olen-onboarding-input",
-      attr: {
-        type: "text",
-        placeholder: "YYYY-MM-DD",
-        value: this.plugin.settings.personalStats.birthdate ?? "",
-      },
-    });
-
-    // Life expectancy
-    const expectField = content.createDiv({ cls: "olen-onboarding-field" });
-    expectField.createEl("label", { cls: "olen-heading", text: "LIFE EXPECTANCY (YEARS)", attr: { style: "font-size: 0.8em;" } });
-    const currentGender = this.plugin.settings.personalStats.gender;
-    const defaultExpectancy = currentGender === "female" ? LIFE_EXPECTANCY_FEMALE : LIFE_EXPECTANCY_MALE;
-    expectField.createEl("div", {
-      cls: "olen-body-italic",
-      text: `Leave empty to use default (${defaultExpectancy} years based on gender).`,
-      attr: { style: "margin-bottom: 8px; font-size: 0.8em;" },
-    });
-    const expectInput = expectField.createEl("input", {
-      cls: "olen-onboarding-input",
-      attr: {
-        type: "text",
-        placeholder: `${defaultExpectancy} (auto)`,
-        value: this.plugin.settings.personalStats.lifeExpectancy ? String(this.plugin.settings.personalStats.lifeExpectancy) : "",
-      },
-    });
-
     // Navigation
     this.renderNav(content, {
       back: 2,
@@ -461,14 +425,6 @@ export class OnboardingView extends ItemView {
         this.plugin.settings.myWhy = whyInput.value.trim();
         this.plugin.settings.aphorism = aphInput.value.trim();
         this.plugin.settings.homepage = homeInput.value.trim();
-
-        // Memento Mori
-        const birthVal = birthInput.value.trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(birthVal) || birthVal === "") {
-          this.plugin.settings.personalStats.birthdate = birthVal;
-        }
-        const expectVal = parseFloat(expectInput.value);
-        this.plugin.settings.personalStats.lifeExpectancy = (!isNaN(expectVal) && expectVal > 0) ? expectVal : 0;
 
         // Parse goals
         const lines = goalsInput.value
@@ -507,7 +463,7 @@ export class OnboardingView extends ItemView {
     });
     content.createEl("div", {
       cls: "olen-body-italic",
-      text: "Used for weight tracking reminders and strength calculations. All optional.",
+      text: "Used for weight tracking, strength calculations, and Memento Mori. All optional.",
       attr: { style: "text-align: center; margin-bottom: 32px;" },
     });
 
@@ -602,6 +558,24 @@ export class OnboardingView extends ItemView {
     sleepInput.addEventListener("input", updateSleepLabel);
     updateSleepLabel();
 
+    // Memento Mori toggle
+    const mementoField = content.createDiv({ cls: "olen-onboarding-field", attr: { style: "margin-top: 16px;" } });
+    const mementoToggleRow = mementoField.createDiv({
+      attr: { style: "display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);" },
+    });
+    const mementoInfo = mementoToggleRow.createDiv();
+    mementoInfo.createEl("div", { cls: "olen-heading", text: "MEMENTO MORI" });
+    mementoInfo.createEl("div", {
+      cls: "olen-data-sm",
+      text: "A reality wake-up call showing how much of your life has passed. Turn this off if you find it too macabre.",
+      attr: { style: "opacity: 0.6; margin-top: 4px; max-width: 260px;" },
+    });
+    const hidden = this.plugin.settings.devConfig.hiddenSections;
+    const mementoToggle = mementoToggleRow.createEl("input", {
+      attr: { type: "checkbox", style: "width: 20px; height: 20px; accent-color: var(--accent-gold, #d4a843); cursor: pointer; flex-shrink: 0; margin-left: 16px;" },
+    }) as HTMLInputElement;
+    mementoToggle.checked = !hidden.includes("mementomori");
+
     // Navigation
     this.renderNav(content, {
       back: 3,
@@ -616,6 +590,15 @@ export class OnboardingView extends ItemView {
         stats.weightLogFrequency = freqSelect.value as WeightLogFrequency;
         const s = parseFloat(sleepInput.value);
         if (!isNaN(s) && s >= 0 && s <= 24) stats.sleepTime = s;
+
+        // Memento Mori toggle
+        const idx = this.plugin.settings.devConfig.hiddenSections.indexOf("mementomori");
+        if (mementoToggle.checked && idx !== -1) {
+          this.plugin.settings.devConfig.hiddenSections.splice(idx, 1);
+        } else if (!mementoToggle.checked && idx === -1) {
+          this.plugin.settings.devConfig.hiddenSections.push("mementomori");
+        }
+
         this.plugin.saveSettings();
       },
     });
@@ -689,9 +672,11 @@ export class OnboardingView extends ItemView {
           new Notice("Select at least one domain");
           return false;
         }
-        // Disable activities from unselected categories
+        // Enable activities from selected categories, disable from unselected
         for (const activity of this.plugin.settings.activities) {
-          if (!enabledCategories.has(activity.category)) {
+          if (enabledCategories.has(activity.category)) {
+            activity.enabled = true;
+          } else {
             activity.enabled = false;
           }
         }
@@ -1435,7 +1420,7 @@ export class OnboardingView extends ItemView {
       await this.plugin.saveSettings();
       new Notice("Welcome to Olen. Your journey begins.");
       this.leaf.detach();
-      this.plugin.activateDashboard();
+      await this.plugin.activateDashboard();
     });
   }
 

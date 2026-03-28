@@ -264,6 +264,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   bossName: "",
   bossRank: "",
   inTartarus: false,
+  titansWrathApplied: false,
   tartarusPenanceTasks: [],
   tartarusStartDate: null,
   failedThresholdDays: 0,

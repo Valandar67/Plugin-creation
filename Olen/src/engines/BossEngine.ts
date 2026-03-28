@@ -13,6 +13,7 @@ export interface BossStatus {
   percent: number;
   tier: number;
   inTartarus: boolean;
+  titansWrathApplied: boolean;
   isDangerZone: boolean;
 }
 
@@ -37,6 +38,7 @@ export class BossEngine {
       percent,
       tier,
       inTartarus: this.settings.inTartarus,
+      titansWrathApplied: this.settings.titansWrathApplied,
       isDangerZone: this.isDangerZone(),
     };
   }

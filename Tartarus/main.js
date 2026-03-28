@@ -1259,7 +1259,23 @@ var TartarusWizardView = class extends import_obsidian.ItemView {
       this.plugin.settings.useAutoDynamicHP = true;
     }
 
-    this.renderNav(root, colors, { back: 2, next: 4 });
+    this.renderNav(root, colors, { back: 2, next: 4, onNext: () => {
+      // Recalculate boss HP after configuring activities and HP settings
+      const allActivities = [
+        ...getEffectiveActivities(this.plugin.settings).filter((a) => this.plugin.settings.enabledActivities[a._originalName] ?? true),
+        ...this.plugin.settings.customHabits.filter((h) => h.enabled)
+      ];
+      const targets = allActivities.length > 0 ? allActivities.map((a) => a.weeklyTarget || 7) : [7];
+      const total = targets.reduce((sum, t) => sum + t, 0);
+      const lowest = Math.min(...targets);
+      const newMaxHP = calculateBossHP(total, this.plugin.settings.currentTier, this.plugin.settings, lowest);
+      this.plugin.settings.bossMaxHP = newMaxHP;
+      if (this.plugin.settings.bossCurrentHP > newMaxHP) {
+        this.plugin.settings.bossCurrentHP = newMaxHP;
+      }
+      this.plugin.saveSettings();
+      if (this.plugin.refreshRankView) this.plugin.refreshRankView();
+    }});
   }
   // --- Screen 4: Launch ---
   renderScreen6_Launch(root, colors) {

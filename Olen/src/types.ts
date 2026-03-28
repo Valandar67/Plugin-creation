@@ -440,6 +440,7 @@ export interface OlenSettings {
   bossName: string;
   bossRank: string;
   inTartarus: boolean;
+  titansWrathApplied: boolean;
   tartarusPenanceTasks: TartarusPenanceTask[];
   tartarusStartDate: string | null;
   failedThresholdDays: number;
