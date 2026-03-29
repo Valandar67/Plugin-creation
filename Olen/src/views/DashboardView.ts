@@ -199,12 +199,16 @@ export class DashboardView extends ItemView {
               async () => {
                 settings.sundayCheckin.enabled = false;
                 await this.plugin.saveSettings();
+                await this.render();
               },
               async () => {
                 settings.sundayCheckin.consecutiveIgnores = 0;
                 await this.plugin.saveSettings();
+                await this.render();
               },
             );
+          } else {
+            await this.render();
           }
         },
       });

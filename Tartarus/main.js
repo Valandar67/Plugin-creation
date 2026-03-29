@@ -2273,9 +2273,10 @@ var TartarusView = class extends import_obsidian.ItemView {
       });
     }
 
-    // Reward boxes
-    this.renderRewardBoxes(wrapper, colors);
     } // End of !inTartarus block for HP bar and rewards
+
+    // Reward boxes (render in both normal and Tartarus modes)
+    this.renderRewardBoxes(wrapper, colors);
 
     if (!settings.inTartarus && settings.systemState === "active") {
       const allActivities = [

@@ -227,6 +227,12 @@ export class OnboardingView extends ItemView {
       ?? (this.app as any).plugins?.plugins?.["mythological-habit-tracker"];
     const isTartarusInstalled = !!tartarusPlugin;
 
+    // If Tartarus is not installed, ensure the setting is OFF
+    if (!isTartarusInstalled) {
+      this.plugin.settings.enableTartarus = false;
+      this.plugin.saveSettings();
+    }
+
     // Explanation card
     const card = content.createDiv({ cls: "olen-card", attr: { style: "padding: 20px; margin-bottom: 24px;" } });
     card.style.setProperty("--i", "0");
@@ -671,6 +677,15 @@ export class OnboardingView extends ItemView {
         if (enabledCategories.size === 0) {
           new Notice("Select at least one domain");
           return false;
+        }
+        // Pre-create activities for selected categories if they don't exist yet
+        for (const group of ONBOARDING_ACTIVITIES) {
+          if (!enabledCategories.has(group.category)) continue;
+          for (const template of group.activities) {
+            if (!this.plugin.settings.activities.some((a) => a.id === template.id)) {
+              this.plugin.settings.activities.push(buildActivityConfig(template, group.category));
+            }
+          }
         }
         // Enable activities from selected categories, disable from unselected
         for (const activity of this.plugin.settings.activities) {
