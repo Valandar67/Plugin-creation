@@ -292,15 +292,20 @@ export default class OlenPlugin extends Plugin {
       }
     }
 
-    // Sync custom habits from tracker
+    // Sync custom habits from tracker (only add truly new ones — skip
+    // activities that already exist by name to prevent circular duplication
+    // when Tartarus imports activities from Olen and Olen re-syncs them back)
     if (Array.isArray(s.customHabits)) {
       for (const custom of s.customHabits) {
-        const existing = this.settings.activities.find(
-          (a) => a.id === `tracker-${custom.name?.toLowerCase().replace(/\s+/g, "-")}`
+        if (!custom.name || !custom.folder || !custom.field) continue;
+        const trackerId = `tracker-${custom.name.toLowerCase().replace(/\s+/g, "-")}`;
+        const existingById = this.settings.activities.find((a) => a.id === trackerId);
+        const existingByName = this.settings.activities.find(
+          (a) => a.name.toLowerCase() === custom.name.toLowerCase()
         );
-        if (!existing && custom.name && custom.folder && custom.field) {
+        if (!existingById && !existingByName) {
           this.settings.activities.push({
-            id: `tracker-${custom.name.toLowerCase().replace(/\s+/g, "-")}`,
+            id: trackerId,
             name: custom.name,
             emoji: custom.emoji ?? "\u2B50",
             category: custom.category ?? "spirit",
