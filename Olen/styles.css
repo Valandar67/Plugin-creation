@@ -256,21 +256,12 @@
   inset: -30px;
   background-size: cover;
   background-position: center;
-  filter: blur(20px) brightness(0.5) saturate(1.3);
-  transform: scale(1.2);
   z-index: 0;
 }
 
 .olen-hero-overlay {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(180deg,
-      transparent 0%,
-      transparent 40%,
-      rgba(0, 0, 0, 0.1) 70%,
-      rgba(0, 0, 0, 0.3) 100%
-    );
   z-index: 1;
 }
 

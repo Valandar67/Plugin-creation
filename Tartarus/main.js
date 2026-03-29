@@ -2778,9 +2778,19 @@ var TartarusView = class extends import_obsidian.ItemView {
       });
 
       let previewIndex = 0;
+      const defaultEmojis = { activity: "\u{1FA99}", streak: "\u{1F525}", boss: "\u2694\uFE0F" };
       const renderIcon = (idx) => {
         iconSlot.empty();
-        if (!poolOptions || poolOptions.length === 0) return;
+        if (!poolOptions || poolOptions.length === 0) {
+          // Show default emoji when no pool options configured
+          const fallback = defaultEmojis[type] || "\u{1FA99}";
+          const opacityStyle = isClaimable ? '1' : '0.5';
+          iconSlot.createEl("span", {
+            text: fallback,
+            attr: { style: `font-size: 18px; line-height: 24px; opacity: ${opacityStyle};` }
+          });
+          return;
+        }
         const opt = poolOptions[idx % poolOptions.length];
         const opacityStyle = isClaimable ? '1' : '0.5';
         const filterStyle = isClaimable ? 'none' : 'grayscale(0.5)';
