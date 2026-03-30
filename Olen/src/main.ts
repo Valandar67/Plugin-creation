@@ -68,6 +68,11 @@ export default class OlenPlugin extends Plugin {
       DEFAULT_SUNDAY_CHECKIN,
       this.settings.sundayCheckin
     );
+    this.settings.lifePhasesProgress = Object.assign(
+      {},
+      { completedCommands: {} },
+      this.settings.lifePhasesProgress
+    );
 
     // Migrate legacy field names from session → workspace
     await this.migrateSessionToWorkspace();

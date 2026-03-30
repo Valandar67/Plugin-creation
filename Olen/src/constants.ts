@@ -328,4 +328,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
 
   // Sunday Check-in
   sundayCheckin: DEFAULT_SUNDAY_CHECKIN,
+
+  // Life Phases Guide
+  lifePhasesProgress: { completedCommands: {} },
 };

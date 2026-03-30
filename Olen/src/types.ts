@@ -499,6 +499,14 @@ export interface OlenSettings {
 
   // Sunday Check-in
   sundayCheckin: SundayCheckinSettings;
+
+  // Life Phases Guide
+  lifePhasesProgress: LifePhasesProgress;
+}
+
+export interface LifePhasesProgress {
+  /** Map of step index -> array of completed command indices */
+  completedCommands: Record<number, number[]>;
 }
 
 // --- TrackHabitRank data.json shape (for migration) ---

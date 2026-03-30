@@ -3741,6 +3741,117 @@
   color: rgba(255, 255, 255, 0.2);
 }
 
+.olen-hero-why-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.olen-hero-why-info {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 50%;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+}
+
+.olen-hero-why-info:hover {
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* --- Life Phases Guide Modal --- */
+
+.olen-lifephases-sheet {
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.olen-lifephases-step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.olen-lifephases-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: background 0.2s;
+}
+
+.olen-lifephases-dot.active {
+  background: var(--accent-gold, #d4a843);
+}
+
+.olen-lifephases-dot.completed {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.olen-lifephases-description {
+  font-family: "Georgia", serif;
+  font-size: 13px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 20px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.olen-lifephases-commands {
+  margin-bottom: 8px;
+}
+
+.olen-lifephases-command {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.olen-lifephases-command input[type="checkbox"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.olen-lifephases-command label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.olen-lifephases-command.checked label {
+  text-decoration: line-through;
+  opacity: 0.4;
+}
+
+.olen-lifephases-complete-badge {
+  text-align: center;
+  color: var(--accent-gold, #d4a843);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  margin-top: 12px;
+}
+
+.olen-lifephases-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 12px;
+}
+
 /* ============================================================
    REDESIGNED MODALS — Keyboard-aware, glass, neutral
    ============================================================ */
