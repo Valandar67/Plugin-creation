@@ -16,6 +16,7 @@ import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { renderMementoMoriFull } from "../components/MementoMori";
 import { createJournalEntry, getRecentJournalEntries } from "../utils/journal";
+import { openFindingWhyModal } from "../modals/LifePhasesModal";
 
 export class DreamBoardView extends ItemView {
   plugin: OlenPlugin;
@@ -82,10 +83,17 @@ export class DreamBoardView extends ItemView {
 
     // Header section
     const header = root.createDiv({ cls: "olen-dreamboard-header" });
-    header.createEl("div", {
+    const titleRow = header.createDiv({ cls: "olen-dreamboard-title-row" });
+    titleRow.createEl("div", {
       cls: "olen-dreamboard-title",
       text: "My Why",
     });
+    const infoBtn = titleRow.createEl("button", {
+      cls: "olen-dreamboard-title-info",
+      attr: { "aria-label": "Finding Your Why guide" },
+    });
+    infoBtn.textContent = "\u24D8";
+    infoBtn.addEventListener("click", () => openFindingWhyModal(this.plugin));
 
     // Aphorism section
     this.renderAphorismSection(root, settings.aphorism ?? "");

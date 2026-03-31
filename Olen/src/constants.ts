@@ -329,6 +329,12 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
   // Sunday Check-in
   sundayCheckin: DEFAULT_SUNDAY_CHECKIN,
 
-  // Life Phases Guide
-  lifePhasesProgress: { completedCommands: {} },
+  // Finding Your Why Guide
+  findingWhyProgress: {
+    lastCompletedScreen: -1,
+    tookConfrontationPath: false,
+    completedCommands: {},
+    selectedSubAreas: [],
+    flowComplete: false,
+  },
 };

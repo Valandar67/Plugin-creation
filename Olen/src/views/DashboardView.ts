@@ -26,7 +26,6 @@ import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import { renderMementoMoriCompact } from "../components/MementoMori";
 import { shouldShowSundayBanner, renderSundayBanner, renderOptOutModal } from "../components/SundayCheckin";
 import { openSundayModal } from "../modals/SundayModal";
-import { openLifePhasesModal } from "../modals/LifePhasesModal";
 // MyWhyModal is no longer used — tapping "My Why" navigates to DreamBoardView
 import { showTaskModal } from "../modals/TaskModal";
 
@@ -112,7 +111,6 @@ export class DashboardView extends ItemView {
         case "hero":
           renderHeroCard(root, settings, engine, staggerIdx++, {
             onMyWhy: () => this.plugin.activateDreamBoard(),
-            onLifePhasesGuide: () => openLifePhasesModal(this.plugin),
           });
           break;
 

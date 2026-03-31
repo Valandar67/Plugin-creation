@@ -1,201 +1,537 @@
 // ============================================================
-// Olen — Life Phases Guide Modal
-// Card-based step navigation with persistent checkboxes
+// Olen — Finding Your Why Modal
+// 9-screen branching guided flow using Sunday modal pattern
 // ============================================================
 
 import type OlenPlugin from "../main";
-import { LIFE_PHASES_STEPS } from "../data/lifePhasesContent";
+import { SCREENS, VISION_SUB_AREAS } from "../data/lifePhasesContent";
+import type { Category } from "../types";
 
-export function openLifePhasesModal(plugin: OlenPlugin): void {
-  let currentStep = getFirstIncompleteStep(plugin);
+export function openFindingWhyModal(plugin: OlenPlugin): void {
+  const progress = plugin.settings.findingWhyProgress;
+  let currentScreen = getFirstIncompleteScreen(plugin);
 
+  // --- Overlay (Sunday modal pattern) ---
   const overlay = document.createElement("div");
-  overlay.className = "olen-modal-overlay";
+  overlay.className = "olen-sunday-modal-overlay";
 
-  const sheet = document.createElement("div");
-  sheet.className = "olen-modal-sheet olen-lifephases-sheet";
-  overlay.appendChild(sheet);
+  const modal = document.createElement("div");
+  modal.className = "olen-sunday-modal";
+  overlay.appendChild(modal);
 
-  // Backdrop close
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.classList.add("olen-sunday-modal-visible");
+    });
+  });
+
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
 
   function closeModal(): void {
-    overlay.classList.remove("visible");
-    cleanupViewport();
-    setTimeout(() => overlay.remove(), 300);
+    overlay.classList.add("olen-sunday-modal-fading");
+    overlay.classList.remove("olen-sunday-modal-visible");
+    setTimeout(() => overlay.remove(), 500);
   }
 
-  function renderStep(stepIndex: number): void {
-    sheet.innerHTML = "";
-    const step = LIFE_PHASES_STEPS[stepIndex];
-    const progress = plugin.settings.lifePhasesProgress;
-    const completed = progress.completedCommands[stepIndex] ?? [];
+  function navigateTo(screenIndex: number): void {
+    currentScreen = screenIndex;
+    renderScreen(screenIndex);
+  }
 
-    // Handle bar
-    const handle = document.createElement("div");
-    handle.className = "olen-modal-handle";
-    sheet.appendChild(handle);
+  function renderScreen(screenIndex: number): void {
+    modal.innerHTML = "";
+    const step = document.createElement("div");
+    step.className = "olen-sunday-step";
+    modal.appendChild(step);
 
-    // Step dots
-    const dots = document.createElement("div");
-    dots.className = "olen-lifephases-step-indicator";
-    for (let i = 0; i < LIFE_PHASES_STEPS.length; i++) {
-      const dot = document.createElement("div");
-      dot.className = "olen-lifephases-dot";
-      if (i === stepIndex) dot.classList.add("active");
-      else if (isStepComplete(plugin, i)) dot.classList.add("completed");
-      dots.appendChild(dot);
+    switch (screenIndex) {
+      case 0: renderScreen0_Entry(step); break;
+      case 1: renderScreen1_Intro(step); break;
+      case 2: renderScreen2_Branch(step); break;
+      case 3: renderScreen3_Confrontation(step); break;
+      case 4: renderScreen4_Vision(step); break;
+      case 5: renderScreen5_Write(step); break;
+      case 6: renderScreen6_Structure(step); break;
+      case 7: renderScreen7_OpenMind(step); break;
+      case 8: renderScreen8_Evolve(step); break;
     }
-    sheet.appendChild(dots);
+  }
 
-    // Title
-    const title = document.createElement("div");
-    title.className = "olen-modal-title";
-    title.textContent = step.title;
-    sheet.appendChild(title);
+  // === Screen 0: Entry ===
+  function renderScreen0_Entry(step: HTMLElement): void {
+    const dialogue = document.createElement("div");
+    dialogue.className = "olen-sunday-dialogue";
+    dialogue.textContent = "Struggling to find your why?";
+    step.appendChild(dialogue);
 
-    // Description
+    const actions = document.createElement("div");
+    actions.className = "olen-findwhy-yesno";
+    step.appendChild(actions);
+
+    const yesBtn = document.createElement("button");
+    yesBtn.className = "olen-findwhy-btn";
+    yesBtn.textContent = "Yes";
+    yesBtn.addEventListener("click", () => {
+      markScreenComplete(0);
+      navigateTo(1);
+    });
+    actions.appendChild(yesBtn);
+
+    const noBtn = document.createElement("button");
+    noBtn.className = "olen-findwhy-btn olen-findwhy-btn-secondary";
+    noBtn.textContent = "No";
+    noBtn.addEventListener("click", () => closeModal());
+    actions.appendChild(noBtn);
+  }
+
+  // === Screen 1: Intro ===
+  function renderScreen1_Intro(step: HTMLElement): void {
+    const screen = SCREENS[1];
+    const dialogue = document.createElement("div");
+    dialogue.className = "olen-sunday-dialogue";
+    dialogue.textContent = screen.dialogue!;
+    step.appendChild(dialogue);
+
+    const actions = document.createElement("div");
+    actions.className = "olen-findwhy-yesno";
+    step.appendChild(actions);
+
+    const okBtn = document.createElement("button");
+    okBtn.className = "olen-findwhy-btn";
+    okBtn.textContent = "Ok";
+    okBtn.addEventListener("click", () => {
+      markScreenComplete(1);
+      navigateTo(2);
+    });
+    actions.appendChild(okBtn);
+  }
+
+  // === Screen 2: Branch ===
+  function renderScreen2_Branch(step: HTMLElement): void {
+    const dialogue = document.createElement("div");
+    dialogue.className = "olen-sunday-dialogue";
+    dialogue.textContent = "Does any part of your current life feel like it\u2019s quietly sabotaging your future?";
+    step.appendChild(dialogue);
+
+    const actions = document.createElement("div");
+    actions.className = "olen-findwhy-yesno";
+    step.appendChild(actions);
+
+    const yesBtn = document.createElement("button");
+    yesBtn.className = "olen-findwhy-btn";
+    yesBtn.textContent = "Yes";
+    yesBtn.addEventListener("click", async () => {
+      progress.tookConfrontationPath = true;
+      markScreenComplete(2);
+      await plugin.saveSettings();
+      navigateTo(3);
+    });
+    actions.appendChild(yesBtn);
+
+    const noBtn = document.createElement("button");
+    noBtn.className = "olen-findwhy-btn olen-findwhy-btn-secondary";
+    noBtn.textContent = "No";
+    noBtn.addEventListener("click", async () => {
+      progress.tookConfrontationPath = false;
+      markScreenComplete(2);
+      // Also mark confrontation as complete (skipped)
+      markScreenComplete(3);
+      await plugin.saveSettings();
+      navigateTo(4);
+    });
+    actions.appendChild(noBtn);
+  }
+
+  // === Screen 3: Confrontation (gated) ===
+  function renderScreen3_Confrontation(step: HTMLElement): void {
+    const screen = SCREENS[3];
+
     const desc = document.createElement("div");
-    desc.className = "olen-lifephases-description";
-    desc.textContent = step.description;
-    sheet.appendChild(desc);
+    desc.className = "olen-findwhy-description";
+    desc.textContent = screen.description!;
+    step.appendChild(desc);
 
-    // Commands with checkboxes
-    const commandsContainer = document.createElement("div");
-    commandsContainer.className = "olen-lifephases-commands";
+    const { container, allChecked } = renderCheckboxes(step, 3, screen.commands!);
 
-    for (let ci = 0; ci < step.commands.length; ci++) {
-      const isChecked = completed.includes(ci);
+    // Transition text
+    const transition = document.createElement("div");
+    transition.className = "olen-findwhy-transition";
+    transition.textContent = "You found the problem, and that you need to solve it. To solve that inertia, we need to find your why.";
+    transition.style.display = allChecked() ? "block" : "none";
+    step.appendChild(transition);
 
+    // Nav
+    const nav = createNav(step, {
+      back: 2,
+      next: 4,
+      gated: true,
+      allChecked,
+      onNext: () => markScreenComplete(3),
+    });
+
+    container.addEventListener("change", () => {
+      transition.style.display = allChecked() ? "block" : "none";
+      updateNavState(nav, allChecked());
+    });
+  }
+
+  // === Screen 4: Vision ===
+  function renderScreen4_Vision(step: HTMLElement): void {
+    const settings = plugin.settings;
+    const gender = settings.personalStats?.gender;
+    const genderWord = gender === "female" ? "woman" : gender === "male" ? "man" : "person";
+    const userName = settings.userName || "friend";
+
+    const greeting = document.createElement("div");
+    greeting.className = "olen-sunday-dialogue";
+    greeting.textContent = `${userName}, close your eyes and envision the ${genderWord} you want to be. Whether in 5 or 10 or 50 years. Be precise.`;
+    step.appendChild(greeting);
+
+    const subtitle = document.createElement("div");
+    subtitle.className = "olen-findwhy-description";
+    subtitle.textContent = "Not a title, not material wealth \u2014 someone living with purpose and beauty.";
+    step.appendChild(subtitle);
+
+    const selectedAreas = new Set<string>(progress.selectedSubAreas ?? []);
+
+    // Group sub-areas by category
+    const categories: Category[] = ["body", "mind", "spirit"];
+    const colorVars: Record<Category, string> = {
+      body: "var(--body-color, #e07a5f)",
+      mind: "var(--mind-color, #81b29a)",
+      spirit: "var(--spirit-color, #f2cc8f)",
+    };
+    const catLabels: Record<Category, string> = {
+      body: "BODY",
+      mind: "MIND",
+      spirit: "SPIRIT",
+    };
+
+    for (const cat of categories) {
+      const group = document.createElement("div");
+      group.className = "olen-findwhy-chip-group";
+
+      const header = document.createElement("div");
+      header.className = "olen-findwhy-chip-header";
+      header.textContent = catLabels[cat];
+      header.style.color = colorVars[cat];
+      group.appendChild(header);
+
+      const chipRow = document.createElement("div");
+      chipRow.className = "olen-findwhy-chips";
+
+      const areas = VISION_SUB_AREAS.filter((a) => a.category === cat);
+      for (const area of areas) {
+        const chip = document.createElement("button");
+        chip.className = "olen-findwhy-chip";
+        chip.textContent = area.label;
+        chip.style.setProperty("--chip-color", colorVars[cat]);
+
+        if (selectedAreas.has(area.id)) {
+          chip.classList.add("selected");
+        }
+
+        chip.addEventListener("click", () => {
+          if (selectedAreas.has(area.id)) {
+            selectedAreas.delete(area.id);
+            chip.classList.remove("selected");
+          } else {
+            selectedAreas.add(area.id);
+            chip.classList.add("selected");
+          }
+          progress.selectedSubAreas = [...selectedAreas];
+          plugin.saveSettings();
+          updateNavState(nav, selectedAreas.size > 0);
+        });
+        chipRow.appendChild(chip);
+      }
+      group.appendChild(chipRow);
+      step.appendChild(group);
+    }
+
+    // Nav
+    const backScreen = progress.tookConfrontationPath ? 3 : 2;
+    const nav = createNav(step, {
+      back: backScreen,
+      next: 5,
+      gated: true,
+      allChecked: () => selectedAreas.size > 0,
+      onNext: () => markScreenComplete(4),
+    });
+  }
+
+  // === Screen 5: Write Your Why (gated) ===
+  function renderScreen5_Write(step: HTMLElement): void {
+    // Tags showing selected sub-areas
+    const selected = progress.selectedSubAreas ?? [];
+    if (selected.length > 0) {
+      const tagRow = document.createElement("div");
+      tagRow.className = "olen-findwhy-tags";
+      for (const areaId of selected) {
+        const area = VISION_SUB_AREAS.find((a) => a.id === areaId);
+        if (!area) continue;
+        const colorVars: Record<Category, string> = {
+          body: "var(--body-color, #e07a5f)",
+          mind: "var(--mind-color, #81b29a)",
+          spirit: "var(--spirit-color, #f2cc8f)",
+        };
+        const tag = document.createElement("span");
+        tag.className = "olen-findwhy-tag";
+        tag.textContent = area.label;
+        tag.style.setProperty("--tag-color", colorVars[area.category]);
+        tagRow.appendChild(tag);
+      }
+      step.appendChild(tagRow);
+    }
+
+    const dialogue = document.createElement("div");
+    dialogue.className = "olen-sunday-dialogue";
+    dialogue.textContent = "Now put it in your own words \u2014 what does your most complete self look like?";
+    step.appendChild(dialogue);
+
+    const textarea = document.createElement("textarea");
+    textarea.className = "olen-sunday-textarea";
+    textarea.placeholder = "I pursue wholeness because...";
+    textarea.rows = 5;
+    textarea.value = plugin.settings.myWhy ?? "";
+    step.appendChild(textarea);
+
+    // Nav
+    const nav = createNav(step, {
+      back: 4,
+      next: 6,
+      gated: true,
+      allChecked: () => textarea.value.trim().length > 0,
+      onNext: async () => {
+        plugin.settings.myWhy = textarea.value.trim();
+        await plugin.saveSettings();
+        markScreenComplete(5);
+      },
+    });
+
+    textarea.addEventListener("input", () => {
+      updateNavState(nav, textarea.value.trim().length > 0);
+    });
+  }
+
+  // === Screen 6: Structure (gated) ===
+  function renderScreen6_Structure(step: HTMLElement): void {
+    const screen = SCREENS[6];
+
+    const desc = document.createElement("div");
+    desc.className = "olen-findwhy-description";
+    desc.textContent = screen.description!;
+    step.appendChild(desc);
+
+    const { allChecked, container } = renderCheckboxes(step, 6, screen.commands!);
+
+    const nav = createNav(step, {
+      back: 5,
+      next: 7,
+      gated: true,
+      allChecked,
+      onNext: () => markScreenComplete(6),
+    });
+
+    container.addEventListener("change", () => {
+      updateNavState(nav, allChecked());
+    });
+  }
+
+  // === Screen 7: Open Your Mind (optional) ===
+  function renderScreen7_OpenMind(step: HTMLElement): void {
+    const screen = SCREENS[7];
+
+    const desc = document.createElement("div");
+    desc.className = "olen-findwhy-description";
+    desc.textContent = screen.description!;
+    step.appendChild(desc);
+
+    renderCheckboxes(step, 7, screen.commands!);
+
+    createNav(step, {
+      back: 6,
+      next: 8,
+      gated: false,
+      allChecked: () => true,
+      onNext: () => markScreenComplete(7),
+    });
+  }
+
+  // === Screen 8: Evolve (wisdom) ===
+  function renderScreen8_Evolve(step: HTMLElement): void {
+    const screen = SCREENS[8];
+
+    const desc = document.createElement("div");
+    desc.className = "olen-findwhy-description";
+    desc.textContent = screen.description!;
+    step.appendChild(desc);
+
+    // Bullet points (not checkboxes)
+    const list = document.createElement("div");
+    list.className = "olen-findwhy-wisdom-list";
+    for (const text of screen.commands!) {
+      const item = document.createElement("div");
+      item.className = "olen-findwhy-wisdom";
+      item.textContent = "\u2022 " + text;
+      list.appendChild(item);
+    }
+    step.appendChild(list);
+
+    // Nav — Done button
+    const nav = document.createElement("div");
+    nav.className = "olen-findwhy-nav";
+
+    const backBtn = document.createElement("button");
+    backBtn.className = "olen-findwhy-nav-btn";
+    backBtn.textContent = "\u2190 Previous";
+    backBtn.addEventListener("click", () => navigateTo(7));
+    nav.appendChild(backBtn);
+
+    const doneBtn = document.createElement("button");
+    doneBtn.className = "olen-findwhy-nav-btn olen-findwhy-nav-primary";
+    doneBtn.textContent = "Done";
+    doneBtn.addEventListener("click", async () => {
+      markScreenComplete(8);
+      progress.flowComplete = true;
+      await plugin.saveSettings();
+      closeModal();
+    });
+    nav.appendChild(doneBtn);
+
+    step.appendChild(nav);
+  }
+
+  // === Helpers ===
+
+  function renderCheckboxes(
+    parent: HTMLElement,
+    screenIndex: number,
+    commands: string[],
+  ): { container: HTMLElement; allChecked: () => boolean } {
+    const completed = progress.completedCommands[screenIndex] ?? [];
+    const container = document.createElement("div");
+    container.className = "olen-findwhy-commands";
+
+    for (let i = 0; i < commands.length; i++) {
+      const isChecked = completed.includes(i);
       const row = document.createElement("div");
-      row.className = "olen-lifephases-command";
-      if (isChecked) row.classList.add("checked");
+      row.className = "olen-findwhy-command" + (isChecked ? " checked" : "");
 
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = isChecked;
       checkbox.addEventListener("change", async () => {
-        await toggleCommand(plugin, stepIndex, ci);
-        renderStep(stepIndex);
+        await toggleCommand(screenIndex, i);
+        row.classList.toggle("checked", checkbox.checked);
       });
 
       const label = document.createElement("label");
-      label.textContent = step.commands[ci];
+      label.textContent = commands[i];
       label.addEventListener("click", () => checkbox.click());
 
       row.appendChild(checkbox);
       row.appendChild(label);
-      commandsContainer.appendChild(row);
+      container.appendChild(row);
     }
-    sheet.appendChild(commandsContainer);
+    parent.appendChild(container);
 
-    // Completion badge
-    if (isStepComplete(plugin, stepIndex)) {
-      const badge = document.createElement("div");
-      badge.className = "olen-lifephases-complete-badge";
-      badge.textContent = "\u2713 STEP COMPLETE";
-      sheet.appendChild(badge);
-    }
+    const allChecked = (): boolean => {
+      const curr = progress.completedCommands[screenIndex] ?? [];
+      return curr.length >= commands.length;
+    };
 
-    // Navigation
+    return { container, allChecked };
+  }
+
+  function createNav(
+    parent: HTMLElement,
+    opts: {
+      back?: number;
+      next: number;
+      gated: boolean;
+      allChecked: () => boolean;
+      onNext?: () => void | Promise<void>;
+    },
+  ): HTMLElement {
     const nav = document.createElement("div");
-    nav.className = "olen-lifephases-nav";
+    nav.className = "olen-findwhy-nav";
 
-    if (stepIndex > 0) {
-      const prevBtn = document.createElement("button");
-      prevBtn.className = "olen-modal-btn-secondary";
-      prevBtn.textContent = "\u2190 Previous";
-      prevBtn.addEventListener("click", () => {
-        currentStep = stepIndex - 1;
-        renderStep(currentStep);
-      });
-      nav.appendChild(prevBtn);
+    if (opts.back !== undefined) {
+      const backBtn = document.createElement("button");
+      backBtn.className = "olen-findwhy-nav-btn";
+      backBtn.textContent = "\u2190 Previous";
+      backBtn.addEventListener("click", () => navigateTo(opts.back!));
+      nav.appendChild(backBtn);
     } else {
-      nav.appendChild(document.createElement("div")); // spacer
+      nav.appendChild(document.createElement("div"));
     }
 
-    if (stepIndex < LIFE_PHASES_STEPS.length - 1) {
-      const nextBtn = document.createElement("button");
-      nextBtn.className = "olen-modal-btn-primary";
-      nextBtn.textContent = "Next \u2192";
-      nextBtn.addEventListener("click", () => {
-        currentStep = stepIndex + 1;
-        renderStep(currentStep);
-      });
-      nav.appendChild(nextBtn);
-    } else {
-      const doneBtn = document.createElement("button");
-      doneBtn.className = "olen-modal-btn-primary";
-      doneBtn.textContent = "Done";
-      doneBtn.addEventListener("click", () => closeModal());
-      nav.appendChild(doneBtn);
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "olen-findwhy-nav-btn olen-findwhy-nav-primary";
+    nextBtn.textContent = "Next \u2192";
+
+    const enabled = !opts.gated || opts.allChecked();
+    if (!enabled) {
+      nextBtn.classList.add("disabled");
     }
-    sheet.appendChild(nav);
+
+    nextBtn.addEventListener("click", async () => {
+      if (opts.gated && !opts.allChecked()) return;
+      if (opts.onNext) await opts.onNext();
+      navigateTo(opts.next);
+    });
+    nav.appendChild(nextBtn);
+
+    parent.appendChild(nav);
+    return nav;
   }
 
-  const cleanupViewport = setupKeyboardAwareness(overlay, sheet);
-
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => {
-    overlay.classList.add("visible");
-    renderStep(currentStep);
-  });
-}
-
-function getFirstIncompleteStep(plugin: OlenPlugin): number {
-  for (let i = 0; i < LIFE_PHASES_STEPS.length; i++) {
-    if (!isStepComplete(plugin, i)) return i;
-  }
-  return 0; // All complete — show first
-}
-
-function isStepComplete(plugin: OlenPlugin, stepIndex: number): boolean {
-  const completed = plugin.settings.lifePhasesProgress.completedCommands[stepIndex] ?? [];
-  return completed.length >= LIFE_PHASES_STEPS[stepIndex].commands.length;
-}
-
-async function toggleCommand(plugin: OlenPlugin, stepIndex: number, cmdIndex: number): Promise<void> {
-  const progress = plugin.settings.lifePhasesProgress;
-  if (!progress.completedCommands[stepIndex]) {
-    progress.completedCommands[stepIndex] = [];
-  }
-  const arr = progress.completedCommands[stepIndex];
-  const idx = arr.indexOf(cmdIndex);
-  if (idx >= 0) {
-    arr.splice(idx, 1);
-  } else {
-    arr.push(cmdIndex);
-  }
-  await plugin.saveSettings();
-}
-
-function setupKeyboardAwareness(overlay: HTMLElement, sheet: HTMLElement): () => void {
-  const vv = (window as any).visualViewport;
-  if (!vv) return () => {};
-
-  function onViewportChange() {
-    const keyboardHeight = window.innerHeight - (vv.offsetTop + vv.height);
-    if (keyboardHeight > 50) {
-      overlay.style.height = `${vv.height}px`;
-      overlay.style.top = `${vv.offsetTop}px`;
-      sheet.style.maxHeight = `${vv.height - 40}px`;
-    } else {
-      overlay.style.height = "";
-      overlay.style.top = "";
-      sheet.style.maxHeight = "";
+  function updateNavState(nav: HTMLElement, enabled: boolean): void {
+    const nextBtn = nav.querySelector(".olen-findwhy-nav-primary");
+    if (nextBtn) {
+      nextBtn.classList.toggle("disabled", !enabled);
     }
   }
 
-  vv.addEventListener("resize", onViewportChange);
-  vv.addEventListener("scroll", onViewportChange);
+  async function toggleCommand(screenIndex: number, cmdIndex: number): Promise<void> {
+    if (!progress.completedCommands[screenIndex]) {
+      progress.completedCommands[screenIndex] = [];
+    }
+    const arr = progress.completedCommands[screenIndex];
+    const idx = arr.indexOf(cmdIndex);
+    if (idx >= 0) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(cmdIndex);
+    }
+    await plugin.saveSettings();
+  }
 
-  return () => {
-    vv.removeEventListener("resize", onViewportChange);
-    vv.removeEventListener("scroll", onViewportChange);
-    overlay.style.height = "";
-    overlay.style.top = "";
-    sheet.style.maxHeight = "";
-  };
+  function markScreenComplete(screenIndex: number): void {
+    if (screenIndex > progress.lastCompletedScreen) {
+      progress.lastCompletedScreen = screenIndex;
+    }
+    plugin.saveSettings();
+  }
+
+  function getFirstIncompleteScreen(plugin: OlenPlugin): number {
+    const p = plugin.settings.findingWhyProgress;
+    if (p.flowComplete) return 0;
+    if (p.lastCompletedScreen < 0) return 0;
+
+    // Walk through screens, skip completed
+    for (let i = p.lastCompletedScreen + 1; i < SCREENS.length; i++) {
+      // If they took the No path, skip confrontation
+      if (i === 3 && !p.tookConfrontationPath) continue;
+      return i;
+    }
+    return 0;
+  }
+
+  // Start
+  renderScreen(currentScreen);
 }

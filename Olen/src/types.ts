@@ -500,13 +500,16 @@ export interface OlenSettings {
   // Sunday Check-in
   sundayCheckin: SundayCheckinSettings;
 
-  // Life Phases Guide
-  lifePhasesProgress: LifePhasesProgress;
+  // Finding Your Why Guide
+  findingWhyProgress: FindingWhyProgress;
 }
 
-export interface LifePhasesProgress {
-  /** Map of step index -> array of completed command indices */
+export interface FindingWhyProgress {
+  lastCompletedScreen: number;
+  tookConfrontationPath: boolean;
   completedCommands: Record<number, number[]>;
+  selectedSubAreas: string[];
+  flowComplete: boolean;
 }
 
 // --- TrackHabitRank data.json shape (for migration) ---

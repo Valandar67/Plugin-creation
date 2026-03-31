@@ -3741,115 +3741,211 @@
   color: rgba(255, 255, 255, 0.2);
 }
 
-.olen-hero-why-row {
+/* --- Finding Your Why Modal --- */
+
+.olen-findwhy-yesno {
   display: flex;
-  align-items: center;
+  gap: 12px;
   justify-content: center;
-  gap: 6px;
+  margin-top: 8px;
 }
 
-.olen-hero-why-info {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.25);
+.olen-findwhy-btn {
+  font-family: "Georgia", serif;
   font-size: 14px;
+  font-weight: 600;
+  padding: 10px 28px;
+  border-radius: var(--radius-xs, 10px);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 50%;
-  transition: color 0.2s, background 0.2s;
-  line-height: 1;
-}
-
-.olen-hero-why-info:hover {
-  color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* --- Life Phases Guide Modal --- */
-
-.olen-lifephases-sheet {
-  max-width: 480px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.olen-lifephases-step-indicator {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.olen-lifephases-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  transition: background 0.2s;
-}
-
-.olen-lifephases-dot.active {
+  transition: all 0.2s ease;
   background: var(--accent-gold, #d4a843);
+  color: var(--bg-primary, #000);
+  border: 1px solid var(--accent-gold, #d4a843);
 }
 
-.olen-lifephases-dot.completed {
-  background: rgba(255, 255, 255, 0.45);
+.olen-findwhy-btn:hover {
+  filter: brightness(1.1);
 }
 
-.olen-lifephases-description {
+.olen-findwhy-btn-secondary {
+  background: transparent;
+  color: var(--text-muted, #888);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+}
+
+.olen-findwhy-btn-secondary:hover {
+  border-color: var(--text-muted, #888);
+  filter: none;
+}
+
+.olen-findwhy-description {
+  font-family: "Georgia", serif;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-muted, #888);
+  line-height: 1.6;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.olen-findwhy-transition {
   font-family: "Georgia", serif;
   font-size: 13px;
   font-style: italic;
-  color: rgba(255, 255, 255, 0.45);
-  margin-bottom: 20px;
-  line-height: 1.6;
+  color: var(--accent-gold-dim, #b89a3a);
   text-align: center;
+  padding: 12px 0 0;
+  line-height: 1.5;
 }
 
-.olen-lifephases-commands {
-  margin-bottom: 8px;
+.olen-findwhy-commands {
+  margin: 8px 0;
 }
 
-.olen-lifephases-command {
+.olen-findwhy-command {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
 }
 
-.olen-lifephases-command input[type="checkbox"] {
+.olen-findwhy-command input[type="checkbox"] {
   margin-top: 3px;
   flex-shrink: 0;
   cursor: pointer;
 }
 
-.olen-lifephases-command label {
+.olen-findwhy-command label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--text-primary, #e0e0e0);
   line-height: 1.5;
   cursor: pointer;
 }
 
-.olen-lifephases-command.checked label {
+.olen-findwhy-command.checked label {
   text-decoration: line-through;
   opacity: 0.4;
 }
 
-.olen-lifephases-complete-badge {
-  text-align: center;
-  color: var(--accent-gold, #d4a843);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  margin-top: 12px;
+/* Vision chips */
+
+.olen-findwhy-chip-group {
+  margin-bottom: 12px;
 }
 
-.olen-lifephases-nav {
+.olen-findwhy-chip-header {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.olen-findwhy-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.olen-findwhy-chip {
+  font-size: 12px;
+  font-family: inherit;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--text-muted, #888);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+}
+
+.olen-findwhy-chip:hover {
+  border-color: var(--chip-color);
+  color: var(--chip-color);
+}
+
+.olen-findwhy-chip.selected {
+  background: var(--chip-color);
+  color: var(--bg-primary, #000);
+  border-color: var(--chip-color);
+  font-weight: 600;
+}
+
+/* Tags on Write screen */
+
+.olen-findwhy-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.olen-findwhy-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: var(--tag-color);
+  color: var(--bg-primary, #000);
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Wisdom bullets */
+
+.olen-findwhy-wisdom-list {
+  margin: 8px 0;
+}
+
+.olen-findwhy-wisdom {
+  font-size: 13px;
+  color: var(--text-muted, #888);
+  line-height: 1.6;
+  padding: 6px 0;
+}
+
+/* Navigation */
+
+.olen-findwhy-nav {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
   gap: 12px;
+}
+
+.olen-findwhy-nav-btn {
+  font-family: "Georgia", serif;
+  font-size: 13px;
+  padding: 8px 20px;
+  border-radius: var(--radius-xs, 10px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--text-muted, #888);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+}
+
+.olen-findwhy-nav-btn:hover {
+  border-color: var(--text-muted, #888);
+}
+
+.olen-findwhy-nav-primary {
+  background: var(--accent-gold, #d4a843);
+  color: var(--bg-primary, #000);
+  border-color: var(--accent-gold, #d4a843);
+  font-weight: 600;
+}
+
+.olen-findwhy-nav-primary:hover {
+  filter: brightness(1.1);
+}
+
+.olen-findwhy-nav-primary.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: none;
 }
 
 /* ============================================================
@@ -4114,6 +4210,30 @@
   text-align: center;
   margin-bottom: 28px;
   padding: 20px 0;
+}
+
+.olen-dreamboard-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.olen-dreamboard-title-info {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #ccc);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 50%;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+}
+
+.olen-dreamboard-title-info:hover {
+  color: var(--accent-gold, #d4a843);
+  background: var(--card-bg, rgba(255, 255, 255, 0.04));
 }
 
 .olen-dreamboard-title {

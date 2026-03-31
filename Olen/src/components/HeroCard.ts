@@ -13,7 +13,7 @@ export function renderHeroCard(
   settings: OlenSettings,
   engine: OlenEngine,
   staggerIndex: number,
-  callbacks?: { onMyWhy?: () => void; onLifePhasesGuide?: () => void }
+  callbacks?: { onMyWhy?: () => void }
 ): void {
   const hero = container.createDiv({ cls: "olen-hero" });
   hero.style.setProperty("--i", String(staggerIndex));
@@ -38,28 +38,13 @@ export function renderHeroCard(
     text: subtitle,
   });
 
-  // Tappable area to open dream board (My Why) + info button for Life Phases Guide
+  // Tappable area to open dream board (My Why)
   if (callbacks?.onMyWhy) {
     const whyArea = hero.createDiv({ cls: "olen-hero-why olen-clickable" });
-
-    const whyRow = whyArea.createDiv({ cls: "olen-hero-why-row" });
-    whyRow.createEl("div", {
+    whyArea.createEl("div", {
       cls: "olen-hero-why-text olen-hero-why-placeholder",
       text: "My Why",
     });
-
-    if (callbacks?.onLifePhasesGuide) {
-      const infoBtn = whyRow.createEl("button", {
-        cls: "olen-hero-why-info",
-        attr: { "aria-label": "Life Phases Guide" },
-      });
-      infoBtn.textContent = "\u24D8";
-      infoBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        callbacks.onLifePhasesGuide?.();
-      });
-    }
-
     whyArea.addEventListener("click", () => callbacks.onMyWhy?.());
   }
 }
