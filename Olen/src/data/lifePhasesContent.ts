@@ -56,7 +56,7 @@ export const SCREENS: ScreenContent[] = [
     index: 1,
     type: "intro",
     dialogue:
-      "Finding purpose is a difficult manner, God only knows how many people have written and pondered on \u201Cthe meaning of man.\u201D I can\u2019t find it for you, but what I can do is give you some ideas for figuring it out yourself, sounds good?",
+      "Finding purpose is a difficult matter \u2014 God only knows how many people have written and pondered on \u201Cthe meaning of man.\u201D I can\u2019t find it for you, but what I can do is give you some ideas for figuring it out yourself. Sounds good?",
   },
   // Screen 2 — Branch
   {
@@ -69,7 +69,7 @@ export const SCREENS: ScreenContent[] = [
     index: 3,
     type: "gated",
     description:
-      "Without honest awareness, comfort becomes a slow decline. You need to see clearly where inertia leads.",
+      "Without honest awareness, comfort becomes a slow decline. You need to see clearly where the inertia leads.",
     commands: [
       "Identify one area where you\u2019ve been choosing comfort over growth",
       "Ask: if I keep doing the same things, where will I end up in 5 years?",
@@ -119,9 +119,9 @@ export const SCREENS: ScreenContent[] = [
     index: 8,
     type: "wisdom",
     description:
-      "The goal is not a fixed destination \u2014 it\u2019s a lens for making decisions. As you grow, your purpose grows with you.",
+      "Your goals will change and refine as you grow \u2014 that\u2019s the point. Purpose is a lens for making decisions, not a fixed destination.",
     commands: [
-      "Accept that your goals will change \u2014 that\u2019s not failure, it\u2019s refinement",
+      "Accept that your goals will change and refine \u2014 that\u2019s growth, not failure",
       "Revisit your My Why from time to time: does it still resonate, or has it deepened?",
       "Strive to be yourself \u2014 make the goal conform to you, not the other way around",
     ],

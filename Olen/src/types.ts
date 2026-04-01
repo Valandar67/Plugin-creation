@@ -509,6 +509,7 @@ export interface FindingWhyProgress {
   tookConfrontationPath: boolean;
   completedCommands: Record<number, number[]>;
   selectedSubAreas: string[];
+  customSubAreas: Array<{ id: string; label: string; category: Category }>;
   flowComplete: boolean;
 }
 

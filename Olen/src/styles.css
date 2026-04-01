@@ -3781,7 +3781,6 @@
 .olen-findwhy-description {
   font-family: "Georgia", serif;
   font-size: 14px;
-  font-style: italic;
   color: var(--text-muted, #888);
   line-height: 1.6;
   text-align: center;
@@ -3871,6 +3870,20 @@
   color: var(--bg-primary, #000);
   border-color: var(--chip-color);
   font-weight: 600;
+}
+
+.olen-findwhy-chip-add {
+  border-style: dashed;
+  color: var(--text-dim, #4d473e);
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 32px;
+  padding: 5px 10px;
+}
+
+.olen-findwhy-chip-add:hover {
+  color: var(--chip-color);
+  border-color: var(--chip-color);
 }
 
 /* Tags on Write screen */
@@ -6050,7 +6063,6 @@
 .olen-sunday-dialogue {
   font-family: "Georgia", serif;
   font-size: 18px;
-  font-style: italic;
   color: var(--accent-gold-bright, #e8c35a);
   line-height: 1.6;
   text-align: center;

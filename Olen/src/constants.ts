@@ -335,6 +335,7 @@ export const DEFAULT_OLEN_SETTINGS: OlenSettings = {
     tookConfrontationPath: false,
     completedCommands: {},
     selectedSubAreas: [],
+    customSubAreas: [],
     flowComplete: false,
   },
 };

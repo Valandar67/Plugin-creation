@@ -6,6 +6,8 @@
 import type OlenPlugin from "../main";
 import { SCREENS, VISION_SUB_AREAS } from "../data/lifePhasesContent";
 import type { Category } from "../types";
+import { THEME_PRESETS } from "../data/themes";
+import { applyAccentColor } from "../utils/accentColor";
 
 export function openFindingWhyModal(plugin: OlenPlugin): void {
   const progress = plugin.settings.findingWhyProgress;
@@ -18,6 +20,27 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
   const modal = document.createElement("div");
   modal.className = "olen-sunday-modal";
   overlay.appendChild(modal);
+
+  // Apply theme + accent color so modal inherits the correct CSS vars
+  const mode = plugin.settings.themeMode ?? "dark";
+  const preset = THEME_PRESETS[mode];
+  const themeOverrides = plugin.settings.themeOverrides ?? {};
+  const theme = { ...preset, ...themeOverrides };
+  const varMap: Record<string, string> = {
+    bgPrimary: "--bg-primary", bgSecondary: "--bg-secondary",
+    cardBg: "--card-bg", cardBgSolid: "--card-bg-solid", cardBorder: "--card-border",
+    textPrimary: "--text-primary", textSecondary: "--text-secondary",
+    textMuted: "--text-muted", textDim: "--text-dim",
+    accentGold: "--accent-gold", accentGoldBright: "--accent-gold-bright",
+    accentGoldDim: "--accent-gold-dim", accentAmber: "--accent-amber",
+    bodyColor: "--body-color", mindColor: "--mind-color", spiritColor: "--spirit-color",
+  };
+  for (const [key, cssVar] of Object.entries(varMap)) {
+    if ((theme as any)[key]) overlay.style.setProperty(cssVar, (theme as any)[key]);
+  }
+  if (plugin.obsidianAccentColor) {
+    applyAccentColor(overlay, plugin.obsidianAccentColor);
+  }
 
   document.body.appendChild(overlay);
   requestAnimationFrame(() => {
@@ -180,22 +203,14 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
 
   // === Screen 4: Vision ===
   function renderScreen4_Vision(step: HTMLElement): void {
-    const settings = plugin.settings;
-    const gender = settings.personalStats?.gender;
-    const genderWord = gender === "female" ? "woman" : gender === "male" ? "man" : "person";
-    const userName = settings.userName || "friend";
-
-    const greeting = document.createElement("div");
-    greeting.className = "olen-sunday-dialogue";
-    greeting.textContent = `${userName}, close your eyes and envision the ${genderWord} you want to be. Whether in 5 or 10 or 50 years. Be precise.`;
-    step.appendChild(greeting);
-
-    const subtitle = document.createElement("div");
-    subtitle.className = "olen-findwhy-description";
-    subtitle.textContent = "Not a title, not material wealth \u2014 someone living with purpose and beauty.";
-    step.appendChild(subtitle);
+    const dialogue = document.createElement("div");
+    dialogue.className = "olen-sunday-dialogue";
+    dialogue.textContent = "Select the things you care about";
+    step.appendChild(dialogue);
 
     const selectedAreas = new Set<string>(progress.selectedSubAreas ?? []);
+    // Track custom sub-areas added by the user
+    const customAreas = progress.customSubAreas ?? [];
 
     // Group sub-areas by category
     const categories: Category[] = ["body", "mind", "spirit"];
@@ -223,8 +238,12 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
       const chipRow = document.createElement("div");
       chipRow.className = "olen-findwhy-chips";
 
+      // Built-in areas
       const areas = VISION_SUB_AREAS.filter((a) => a.category === cat);
-      for (const area of areas) {
+      // Custom areas for this category
+      const customs = customAreas.filter((a) => a.category === cat);
+
+      for (const area of [...areas, ...customs]) {
         const chip = document.createElement("button");
         chip.className = "olen-findwhy-chip";
         chip.textContent = area.label;
@@ -248,6 +267,28 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
         });
         chipRow.appendChild(chip);
       }
+
+      // Add custom chip button (+)
+      const addBtn = document.createElement("button");
+      addBtn.className = "olen-findwhy-chip olen-findwhy-chip-add";
+      addBtn.textContent = "+";
+      addBtn.style.setProperty("--chip-color", colorVars[cat]);
+      addBtn.addEventListener("click", () => {
+        const name = prompt("Add a custom area:");
+        if (!name || !name.trim()) return;
+        const id = `custom-${cat}-${name.trim().toLowerCase().replace(/\s+/g, "-")}`;
+        if (customAreas.some((a) => a.id === id)) return;
+        const newArea = { id, label: name.trim(), category: cat };
+        customAreas.push(newArea);
+        progress.customSubAreas = customAreas;
+        selectedAreas.add(id);
+        progress.selectedSubAreas = [...selectedAreas];
+        plugin.saveSettings();
+        // Re-render to show the new chip
+        navigateTo(4);
+      });
+      chipRow.appendChild(addBtn);
+
       group.appendChild(chipRow);
       step.appendChild(group);
     }
@@ -267,11 +308,13 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
   function renderScreen5_Write(step: HTMLElement): void {
     // Tags showing selected sub-areas
     const selected = progress.selectedSubAreas ?? [];
+    const customAreas = progress.customSubAreas ?? [];
     if (selected.length > 0) {
       const tagRow = document.createElement("div");
       tagRow.className = "olen-findwhy-tags";
       for (const areaId of selected) {
-        const area = VISION_SUB_AREAS.find((a) => a.id === areaId);
+        const area = VISION_SUB_AREAS.find((a) => a.id === areaId)
+          ?? customAreas.find((a) => a.id === areaId);
         if (!area) continue;
         const colorVars: Record<Category, string> = {
           body: "var(--body-color, #e07a5f)",
@@ -289,12 +332,17 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
 
     const dialogue = document.createElement("div");
     dialogue.className = "olen-sunday-dialogue";
-    dialogue.textContent = "Now put it in your own words \u2014 what does your most complete self look like?";
+    dialogue.textContent = "Now that you know what truly matters, close your eyes and vividly imagine your future across each area.";
     step.appendChild(dialogue);
+
+    const desc = document.createElement("div");
+    desc.className = "olen-findwhy-description";
+    desc.textContent = "This vision must be a life you\u2019d be deeply proud of, one you\u2019d love living every day, and a future worth fighting for. Let this vision sink in deeply. Write it down now and make it your guiding purpose.";
+    step.appendChild(desc);
 
     const textarea = document.createElement("textarea");
     textarea.className = "olen-sunday-textarea";
-    textarea.placeholder = "I pursue wholeness because...";
+    textarea.placeholder = "My purpose is...";
     textarea.rows = 5;
     textarea.value = plugin.settings.myWhy ?? "";
     step.appendChild(textarea);

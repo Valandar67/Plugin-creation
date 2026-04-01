@@ -75,6 +75,7 @@ export default class OlenPlugin extends Plugin {
         tookConfrontationPath: false,
         completedCommands: {},
         selectedSubAreas: [],
+        customSubAreas: [],
         flowComplete: false,
       },
       this.settings.findingWhyProgress
