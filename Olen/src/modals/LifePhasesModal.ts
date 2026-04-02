@@ -332,17 +332,17 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
     dialogue.textContent = "Now that you know what truly matters, close your eyes and vividly imagine your future across each area.";
     step.appendChild(dialogue);
 
-    const desc = document.createElement("div");
-    desc.className = "olen-findwhy-description";
-    desc.textContent = "This vision must be a life you\u2019d be deeply proud of, one you\u2019d love living every day, and a future worth fighting for. Let this vision sink in deeply. Write it down now and make it your guiding purpose.";
-    step.appendChild(desc);
-
     const textarea = document.createElement("textarea");
     textarea.className = "olen-sunday-textarea";
     textarea.placeholder = "My purpose is...";
     textarea.rows = 5;
     textarea.value = plugin.settings.myWhy ?? "";
     step.appendChild(textarea);
+
+    const desc = document.createElement("div");
+    desc.className = "olen-findwhy-description";
+    desc.textContent = "This vision must be a life you\u2019d be deeply proud of, one you\u2019d love living every day, and a future worth fighting for. Let this vision sink in deeply. Write it down now and make it your guiding purpose.";
+    step.appendChild(desc);
 
     // Nav
     const nav = createNav(step, {
