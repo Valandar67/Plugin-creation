@@ -212,12 +212,13 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
     // Track custom sub-areas added by the user
     const customAreas = progress.customSubAreas ?? [];
 
-    // Group sub-areas by category
+    // Group sub-areas by category — use actual configured colors
     const categories: Category[] = ["body", "mind", "spirit"];
-    const colorVars: Record<Category, string> = {
-      body: "var(--body-color, #e07a5f)",
-      mind: "var(--mind-color, #81b29a)",
-      spirit: "var(--spirit-color, #f2cc8f)",
+    const catColors = plugin.settings.categoryColors;
+    const colorMap: Record<Category, string> = {
+      body: catColors.body,
+      mind: catColors.mind,
+      spirit: catColors.spirit,
     };
     const catLabels: Record<Category, string> = {
       body: "BODY",
@@ -232,7 +233,7 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
       const header = document.createElement("div");
       header.className = "olen-findwhy-chip-header";
       header.textContent = catLabels[cat];
-      header.style.color = colorVars[cat];
+      header.style.color = colorMap[cat];
       group.appendChild(header);
 
       const chipRow = document.createElement("div");
@@ -247,7 +248,7 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
         const chip = document.createElement("button");
         chip.className = "olen-findwhy-chip";
         chip.textContent = area.label;
-        chip.style.setProperty("--chip-color", colorVars[cat]);
+        chip.style.setProperty("--chip-color", colorMap[cat]);
 
         if (selectedAreas.has(area.id)) {
           chip.classList.add("selected");
@@ -272,7 +273,7 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
       const addBtn = document.createElement("button");
       addBtn.className = "olen-findwhy-chip olen-findwhy-chip-add";
       addBtn.textContent = "+";
-      addBtn.style.setProperty("--chip-color", colorVars[cat]);
+      addBtn.style.setProperty("--chip-color", colorMap[cat]);
       addBtn.addEventListener("click", () => {
         const name = prompt("Add a custom area:");
         if (!name || !name.trim()) return;
@@ -316,15 +317,11 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
         const area = VISION_SUB_AREAS.find((a) => a.id === areaId)
           ?? customAreas.find((a) => a.id === areaId);
         if (!area) continue;
-        const colorVars: Record<Category, string> = {
-          body: "var(--body-color, #e07a5f)",
-          mind: "var(--mind-color, #81b29a)",
-          spirit: "var(--spirit-color, #f2cc8f)",
-        };
+        const catColors = plugin.settings.categoryColors;
         const tag = document.createElement("span");
         tag.className = "olen-findwhy-tag";
         tag.textContent = area.label;
-        tag.style.setProperty("--tag-color", colorVars[area.category]);
+        tag.style.setProperty("--tag-color", catColors[area.category]);
         tagRow.appendChild(tag);
       }
       step.appendChild(tagRow);

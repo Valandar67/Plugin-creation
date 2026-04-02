@@ -3791,7 +3791,7 @@
   font-family: "Georgia", serif;
   font-size: 13px;
   font-style: italic;
-  color: var(--accent-gold-dim, #b89a3a);
+  color: var(--text-secondary, #c8c0b2);
   text-align: center;
   padding: 12px 0 0;
   line-height: 1.5;

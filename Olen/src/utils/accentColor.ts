@@ -54,17 +54,39 @@ export interface AccentColorVariants {
   bodyColor: string;
 }
 
+/** Perceived brightness (0-255) using ITU-R BT.601 weights */
+function perceivedBrightness(hex: string): number {
+  const c = hexToRgb(hex);
+  if (!c) return 128;
+  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+}
+
+/** Ensure a color meets a minimum brightness for readability on dark backgrounds */
+function ensureMinBrightness(hex: string, minBrightness: number): string {
+  let color = hex;
+  let attempts = 0;
+  while (perceivedBrightness(color) < minBrightness && attempts < 20) {
+    color = lighten(color, 0.1);
+    attempts++;
+  }
+  return color;
+}
+
+// Minimum perceived brightness for text on dark backgrounds (~120 is comfortably readable)
+const MIN_TEXT_BRIGHTNESS = 120;
+
 /** Derive all accent color variants from a single base hex color */
 export function deriveAccentVariants(baseHex: string): AccentColorVariants {
+  const safeBase = ensureMinBrightness(baseHex, MIN_TEXT_BRIGHTNESS);
   return {
-    accentGold: baseHex,
-    accentGoldBright: lighten(baseHex, 0.25),
-    accentGoldDim: hexToRgba(baseHex, 0.18),
-    accentAmber: darken(baseHex, 0.2),
-    accentWarm: hexToRgba(baseHex, 0.06),
-    success: baseHex,
-    successDim: hexToRgba(baseHex, 0.15),
-    bodyColor: baseHex,
+    accentGold: safeBase,
+    accentGoldBright: ensureMinBrightness(lighten(baseHex, 0.25), MIN_TEXT_BRIGHTNESS),
+    accentGoldDim: hexToRgba(safeBase, 0.18),
+    accentAmber: darken(safeBase, 0.2),
+    accentWarm: hexToRgba(safeBase, 0.06),
+    success: safeBase,
+    successDim: hexToRgba(safeBase, 0.15),
+    bodyColor: safeBase,
   };
 }
 

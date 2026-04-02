@@ -15,12 +15,16 @@ export interface SubArea {
 
 export const VISION_SUB_AREAS: SubArea[] = [
   // Body
-  { id: "location", label: "Location", category: "body" },
-  { id: "health", label: "Health", category: "body" },
+  { id: "vitality", label: "Vitality", category: "body" },
+  { id: "aesthetic", label: "Aesthetic", category: "body" },
+  { id: "living-space", label: "Living Space", category: "body" },
+  { id: "setting", label: "Setting", category: "body" },
   // Mind
   { id: "career", label: "Career", category: "mind" },
   { id: "skills", label: "Skills", category: "mind" },
   { id: "hobbies", label: "Hobbies", category: "mind" },
+  { id: "intellectual-growth", label: "Intellectual Growth", category: "mind" },
+  { id: "mindset", label: "Mindset", category: "mind" },
   // Spirit
   { id: "relationships", label: "Relationships", category: "spirit" },
   { id: "family", label: "Family", category: "spirit" },
@@ -56,7 +60,7 @@ export const SCREENS: ScreenContent[] = [
     index: 1,
     type: "intro",
     dialogue:
-      "Finding purpose is a difficult matter \u2014 God only knows how many people have written and pondered on \u201Cthe meaning of man.\u201D I can\u2019t find it for you, but what I can do is give you some ideas for figuring it out yourself. Sounds good?",
+      "Finding purpose is a difficult matter \u2014 God only knows how many people have written and pondered on \u201Cthe meaning of man\u201D. I can\u2019t find it for you, but what I can do is give you some ideas for figuring it out yourself. Sounds good?",
   },
   // Screen 2 — Branch
   {
@@ -106,7 +110,7 @@ export const SCREENS: ScreenContent[] = [
     index: 7,
     type: "optional",
     description:
-      "You act the way you do because of the information you\u2019ve absorbed. New perspectives create new possibilities.",
+      "The perspectives you take in shape the actions you take. New information opens new possibilities.",
     commands: [
       "Immerse yourself in something unfamiliar: a book, a conversation, a place you\u2019ve never been",
       "When you feel the pull to learn more about something, follow it \u2014 that\u2019s your mind hungry for change",
