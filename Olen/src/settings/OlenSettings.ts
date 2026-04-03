@@ -763,18 +763,6 @@ export class OlenSettingTab extends PluginSettingTab {
     }
 
     new Setting(details)
-      .setName("Skill folder")
-      .setDesc("Vault folder containing skill tree notes")
-      .addText((t) =>
-        t.setPlaceholder("e.g. Home/Starts/Drawing/Skill tree")
-          .setValue(activity.skillFolder ?? "")
-          .onChange(async (v) => {
-            this.plugin.settings.activities[index].skillFolder = v.trim() || undefined;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(details)
       .setName("After completion")
       .setDesc("Where to go after finishing this activity")
       .addDropdown((d) =>

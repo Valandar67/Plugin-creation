@@ -20,8 +20,6 @@ export function renderSkillHeatmap(
   settings: OlenSettings,
   staggerIndex: number
 ): void {
-  if (!activity.skillFolder) return;
-
   const card = container.createDiv({ cls: "olen-card olen-skill-heatmap" });
   card.style.setProperty("--i", String(staggerIndex));
 
@@ -103,19 +101,6 @@ function getSkillStats(app: App, activity: ActivityConfig): SkillStats[] {
         }
       } else {
         skillCounts.set(skill, { count: 1, lastDate: date });
-      }
-    }
-  }
-
-  // Also include skills from skill folder that haven't been practiced
-  if (activity.skillFolder) {
-    const skillNormalizedFolder = activity.skillFolder.endsWith("/")
-      ? activity.skillFolder
-      : activity.skillFolder + "/";
-    const skillFiles = files.filter((f) => f.path.startsWith(skillNormalizedFolder));
-    for (const sf of skillFiles) {
-      if (!skillCounts.has(sf.basename)) {
-        skillCounts.set(sf.basename, { count: 0, lastDate: null });
       }
     }
   }

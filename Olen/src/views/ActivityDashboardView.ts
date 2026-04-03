@@ -170,10 +170,8 @@ export class ActivityDashboardView extends ItemView {
     // 8. Consistency Calendar
     renderConsistencyCalendar(root, activity, completionData, settings, staggerIdx++);
 
-    // 9. Skill Heatmap (if applicable)
-    if (activity.skillFolder) {
-      renderSkillHeatmap(root, this.app, activity, settings, staggerIdx++);
-    }
+    // 9. Skill Heatmap
+    renderSkillHeatmap(root, this.app, activity, settings, staggerIdx++);
 
     // 10. Personal Records
     renderPersonalRecords(root, this.app, activity, completionData, settings, staggerIdx++);
@@ -296,9 +294,7 @@ export class ActivityDashboardView extends ItemView {
       emoji: activity.emoji,
       category: activity.category,
       startTime: new Date().toISOString(),
-      skills: [],
       hasWorkspace: true,
-      skillFolder: activity.skillFolder,
     };
     await this.plugin.saveSettings();
     this.plugin.activateWorkspaceView();

@@ -44,7 +44,6 @@ export interface ActivityConfig {
   trackingMode: "daily" | "weekly";
   hasWorkspace: boolean;
   workspaceTemplate?: string;
-  skillFolder?: string;
 
   // Priority
   priority: number; // 1-10
@@ -153,9 +152,7 @@ export interface ActiveWorkspace {
   emoji: string;
   category: Category;
   startTime: string; // ISO — start of current work/break interval
-  skills: string[];
   hasWorkspace: boolean;
-  skillFolder?: string;
 
   // Pomodoro state (persisted for background operation)
   pomodoroActive?: boolean;
@@ -173,7 +170,6 @@ export interface WorkspaceResult {
   startTime: string;
   endTime: string;
   durationMinutes: number;
-  skills: string[];
   quote?: { text: string; attribution: string };
 }
 

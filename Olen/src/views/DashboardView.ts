@@ -413,9 +413,7 @@ export class DashboardView extends ItemView {
         emoji: activity.emoji,
         category: activity.category,
         startTime: new Date().toISOString(),
-        skills: [],
         hasWorkspace: true,
-        skillFolder: activity.skillFolder,
       };
       await this.plugin.saveSettings();
       this.plugin.activateWorkspaceView();

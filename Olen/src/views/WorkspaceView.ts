@@ -1,18 +1,17 @@
 // ============================================================
 // Olen — Workspace View
-// Active workspace screen with timer, skills, finish flow.
+// Active workspace screen with timer + finish flow.
 // When an activity has a workspaceTemplate, the template is
 // rendered instead of the default timer UI.
 // ============================================================
 
-import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownRenderer, Component } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult, PomodoroSettings } from "../types";
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES, DEFAULT_POMODORO_SETTINGS } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { playAlertSound, vibrateAlert, stopAlertSound } from "../utils/alertSound";
-import { resolveInternalImageEmbeds } from "./EmbeddedMdView";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -32,8 +31,6 @@ export class WorkspaceView extends ItemView {
   private templateNoteFile: TFile | null = null;
   /** Tracks whether we already processed a completion (prevents double-apply) */
   private completionApplied = false;
-  /** Component for managing embedded skill previews lifecycle */
-  private skillPreviewComponent: Component | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
@@ -69,7 +66,7 @@ export class WorkspaceView extends ItemView {
       // Template mode: render the activity template bound to today's daily note
       await this.renderTemplateMode(workspace, activity);
     } else {
-      // Default mode: timer + skills + finish
+      // Default mode: timer + finish
       this.startTime = new Date(workspace.startTime);
 
       // Load per-activity pomodoro settings
@@ -111,10 +108,6 @@ export class WorkspaceView extends ItemView {
     stopAlertSound();
     this.templateNoteFile = null;
     this.completionApplied = false;
-    if (this.skillPreviewComponent) {
-      this.skillPreviewComponent.unload();
-      this.skillPreviewComponent = null;
-    }
     this.contentEl.empty();
   }
 
@@ -272,7 +265,7 @@ export class WorkspaceView extends ItemView {
   }
 
   // ================================================================
-  // Default Mode (timer + skills + finish)
+  // Default Mode (timer + finish)
   // ================================================================
 
   private startTimer(): void {
@@ -422,36 +415,6 @@ export class WorkspaceView extends ItemView {
     // Main content area
     const content = root.createDiv({ cls: "olen-workspace-content" });
 
-    // Skills section
-    const skillsSection = content.createDiv({ cls: "olen-workspace-skills-section" });
-    skillsSection.createEl("div", { cls: "olen-heading", text: "WORKSPACE SKILLS" });
-
-    const skillsContainer = skillsSection.createDiv({ cls: "olen-workspace-skills" });
-
-    if (workspace.skills.length === 0) {
-      skillsContainer.createEl("div", {
-        cls: "olen-workspace-no-skills",
-        text: "No skills tagged yet",
-      });
-    } else {
-      for (const skill of workspace.skills) {
-        const chip = skillsContainer.createDiv({ cls: "olen-workspace-skill-chip" });
-        chip.textContent = skill;
-      }
-    }
-
-    // Add skills button
-    const addSkillBtn = skillsSection.createEl("button", {
-      cls: "olen-btn olen-btn-secondary olen-workspace-add-skill",
-      text: "+ ADD SKILL",
-    });
-    addSkillBtn.addEventListener("click", () => this.showSkillPicker(workspace));
-
-    // Skill note previews — embedded markdown previews of skill files
-    if (workspace.skills.length > 0 && workspace.skillFolder) {
-      this.renderSkillPreviews(content, workspace);
-    }
-
     // Focus zone — motivational area
     const focusZone = content.createDiv({ cls: "olen-workspace-focus" });
     const quote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
@@ -472,153 +435,13 @@ export class WorkspaceView extends ItemView {
       text: catLabel,
     });
     bottomBar.style.borderLeftColor = accentColor;
-  }
 
-  private showSkillPicker(workspace: ActiveWorkspace): void {
-    // Prompt for skill name via a simple input
-    const overlay = document.createElement("div");
-    overlay.className = "olen-sheet-overlay";
-
-    const sheet = overlay.createDiv({ cls: "olen-sheet" });
-    sheet.createDiv({ cls: "olen-sheet-handle" });
-    sheet.createEl("div", { cls: "olen-heading-lg", text: "ADD SKILL" });
-
-    const inputWrap = sheet.createDiv({ attr: { style: "margin: 20px 0;" } });
-    const input = inputWrap.createEl("input", {
-      cls: "olen-workspace-skill-input",
-      attr: { type: "text", placeholder: "Skill name..." },
-    });
-
-    // If skill folder exists, load existing skills
-    if (workspace.skillFolder) {
-      const skills = this.loadSkillsFromFolder(workspace.skillFolder);
-      if (skills.length > 0) {
-        const existing = sheet.createDiv({ cls: "olen-workspace-skills", attr: { style: "margin-bottom: 16px;" } });
-        for (const skill of skills) {
-          const chip = existing.createDiv({ cls: "olen-workspace-skill-chip olen-clickable" });
-          chip.textContent = skill;
-          chip.addEventListener("click", () => {
-            addSkill(skill);
-            closeSheet();
-          });
-        }
-      }
-    }
-
-    const actions = sheet.createDiv({ cls: "olen-directive-actions" });
-
-    const addBtn = actions.createEl("button", {
-      cls: "olen-btn olen-btn-primary",
-      text: "ADD",
-    });
-    addBtn.addEventListener("click", () => {
-      const val = input.value.trim();
-      if (val) {
-        addSkill(val);
-        closeSheet();
-      }
-    });
-
-    const cancelBtn = actions.createEl("button", {
+    // Back to Home button
+    const backBtn = bottomBar.createEl("button", {
       cls: "olen-btn olen-btn-secondary",
-      text: "CANCEL",
+      text: "← Back to Home",
     });
-    cancelBtn.addEventListener("click", () => closeSheet());
-
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeSheet();
-    });
-
-    const addSkill = (name: string) => {
-      if (!workspace.skills.includes(name)) {
-        workspace.skills.push(name);
-        this.plugin.settings.activeWorkspace = workspace;
-        this.plugin.saveSettings();
-        this.render(workspace);
-      }
-    };
-
-    const closeSheet = () => {
-      overlay.classList.remove("visible");
-      setTimeout(() => overlay.remove(), 350);
-    };
-
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => {
-      overlay.classList.add("visible");
-      input.focus();
-    });
-  }
-
-  private loadSkillsFromFolder(folderPath: string): string[] {
-    const files = this.app.vault.getMarkdownFiles();
-    const normalizedFolder = folderPath.endsWith("/") ? folderPath : folderPath + "/";
-    return files
-      .filter((f) => f.path.startsWith(normalizedFolder))
-      .map((f) => f.basename)
-      .sort();
-  }
-
-  private async renderSkillPreviews(
-    container: HTMLElement,
-    workspace: ActiveWorkspace,
-  ): Promise<void> {
-    // Clean up previous preview component
-    if (this.skillPreviewComponent) {
-      this.skillPreviewComponent.unload();
-    }
-    this.skillPreviewComponent = new Component();
-    this.skillPreviewComponent.load();
-
-    const previewsSection = container.createDiv({ cls: "olen-skill-previews" });
-
-    const normalizedFolder = workspace.skillFolder!.endsWith("/")
-      ? workspace.skillFolder!
-      : workspace.skillFolder! + "/";
-
-    for (const skillName of workspace.skills) {
-      // Try to find the skill file in the skill folder
-      const filePath = normalizedFolder + skillName + ".md";
-      const file = this.app.vault.getAbstractFileByPath(filePath);
-      if (!(file instanceof TFile)) continue;
-
-      const previewCard = previewsSection.createDiv({ cls: "olen-skill-preview-card" });
-
-      // Header with skill name
-      const header = previewCard.createDiv({ cls: "olen-skill-preview-header" });
-      header.createEl("span", { cls: "olen-skill-preview-title", text: skillName });
-
-      // Collapsible toggle
-      const toggleBtn = header.createEl("button", {
-        cls: "olen-skill-preview-toggle",
-        attr: { "aria-label": "Toggle preview" },
-      });
-      toggleBtn.textContent = "▼";
-
-      // Preview content area
-      const previewContent = previewCard.createDiv({ cls: "olen-skill-preview-content" });
-
-      // Render the markdown
-      const mdContent = await this.app.vault.read(file);
-      await MarkdownRenderer.render(
-        this.app,
-        mdContent,
-        previewContent,
-        file.path,
-        this.skillPreviewComponent,
-      );
-
-      // Resolve image embeds
-      resolveInternalImageEmbeds(this.app, previewContent, file.path);
-
-      // Toggle collapse
-      let collapsed = false;
-      toggleBtn.addEventListener("click", () => {
-        collapsed = !collapsed;
-        previewContent.classList.toggle("olen-skill-preview-collapsed", collapsed);
-        toggleBtn.textContent = collapsed ? "▶" : "▼";
-      });
-    }
+    backBtn.addEventListener("click", () => this.plugin.activateDashboardView());
   }
 
   private renderPomodoroDots(container: HTMLElement): void {
@@ -836,17 +659,18 @@ export class WorkspaceView extends ItemView {
   }
 
   private showPomodoroSettingsPanel(workspace: ActiveWorkspace): void {
-    const overlay = document.createElement("div");
-    overlay.className = "olen-sheet-overlay";
+    const modal = document.createElement("div");
+    modal.className = "olen-quick-task-modal";
 
-    const sheet = overlay.createDiv({ cls: "olen-sheet" });
-    sheet.createDiv({ cls: "olen-sheet-handle" });
-    sheet.createEl("div", { cls: "olen-heading-lg", text: "TIMER SETTINGS" });
+    const backdrop = modal.createDiv({ cls: "olen-quick-task-backdrop" });
+    const sheet = modal.createDiv({ cls: "olen-quick-task-sheet" });
+
+    sheet.createEl("div", { cls: "olen-quick-task-title", text: "TIMER SETTINGS" });
 
     const profileLabel = `${this.pomSettings.focusMinutes}/${this.pomSettings.breakMinutes}`;
     sheet.createEl("div", {
       cls: "olen-body-italic",
-      attr: { style: "margin: 4px 0 16px; opacity: 0.6;" },
+      attr: { style: "margin: -8px 0 16px; opacity: 0.6; font-size: 12px;" },
       text: `Profile: ${profileLabel}`,
     });
 
@@ -980,10 +804,16 @@ export class WorkspaceView extends ItemView {
     });
 
     // Save button
-    const actions = sheet.createDiv({ attr: { style: "display: flex; gap: 12px; justify-content: center; margin-top: 20px;" } });
+    const actions = sheet.createDiv({ cls: "olen-quick-task-actions" });
+    const cancelBtn = actions.createEl("button", {
+      cls: "olen-quick-task-cancel",
+      text: "Cancel",
+    });
+    cancelBtn.addEventListener("click", () => closeModal());
+
     const saveBtn = actions.createEl("button", {
-      cls: "olen-btn olen-btn-primary",
-      text: "SAVE",
+      cls: "olen-quick-task-add",
+      text: "Save",
     });
     saveBtn.addEventListener("click", async () => {
       this.pomSettings.focusMinutes = Math.max(1, parseInt(focusInput.value) || 25);
@@ -1009,26 +839,14 @@ export class WorkspaceView extends ItemView {
       this.updatePomodoroDots();
 
       new Notice("Pomodoro settings saved");
-      closeSheet();
+      closeModal();
     });
 
-    const cancelBtn = actions.createEl("button", {
-      cls: "olen-btn olen-btn-secondary",
-      text: "CANCEL",
-    });
-    cancelBtn.addEventListener("click", () => closeSheet());
+    backdrop.addEventListener("click", () => closeModal());
 
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeSheet();
-    });
+    const closeModal = () => modal.remove();
 
-    const closeSheet = () => {
-      overlay.classList.remove("visible");
-      setTimeout(() => overlay.remove(), 350);
-    };
-
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add("visible"));
+    document.body.appendChild(modal);
   }
 
   private showSoundFilePicker(labelEl: HTMLElement): void {
@@ -1040,12 +858,13 @@ export class WorkspaceView extends ItemView {
       })
       .sort((a, b) => a.path.localeCompare(b.path));
 
-    const overlay = document.createElement("div");
-    overlay.className = "olen-sheet-overlay";
+    const modal = document.createElement("div");
+    modal.className = "olen-quick-task-modal";
 
-    const sheet = overlay.createDiv({ cls: "olen-sheet" });
-    sheet.createDiv({ cls: "olen-sheet-handle" });
-    sheet.createEl("div", { cls: "olen-heading-lg", text: "SELECT SOUND FILE" });
+    const backdrop = modal.createDiv({ cls: "olen-quick-task-backdrop" });
+    const sheet = modal.createDiv({ cls: "olen-quick-task-sheet" });
+
+    sheet.createEl("div", { cls: "olen-quick-task-title", text: "SELECT SOUND FILE" });
 
     if (files.length === 0) {
       sheet.createEl("div", {
@@ -1061,29 +880,23 @@ export class WorkspaceView extends ItemView {
         item.addEventListener("click", () => {
           this.pomSettings.soundFile = file.path;
           labelEl.textContent = file.name;
-          closeSheet();
+          closeModal();
         });
       }
     }
 
     const cancelBtn = sheet.createEl("button", {
-      cls: "olen-btn olen-btn-secondary",
-      attr: { style: "margin-top: 12px;" },
-      text: "CANCEL",
+      cls: "olen-quick-task-cancel",
+      attr: { style: "margin-top: 12px; width: 100%;" },
+      text: "Cancel",
     });
-    cancelBtn.addEventListener("click", () => closeSheet());
+    cancelBtn.addEventListener("click", () => closeModal());
 
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) closeSheet();
-    });
+    backdrop.addEventListener("click", () => closeModal());
 
-    const closeSheet = () => {
-      overlay.classList.remove("visible");
-      setTimeout(() => overlay.remove(), 350);
-    };
+    const closeModal = () => modal.remove();
 
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add("visible"));
+    document.body.appendChild(modal);
   }
 
   private showFinishModal(workspace: ActiveWorkspace): void {
@@ -1141,7 +954,6 @@ export class WorkspaceView extends ItemView {
           startTime: workspace.startTime,
           endTime: endTime.toISOString(),
           durationMinutes,
-          skills: workspace.skills,
         };
 
         await this.finishWorkspace(result, workspace);
@@ -1236,9 +1048,7 @@ export class WorkspaceView extends ItemView {
       `endTime: "${endTimestamp}"`,
       `duration: "${durationStr}"`,
       `category: "${result.category}"`,
-      result.skills.length > 0
-        ? `skills: [${result.skills.map((s) => `"${s}"`).join(", ")}]`
-        : "skills: []",
+      "skills: []",
       "cssclasses:",
       "  - hide-properties",
       "---",
