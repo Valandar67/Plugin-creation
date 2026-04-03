@@ -148,7 +148,7 @@ export class OnboardingView extends ItemView {
 
     content.createEl("div", {
       cls: "olen-body-italic",
-      text: "A mythological life-operating system",
+      text: "Your life-operating system",
       attr: { style: "margin-bottom: 32px; font-size: 16px; opacity: 0.7;" },
     });
 
