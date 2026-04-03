@@ -9,7 +9,7 @@ import type { Category } from "../types";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 
-export function openFindingWhyModal(plugin: OlenPlugin): void {
+export function openFindingWhyModal(plugin: OlenPlugin, onComplete?: () => void): void {
   const progress = plugin.settings.findingWhyProgress;
   let currentScreen = getFirstIncompleteScreen(plugin);
 
@@ -56,7 +56,10 @@ export function openFindingWhyModal(plugin: OlenPlugin): void {
   function closeModal(): void {
     overlay.classList.add("olen-sunday-modal-fading");
     overlay.classList.remove("olen-sunday-modal-visible");
-    setTimeout(() => overlay.remove(), 500);
+    setTimeout(() => {
+      overlay.remove();
+      if (onComplete) onComplete();
+    }, 500);
   }
 
   function navigateTo(screenIndex: number): void {

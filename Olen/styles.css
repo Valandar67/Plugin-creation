@@ -1707,6 +1707,69 @@
   color: var(--text-dim);
 }
 
+/* ── Finish Modal (quick-task style) ── */
+
+.olen-finish-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+}
+
+.olen-finish-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  transition: opacity 0.25s ease;
+}
+
+.olen-finish-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 24px;
+  background: var(--card-bg-solid, rgba(10, 10, 10, 0.95));
+  -webkit-backdrop-filter: blur(60px) saturate(180%);
+  backdrop-filter: blur(60px) saturate(180%);
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.06));
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  animation: olen-finish-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+@keyframes olen-finish-down {
+  from { transform: translateY(-40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes olen-finish-up {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-30px); opacity: 0; }
+}
+
+.olen-finish-title {
+  font-family: "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--text-muted, #7e7769);
+  margin-bottom: 8px;
+}
+
+.olen-finish-subtitle {
+  font-family: "Georgia", serif;
+  font-size: 15px;
+  color: var(--text-secondary, #c8c0b2);
+  margin-bottom: 24px;
+}
+
 /* Finish modal — completion states grid */
 .olen-workspace-states-grid {
   display: flex;

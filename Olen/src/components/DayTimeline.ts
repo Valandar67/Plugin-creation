@@ -101,14 +101,25 @@ function renderTimelineEntry(
 
   const row = parent.createDiv({ cls: stateCls });
 
-  // Category color bar (calendar tasks get a distinct dashed style)
+  // Category color bar — progressively empties for current/past activities
   const bar = row.createDiv({ cls: "olen-timeline-bar" });
-  bar.style.background = color;
   if (isCalendar && !isDone) {
     bar.classList.add("olen-timeline-bar-calendar");
   }
+
   if (isCurrent && !isDone && !isSkipped) {
+    // Show filled portion (top = done, bottom = remaining as dim)
+    const progress = Math.min(1, Math.max(0,
+      (currentHour - entry.startHour) / (entry.endHour - entry.startHour)
+    ));
+    const filledPct = Math.round(progress * 100);
+    bar.style.background = `linear-gradient(to bottom, ${color} ${filledPct}%, rgba(255,255,255,0.08) ${filledPct}%)`;
     bar.style.boxShadow = `0 0 12px ${color}`;
+  } else if (isPast && !isDone && !isSkipped) {
+    // Past and not completed — empty/dim bar
+    bar.style.background = "rgba(255,255,255,0.08)";
+  } else {
+    bar.style.background = color;
   }
 
   // Content
@@ -194,12 +205,7 @@ function renderTimelineEntry(
     }
   }
 
-  // Current time indicator
-  if (isCurrent && !isDone && !isSkipped) {
-    const indicator = row.createDiv({ cls: "olen-timeline-now" });
-    const progress = (currentHour - entry.startHour) / (entry.endHour - entry.startHour);
-    indicator.style.top = `${Math.min(100, Math.max(0, progress * 100))}%`;
-  }
+  // (Red laser line removed — progress now shown via the category bar fill)
 }
 
 function renderTimelineFooter(

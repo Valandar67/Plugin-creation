@@ -1018,17 +1018,33 @@ export class WorkspaceView extends ItemView {
     const endTime = new Date();
     const durationMinutes = Math.round((endTime.getTime() - this.startTime.getTime()) / 60000);
 
-    const overlay = document.createElement("div");
-    overlay.className = "olen-sheet-overlay";
+    // Modal (quick-task-sheet style)
+    const modal = document.createElement("div");
+    modal.className = "olen-finish-modal";
 
-    const sheet = overlay.createDiv({ cls: "olen-sheet" });
-    sheet.createDiv({ cls: "olen-sheet-handle" });
+    const backdrop = modal.createDiv({ cls: "olen-finish-backdrop" });
+    const sheet = modal.createDiv({ cls: "olen-finish-sheet" });
 
-    sheet.createEl("div", { cls: "olen-heading-lg", text: "HOW DID IT FEEL?" });
+    // Copy theme CSS vars from dashboard
+    const dashboard = document.querySelector(".olen-dashboard") as HTMLElement | null;
+    if (dashboard) {
+      const cs = getComputedStyle(dashboard);
+      const vars = [
+        "--bg-primary", "--bg-secondary", "--card-bg", "--card-bg-solid",
+        "--card-border", "--text-primary", "--text-secondary", "--text-muted",
+        "--text-dim", "--accent-gold", "--accent-gold-bright", "--accent-gold-dim",
+        "--accent-amber", "--shadow-card", "--glow-gold-strong",
+      ];
+      for (const v of vars) {
+        const val = cs.getPropertyValue(v);
+        if (val) sheet.style.setProperty(v, val);
+      }
+    }
+
+    sheet.createEl("div", { cls: "olen-finish-title", text: "HOW DID IT FEEL?" });
     sheet.createEl("div", {
-      cls: "olen-body-italic",
-      attr: { style: "margin: 12px 0 20px;" },
-      text: `${workspace.emoji} ${workspace.activityName} · ${durationMinutes} minutes`,
+      cls: "olen-finish-subtitle",
+      text: `${workspace.emoji} ${workspace.activityName} \u00B7 ${durationMinutes} minutes`,
     });
 
     // Completion state buttons
@@ -1059,19 +1075,13 @@ export class WorkspaceView extends ItemView {
       });
     }
 
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) {
-        // Don't close on overlay tap — user must choose
-      }
-    });
-
     const closeSheet = () => {
-      overlay.classList.remove("visible");
-      setTimeout(() => overlay.remove(), 350);
+      sheet.style.animation = "olen-finish-up 0.25s ease forwards";
+      backdrop.style.opacity = "0";
+      setTimeout(() => modal.remove(), 300);
     };
 
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add("visible"));
+    document.body.appendChild(modal);
   }
 
   private async finishWorkspace(result: WorkspaceResult, workspace: ActiveWorkspace): Promise<void> {

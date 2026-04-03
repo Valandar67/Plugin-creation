@@ -93,7 +93,7 @@ export class DreamBoardView extends ItemView {
       attr: { "aria-label": "Finding Your Why guide" },
     });
     infoBtn.textContent = "\u24D8";
-    infoBtn.addEventListener("click", () => openFindingWhyModal(this.plugin));
+    infoBtn.addEventListener("click", () => openFindingWhyModal(this.plugin, () => this.render()));
 
     // Aphorism section
     this.renderAphorismSection(root, settings.aphorism ?? "");
