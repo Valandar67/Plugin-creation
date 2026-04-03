@@ -254,7 +254,7 @@ export class OnboardingView extends ItemView {
     // Feature list
     const features = [
       "\u2694\uFE0F Boss fights tied to your weekly targets",
-      "\u{1F3C6} 13 mythological ranks to climb",
+      "\u{1F3C6} 14 mythological ranks to climb",
       "\u{1F525} Neglect penalties and Tartarus penance mode",
       "\u{1F4A0} Dynamic titles based on your category balance",
     ];
