@@ -785,6 +785,18 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(details)
+      .setName("Exercise database folder")
+      .setDesc("Vault folder containing strength standard notes (e.g. Bench Press.md)")
+      .addText((t) =>
+        t.setPlaceholder("e.g. Exercises")
+          .setValue(activity.exerciseDbFolder ?? "")
+          .onChange(async (v) => {
+            this.plugin.settings.activities[index].exerciseDbFolder = v.trim() || undefined;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(details)
       .setName("Blocks (comma-separated activity IDs)")
       .addText((t) =>
         t.setValue((activity.blocks ?? []).join(", ")).onChange(async (v) => {

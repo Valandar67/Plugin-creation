@@ -12,11 +12,12 @@ const { container, getData, setData, setMultipleData, app, moment, notice,
 // ============================================================
 // SETTINGS — Edit these to match your vault structure
 // ============================================================
+const _actConfig = ctx.plugin?.settings?.activities?.find(a => a.id === getData("activity") || a.workspaceTemplate === "workout");
 const SETTINGS = {
   // Where daily workout notes are stored
-  workoutFolder: (ctx.plugin?.settings?.activities?.find(a => a.id === "workout")?.folder) || "Activities/Workout",
+  workoutFolder: _actConfig?.folder || "Activities/Workout",
   // Folder containing exercise standard .md files (e.g. "Bench Press.md")
-  exerciseDbFolder: "Exercises",
+  exerciseDbFolder: _actConfig?.exerciseDbFolder || "Exercises",
 };
 
 // Read personal stats from plugin settings (set in Olen Settings > Personal Stats)
@@ -495,6 +496,31 @@ async function finishWorkout(type) {
     exercises: exercises,
     currentMuscleIndex: currentMuscleIndex,
   });
+
+  // Clear active workspace directly to ensure the dashboard resume banner
+  // disappears even if the workspace view's metadata listener doesn't fire
+  // (e.g. when navigating away quickly after completion)
+  if (ctx.plugin?.settings) {
+    const ws = ctx.plugin.settings.activeWorkspace;
+    if (ws) {
+      // Apply XP + boss damage
+      const actConfig = ctx.plugin.settings.activities?.find(a => a.id === ws.activityId);
+      const wsType = type.toLowerCase();
+      const state = ctx.plugin.settings.workspaceCompletionStates?.find(s => s.id === wsType);
+      if (state && state.xpMultiplier > 0) {
+        const xpGain = Math.round((ctx.plugin.settings.devConfig?.xpPerCompletion || 50) * state.xpMultiplier);
+        if (ctx.plugin.settings.categoryXP?.[ws.category] !== undefined) {
+          ctx.plugin.settings.categoryXP[ws.category] += xpGain;
+        }
+      }
+      if (wsType !== "skipped" && actConfig) {
+        ctx.plugin.settings.bossCurrentHP = Math.max(0, (ctx.plugin.settings.bossCurrentHP || 0) - (actConfig.damagePerCompletion || 0));
+      }
+      ctx.plugin.settings.activeWorkspace = null;
+      if (ctx.plugin.saveSettings) await ctx.plugin.saveSettings();
+    }
+  }
+
   notice("Workout logged as " + (type === "discipline" ? "Discipline Win" : "Flow State") + "!");
   navigateAfterCompletion();
 }
@@ -656,6 +682,11 @@ async function openFinishModal() {
 // ADD EXERCISE MODAL
 // ============================================================
 
+function getAvailableExercises() {
+  const files = getFilesInFolder(SETTINGS.exerciseDbFolder);
+  return files.map(f => f.basename).sort();
+}
+
 function openAddExerciseModal(muscle) {
   createModal("Add Exercise - " + muscle, (content) => {
     const nameInput = document.createElement("input");
@@ -663,6 +694,33 @@ function openAddExerciseModal(muscle) {
     nameInput.placeholder = "Exercise name...";
     nameInput.style.cssText = `width:100%;padding:12px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};color:${THEME.color};font-size:14px;box-sizing:border-box;`;
     content.appendChild(nameInput);
+
+    // Show available exercises from strength standards folder
+    const availableExercises = getAvailableExercises();
+    if (availableExercises.length > 0) {
+      const suggestionsContainer = document.createElement("div");
+      suggestionsContainer.style.cssText = "max-height:150px;overflow-y:auto;margin-top:8px;display:flex;flex-direction:column;gap:2px;";
+
+      const filterAndShow = (query) => {
+        suggestionsContainer.innerHTML = "";
+        const q = query.toLowerCase();
+        const filtered = q ? availableExercises.filter(e => e.toLowerCase().includes(q)) : availableExercises;
+        for (const exName of filtered.slice(0, 20)) {
+          const item = document.createElement("div");
+          item.textContent = exName;
+          item.style.cssText = `padding:8px 12px;font-size:12px;color:${THEME.colorLight};cursor:pointer;background:rgba(0,0,0,0.3);border:1px solid rgba(154,140,122,0.06);border-radius:6px;transition:all 0.15s;`;
+          item.onmouseenter = () => { item.style.borderColor = THEME.color; item.style.background = "rgba(154,140,122,0.08)"; };
+          item.onmouseleave = () => { item.style.borderColor = "rgba(154,140,122,0.06)"; item.style.background = "rgba(0,0,0,0.3)"; };
+          item.onclick = () => { nameInput.value = exName; suggestionsContainer.style.display = "none"; };
+          suggestionsContainer.appendChild(item);
+        }
+        suggestionsContainer.style.display = filtered.length > 0 ? "flex" : "none";
+      };
+
+      filterAndShow("");
+      nameInput.addEventListener("input", () => filterAndShow(nameInput.value));
+      content.appendChild(suggestionsContainer);
+    }
 
     const warmupLabel = document.createElement("div");
     warmupLabel.textContent = "Include warmup sets?";
@@ -732,6 +790,71 @@ function openAddExerciseModal(muscle) {
       render();
     };
     btnRow.appendChild(addBtn);
+
+    setTimeout(() => nameInput.focus(), 100);
+  });
+}
+
+// ============================================================
+// ADD STRENGTH STANDARD MODAL
+// ============================================================
+
+function openAddStrengthStandardModal() {
+  createModal("Add Strength Standard", (content) => {
+    const form = document.createElement("div");
+    form.style.cssText = "display:flex;flex-direction:column;gap:16px;";
+    content.appendChild(form);
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.placeholder = "Exercise name (e.g., Dumbbell Curl)";
+    nameInput.style.cssText = `width:100%;padding:12px;background:#0f0f0f;border:1px solid ${THEME.colorBorder};color:${THEME.color};font-size:14px;box-sizing:border-box;`;
+    form.appendChild(nameInput);
+
+    let exerciseType = "Weighted";
+    const typeContainer = document.createElement("div");
+    typeContainer.style.cssText = "display:flex;gap:12px;";
+    const weightedBtn = document.createElement("button");
+    weightedBtn.textContent = "\uD83C\uDFCB\uFE0F Weighted";
+    weightedBtn.className = "otw-btn otw-btn-secondary";
+    weightedBtn.style.cssText += `flex:1;background:rgba(154,140,122,0.2);border-color:${THEME.color};color:${THEME.color};`;
+    const bodyweightBtn = document.createElement("button");
+    bodyweightBtn.textContent = "\uD83E\uDD38 Bodyweight";
+    bodyweightBtn.className = "otw-btn otw-btn-secondary";
+    bodyweightBtn.style.flex = "1";
+    weightedBtn.onclick = () => { exerciseType = "Weighted"; weightedBtn.style.background = "rgba(154,140,122,0.2)"; weightedBtn.style.borderColor = THEME.color; weightedBtn.style.color = THEME.color; bodyweightBtn.style.background = "rgba(255,255,255,0.03)"; bodyweightBtn.style.borderColor = THEME.colorBorder; bodyweightBtn.style.color = THEME.colorMuted; };
+    bodyweightBtn.onclick = () => { exerciseType = "Bodyweight"; bodyweightBtn.style.background = "rgba(154,140,122,0.2)"; bodyweightBtn.style.borderColor = THEME.color; bodyweightBtn.style.color = THEME.color; weightedBtn.style.background = "rgba(255,255,255,0.03)"; weightedBtn.style.borderColor = THEME.colorBorder; weightedBtn.style.color = THEME.colorMuted; };
+    typeContainer.appendChild(weightedBtn);
+    typeContainer.appendChild(bodyweightBtn);
+    form.appendChild(typeContainer);
+
+    const infoText = document.createElement("div");
+    infoText.innerHTML = "<strong>Weighted:</strong> Standards in kg (1RM)<br><strong>Bodyweight:</strong> Standards in reps";
+    infoText.style.cssText = `color:${THEME.colorMuted};font-size:12px;line-height:1.6;`;
+    form.appendChild(infoText);
+
+    const createBtn = document.createElement("button");
+    createBtn.textContent = "CREATE & OPEN";
+    createBtn.className = "otw-btn otw-btn-primary";
+    createBtn.onclick = async () => {
+      const exerciseName = nameInput.value.trim();
+      if (!exerciseName) { notice("Please enter an exercise name"); return; }
+      const filePath = SETTINGS.exerciseDbFolder + "/" + exerciseName + ".md";
+      const unitLabel = exerciseType === "Bodyweight" ? "reps" : "kg (1RM)";
+      const fileContent = "---\nData: Strength Standard\nExercise: \"" + exerciseName + "\"\nType: " + exerciseType + "\ncssclasses:\n  - hide-properties\n---\n\n# " + exerciseName + " Strength Standards\n\n> Standards are in **" + unitLabel + "**\n\n## Bodyweight Table\n| BW  | Beg. | Nov. | Int. | Adv. | Elite |\n| --- | ---- | ---- | ---- | ---- | ----- |\n| 50  | 0    | 0    | 0    | 0    | 0     |\n| 60  | 0    | 0    | 0    | 0    | 0     |\n| 70  | 0    | 0    | 0    | 0    | 0     |\n| 80  | 0    | 0    | 0    | 0    | 0     |\n| 90  | 0    | 0    | 0    | 0    | 0     |\n\n## Age Table\n| Age | Beg. | Nov. | Int. | Adv. | Elite |\n| --- | ---- | ---- | ---- | ---- | ----- |\n| 15  | 0    | 0    | 0    | 0    | 0     |\n| 20  | 0    | 0    | 0    | 0    | 0     |\n| 30  | 0    | 0    | 0    | 0    | 0     |\n| 40  | 0    | 0    | 0    | 0    | 0     |\n| 50  | 0    | 0    | 0    | 0    | 0     |\n";
+      try {
+        const folder = app.vault.getAbstractFileByPath(SETTINGS.exerciseDbFolder);
+        if (!folder) await app.vault.createFolder(SETTINGS.exerciseDbFolder);
+        const existing = app.vault.getAbstractFileByPath(filePath);
+        if (!existing) await app.vault.create(filePath, fileContent);
+        closeModal();
+        const targetFile = app.vault.getAbstractFileByPath(filePath);
+        if (targetFile) {
+          setTimeout(() => app.workspace.getLeaf(false).openFile(targetFile), 300);
+        }
+      } catch (error) { notice("Error: " + error.message); }
+    };
+    form.appendChild(createBtn);
 
     setTimeout(() => nameInput.focus(), 100);
   });
@@ -1591,26 +1714,10 @@ async function renderMuscleSelection(root) {
   const selectedMuscles = new Set();
   const selectedSubgroups = new Map();
 
-  // ── "Start New Workout" button HIGH at the top ──
-  const startBtnTop = document.createElement("button");
-  startBtnTop.textContent = "\uD83C\uDFCB\uFE0F START NEW WORKOUT";
-  startBtnTop.className = "otw-btn otw-btn-primary";
-  startBtnTop.style.cssText += "padding:14px 24px;font-size:14px;font-weight:700;width:100%;margin-bottom:16px;";
-  startBtnTop.onclick = () => scrollToMuscleSelect();
-  root.appendChild(startBtnTop);
-
   // Stats dashboard
   await renderStatsSection(root);
 
   // ── Muscle Selection Section ──
-  const selAnchor = document.createElement("div");
-  selAnchor.id = "otw-muscle-select";
-  root.appendChild(selAnchor);
-
-  function scrollToMuscleSelect() {
-    selAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   const selLabel = document.createElement("div");
   selLabel.className = "otw-section-label";
   selLabel.style.marginTop = "28px";
@@ -1729,6 +1836,14 @@ async function renderMuscleSelection(root) {
     render();
   };
   root.appendChild(startBtn);
+
+  // Add Strength Standard button
+  const addStdBtn = document.createElement("button");
+  addStdBtn.textContent = "\uD83D\uDCCA Add Strength Standard";
+  addStdBtn.className = "otw-btn otw-btn-secondary";
+  addStdBtn.style.cssText += "width:100%;margin-top:10px;padding:14px;font-size:12px;letter-spacing:1px;";
+  addStdBtn.onclick = () => openAddStrengthStandardModal();
+  root.appendChild(addStdBtn);
 }
 
 // ============================================================

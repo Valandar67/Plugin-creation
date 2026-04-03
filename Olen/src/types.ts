@@ -44,6 +44,7 @@ export interface ActivityConfig {
   trackingMode: "daily" | "weekly";
   hasWorkspace: boolean;
   workspaceTemplate?: string;
+  exerciseDbFolder?: string;
 
   // Priority
   priority: number; // 1-10
