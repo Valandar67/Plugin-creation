@@ -5,13 +5,14 @@
 // rendered instead of the default timer UI.
 // ============================================================
 
-import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownRenderer, Component } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActiveWorkspace, ActivityConfig, WorkspaceType, WorkspaceResult, PomodoroSettings } from "../types";
 import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES, DEFAULT_POMODORO_SETTINGS } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { playAlertSound, vibrateAlert, stopAlertSound } from "../utils/alertSound";
+import { resolveInternalImageEmbeds } from "./EmbeddedMdView";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -31,6 +32,8 @@ export class WorkspaceView extends ItemView {
   private templateNoteFile: TFile | null = null;
   /** Tracks whether we already processed a completion (prevents double-apply) */
   private completionApplied = false;
+  /** Component for managing embedded skill previews lifecycle */
+  private skillPreviewComponent: Component | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: OlenPlugin) {
     super(leaf);
@@ -108,6 +111,10 @@ export class WorkspaceView extends ItemView {
     stopAlertSound();
     this.templateNoteFile = null;
     this.completionApplied = false;
+    if (this.skillPreviewComponent) {
+      this.skillPreviewComponent.unload();
+      this.skillPreviewComponent = null;
+    }
     this.contentEl.empty();
   }
 
@@ -440,6 +447,11 @@ export class WorkspaceView extends ItemView {
     });
     addSkillBtn.addEventListener("click", () => this.showSkillPicker(workspace));
 
+    // Skill note previews — embedded markdown previews of skill files
+    if (workspace.skills.length > 0 && workspace.skillFolder) {
+      this.renderSkillPreviews(content, workspace);
+    }
+
     // Focus zone — motivational area
     const focusZone = content.createDiv({ cls: "olen-workspace-focus" });
     const quote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
@@ -545,6 +557,68 @@ export class WorkspaceView extends ItemView {
       .filter((f) => f.path.startsWith(normalizedFolder))
       .map((f) => f.basename)
       .sort();
+  }
+
+  private async renderSkillPreviews(
+    container: HTMLElement,
+    workspace: ActiveWorkspace,
+  ): Promise<void> {
+    // Clean up previous preview component
+    if (this.skillPreviewComponent) {
+      this.skillPreviewComponent.unload();
+    }
+    this.skillPreviewComponent = new Component();
+    this.skillPreviewComponent.load();
+
+    const previewsSection = container.createDiv({ cls: "olen-skill-previews" });
+
+    const normalizedFolder = workspace.skillFolder!.endsWith("/")
+      ? workspace.skillFolder!
+      : workspace.skillFolder! + "/";
+
+    for (const skillName of workspace.skills) {
+      // Try to find the skill file in the skill folder
+      const filePath = normalizedFolder + skillName + ".md";
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (!(file instanceof TFile)) continue;
+
+      const previewCard = previewsSection.createDiv({ cls: "olen-skill-preview-card" });
+
+      // Header with skill name
+      const header = previewCard.createDiv({ cls: "olen-skill-preview-header" });
+      header.createEl("span", { cls: "olen-skill-preview-title", text: skillName });
+
+      // Collapsible toggle
+      const toggleBtn = header.createEl("button", {
+        cls: "olen-skill-preview-toggle",
+        attr: { "aria-label": "Toggle preview" },
+      });
+      toggleBtn.textContent = "▼";
+
+      // Preview content area
+      const previewContent = previewCard.createDiv({ cls: "olen-skill-preview-content" });
+
+      // Render the markdown
+      const mdContent = await this.app.vault.read(file);
+      await MarkdownRenderer.render(
+        this.app,
+        mdContent,
+        previewContent,
+        file.path,
+        this.skillPreviewComponent,
+      );
+
+      // Resolve image embeds
+      resolveInternalImageEmbeds(this.app, previewContent, file.path);
+
+      // Toggle collapse
+      let collapsed = false;
+      toggleBtn.addEventListener("click", () => {
+        collapsed = !collapsed;
+        previewContent.classList.toggle("olen-skill-preview-collapsed", collapsed);
+        toggleBtn.textContent = collapsed ? "▶" : "▼";
+      });
+    }
   }
 
   private renderPomodoroDots(container: HTMLElement): void {

@@ -1666,6 +1666,69 @@
   font-size: 10px !important;
 }
 
+/* Skill note previews — embedded split-screen style */
+.olen-skill-previews {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.olen-skill-preview-card {
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.olen-skill-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.olen-skill-preview-title {
+  font-family: "Georgia", serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.olen-skill-preview-toggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 4px 8px;
+  opacity: 0.6;
+}
+
+.olen-skill-preview-content {
+  max-height: 400px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 12px;
+  transition: max-height 0.3s ease;
+}
+
+.olen-skill-preview-content.olen-skill-preview-collapsed {
+  max-height: 0;
+  padding: 0 12px;
+  overflow: hidden;
+}
+
+.olen-skill-preview-content .markdown-preview-view,
+.olen-skill-preview-content .markdown-rendered {
+  font-size: 13px;
+}
+
 .olen-workspace-skill-input {
   width: 100%;
   padding: 12px 16px;
