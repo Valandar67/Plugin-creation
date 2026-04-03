@@ -1770,6 +1770,45 @@
   margin-bottom: 24px;
 }
 
+.olen-finish-quote {
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+
+.olen-finish-quote-text {
+  font-family: "Georgia", serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary, #c8c0b2);
+  line-height: 1.6;
+}
+
+.olen-finish-quote-attr {
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  font-size: 10px;
+  color: var(--text-dim, #4d473e);
+  margin-top: 6px;
+}
+
+.olen-finish-cancel {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted, #928d85);
+  transition: all 0.2s;
+}
+
+.olen-finish-cancel:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Finish modal — completion states grid */
 .olen-workspace-states-grid {
   display: flex;

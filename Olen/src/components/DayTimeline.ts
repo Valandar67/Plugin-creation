@@ -108,12 +108,12 @@ function renderTimelineEntry(
   }
 
   if (isCurrent && !isDone && !isSkipped) {
-    // Show filled portion (top = done, bottom = remaining as dim)
+    // Bar empties from top as time passes: elapsed = dim, remaining = colored
     const progress = Math.min(1, Math.max(0,
       (currentHour - entry.startHour) / (entry.endHour - entry.startHour)
     ));
-    const filledPct = Math.round(progress * 100);
-    bar.style.background = `linear-gradient(to bottom, ${color} ${filledPct}%, rgba(255,255,255,0.08) ${filledPct}%)`;
+    const elapsedPct = Math.round(progress * 100);
+    bar.style.background = `linear-gradient(to bottom, rgba(255,255,255,0.08) ${elapsedPct}%, ${color} ${elapsedPct}%)`;
     bar.style.boxShadow = `0 0 12px ${color}`;
   } else if (isPast && !isDone && !isSkipped) {
     // Past and not completed — empty/dim bar

@@ -13,7 +13,7 @@ export interface LogResult {
 }
 
 /**
- * Shows a bottom-sheet style modal for logging activity completion.
+ * Shows a centered modal for logging activity completion.
  * Returns the chosen completion type via callback.
  */
 export function showLogModal(
@@ -21,29 +21,44 @@ export function showLogModal(
   activity: ActivityConfig,
   onComplete: (result: LogResult) => void
 ): void {
-  const overlay = document.createElement("div");
-  overlay.className = "olen-sheet-overlay";
+  const modal = document.createElement("div");
+  modal.className = "olen-finish-modal";
 
-  const sheet = overlay.createDiv({ cls: "olen-sheet" });
-  sheet.createDiv({ cls: "olen-sheet-handle" });
+  const backdrop = modal.createDiv({ cls: "olen-finish-backdrop" });
+  const sheet = modal.createDiv({ cls: "olen-finish-sheet" });
 
-  sheet.createEl("div", { cls: "olen-heading-lg", text: "LOG COMPLETION" });
+  // Copy theme CSS vars from dashboard
+  const dashboard = document.querySelector(".olen-dashboard") as HTMLElement | null;
+  if (dashboard) {
+    const cs = getComputedStyle(dashboard);
+    const vars = [
+      "--bg-primary", "--bg-secondary", "--card-bg", "--card-bg-solid",
+      "--card-border", "--text-primary", "--text-secondary", "--text-muted",
+      "--text-dim", "--accent-gold", "--accent-gold-bright", "--accent-gold-dim",
+      "--accent-amber", "--shadow-card", "--glow-gold-strong",
+    ];
+    for (const v of vars) {
+      const val = cs.getPropertyValue(v);
+      if (val) sheet.style.setProperty(v, val);
+    }
+  }
+
+  sheet.createEl("div", { cls: "olen-finish-title", text: "LOG COMPLETION" });
   sheet.createEl("div", {
-    cls: "olen-body-italic",
-    attr: { style: "margin: 12px 0 20px;" },
+    cls: "olen-finish-subtitle",
     text: `${activity.emoji} ${activity.name}`,
   });
 
   // Aphorism
   const quote = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
-  const quoteEl = sheet.createDiv({ cls: "olen-log-quote" });
+  const quoteEl = sheet.createDiv({ cls: "olen-finish-quote" });
   quoteEl.createEl("div", {
-    cls: "olen-body-italic",
-    text: `"${quote.text}"`,
+    cls: "olen-finish-quote-text",
+    text: `\u201C${quote.text}\u201D`,
   });
   quoteEl.createEl("div", {
-    cls: "olen-data-sm",
-    text: `— ${quote.attribution}`,
+    cls: "olen-finish-quote-attr",
+    text: `\u2014 ${quote.attribution}`,
   });
 
   // Completion state buttons
@@ -65,17 +80,17 @@ export function showLogModal(
 
   // Cancel
   const cancelBtn = sheet.createEl("button", {
-    cls: "olen-btn olen-btn-secondary",
-    text: "CANCEL",
-    attr: { style: "margin-top: 16px; width: 100%;" },
+    cls: "olen-finish-cancel",
+    text: "Cancel",
   });
   cancelBtn.addEventListener("click", () => closeSheet());
+  backdrop.addEventListener("click", () => closeSheet());
 
   const closeSheet = () => {
-    overlay.classList.remove("visible");
-    setTimeout(() => overlay.remove(), 350);
+    sheet.style.animation = "olen-finish-up 0.25s ease forwards";
+    backdrop.style.opacity = "0";
+    setTimeout(() => modal.remove(), 300);
   };
 
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => overlay.classList.add("visible"));
+  document.body.appendChild(modal);
 }
