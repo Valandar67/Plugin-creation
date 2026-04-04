@@ -362,6 +362,12 @@ export default class OlenPlugin extends Plugin {
     }
 
     await workspace.revealLeaf(leaf);
+
+    // Force re-render so the dashboard reflects latest completions/state
+    const view = leaf.view;
+    if (view instanceof DashboardView) {
+      await view.render();
+    }
   }
 
   async activateOnboarding(): Promise<void> {

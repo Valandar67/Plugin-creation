@@ -503,7 +503,9 @@ export class OlenEngine {
     const skipped = this.settings.skippedToday?.date === effectiveToday
       ? new Set(this.settings.skippedToday.activityIds)
       : new Set<string>();
-    const activities = this.getEnabledActivities().filter((a) => !this.isDoneToday(a.id) && !skipped.has(a.id));
+    const allActivities = this.getEnabledActivities();
+    // Only use pending activities for slot allocation
+    const pendingActivities = allActivities.filter((a) => !this.isDoneToday(a.id) && !skipped.has(a.id));
     const { morningStart, morningEnd, afternoonEnd, eveningEnd, bufferMinutes } = this.settings.devConfig;
 
     const timeSlots: { period: string; startHour: number; endHour: number }[] = [
@@ -516,7 +518,7 @@ export class OlenEngine {
     const scheduled = new Set<string>();
 
     // 1. Place time-override activities first
-    for (const activity of activities) {
+    for (const activity of pendingActivities) {
       if (!activity.timeOverride) continue;
       entries.push({
         activityId: activity.id,
@@ -533,7 +535,7 @@ export class OlenEngine {
     }
 
     // 2. Place neglected activities in their preferred slots
-    const neglected = this.getNeglectedActivitiesSorted(activities)
+    const neglected = this.getNeglectedActivitiesSorted(pendingActivities)
       .filter((a) => !scheduled.has(a.id));
 
     for (const activity of neglected) {
@@ -555,7 +557,7 @@ export class OlenEngine {
     }
 
     // 3. Place remaining weekly-target activities
-    const remaining = activities
+    const remaining = pendingActivities
       .filter((a) => !scheduled.has(a.id))
       .filter((a) => {
         const progress = this.getWeeklyProgress(a.id);
@@ -576,6 +578,50 @@ export class OlenEngine {
           estimatedDuration: activity.estimatedDuration,
           status: "pending",
           priorityReason: "weekly",
+        });
+        scheduled.add(activity.id);
+      }
+    }
+
+    // 4. Add completed activities (done today) so they show with a checkmark
+    const doneActivities = allActivities.filter((a) => this.isDoneToday(a.id) && !scheduled.has(a.id));
+    for (const activity of doneActivities) {
+      const slot = activity.timeOverride
+        ? { startHour: activity.timeOverride.startHour, endHour: activity.timeOverride.endHour }
+        : this.findSlotForActivity(activity, timeSlots, entries, bufferMinutes);
+      if (slot) {
+        entries.push({
+          activityId: activity.id,
+          activityName: activity.name,
+          emoji: activity.emoji,
+          category: activity.category,
+          startHour: slot.startHour,
+          endHour: slot.endHour,
+          estimatedDuration: activity.estimatedDuration,
+          status: "done",
+          priorityReason: "balanced",
+        });
+        scheduled.add(activity.id);
+      }
+    }
+
+    // 5. Add skipped activities so they show with a skip mark
+    const skippedActivities = allActivities.filter((a) => skipped.has(a.id) && !this.isDoneToday(a.id) && !scheduled.has(a.id));
+    for (const activity of skippedActivities) {
+      const slot = activity.timeOverride
+        ? { startHour: activity.timeOverride.startHour, endHour: activity.timeOverride.endHour }
+        : this.findSlotForActivity(activity, timeSlots, entries, bufferMinutes);
+      if (slot) {
+        entries.push({
+          activityId: activity.id,
+          activityName: activity.name,
+          emoji: activity.emoji,
+          category: activity.category,
+          startHour: slot.startHour,
+          endHour: slot.endHour,
+          estimatedDuration: activity.estimatedDuration,
+          status: "skipped",
+          priorityReason: "balanced",
         });
         scheduled.add(activity.id);
       }
@@ -608,14 +654,7 @@ export class OlenEngine {
       }
     }
 
-    // Mark done activities (only for non-calendar entries)
-    for (const entry of entries) {
-      if (!entry.isCalendarTask && this.isDoneToday(entry.activityId)) {
-        entry.status = "done";
-      }
-    }
-
-    // Also filter out skipped calendar entries
+    // Filter out skipped calendar entries
     const filteredEntries = entries.filter((e) => {
       if (e.isCalendarTask && e.calendarTaskId && skipped.has(e.calendarTaskId)) return false;
       return true;
