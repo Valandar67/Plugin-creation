@@ -8,6 +8,14 @@ import type { App, TFile } from "obsidian";
 import type { Completion } from "../types";
 
 const DATE_REGEX = /\d{4}-\d{2}-\d{2}/;
+
+/** Format a Date as YYYY-MM-DD in LOCAL time (never UTC). */
+export function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 const FM_BOUNDARY = /^---\s*$/;
 
 /**
@@ -52,9 +60,9 @@ function extractDate(fm: Record<string, string>, file: TFile): string | null {
     if (match) return match[0];
   }
 
-  // 2. Fall back to file creation time
+  // 2. Fall back to file creation time (local timezone)
   if (file.stat?.ctime) {
-    return new Date(file.stat.ctime).toISOString().slice(0, 10);
+    return toLocalDateStr(new Date(file.stat.ctime));
   }
 
   return null;

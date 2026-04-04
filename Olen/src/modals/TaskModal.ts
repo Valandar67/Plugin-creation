@@ -5,6 +5,7 @@
 
 import { Notice } from "obsidian";
 import type OlenPlugin from "../main";
+import { toLocalDateStr } from "../utils/completions";
 
 export function showTaskModal(
   plugin: OlenPlugin,
@@ -91,7 +92,7 @@ export function showTaskModal(
     const now = plugin.settings.simulatedDate
       ? new Date(plugin.settings.simulatedDate)
       : new Date();
-    const today = now.toISOString().slice(0, 10);
+    const today = toLocalDateStr(now);
 
     plugin.settings.calendar.quickTasks.push({
       id: `qt-${Date.now()}`,

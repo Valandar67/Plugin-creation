@@ -5,6 +5,7 @@
 
 import { App } from "obsidian";
 import type { OlenSettings, ActivityConfig, CompletionMap } from "../types";
+import { toLocalDateStr } from "../utils/completions";
 
 export function renderPersonalRecords(
   container: HTMLElement,
@@ -92,7 +93,7 @@ function calculateRecords(
       for (let i = 0; i < 7; i++) {
         const checkDate = new Date(startDate);
         checkDate.setDate(checkDate.getDate() + i);
-        const checkStr = checkDate.toISOString().slice(0, 10);
+        const checkStr = toLocalDateStr(checkDate);
         if (dateSet.has(checkStr)) weekCount++;
       }
       bestWeekSessions = Math.max(bestWeekSessions, weekCount);

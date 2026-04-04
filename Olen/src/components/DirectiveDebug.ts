@@ -6,6 +6,7 @@
 import type { App, TFile } from "obsidian";
 import type { OlenSettings, CompletionMap } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
+import { toLocalDateStr } from "../utils/completions";
 
 const DATE_REGEX = /\d{4}-\d{2}-\d{2}/;
 const FM_BOUNDARY = /^---\s*$/;
@@ -132,7 +133,7 @@ export async function renderDirectiveDebug(
         if (m) extractedDate = m[0];
       }
       if (extractedDate === "NONE" && file.stat?.ctime) {
-        extractedDate = new Date(file.stat.ctime).toISOString().slice(0, 10) + " (from ctime)";
+        extractedDate = toLocalDateStr(new Date(file.stat.ctime)) + " (from ctime)";
       }
 
       const propTrimmed = propVal ? propVal.replace(/^["']|["']$/g, "").toLowerCase() : "MISSING";

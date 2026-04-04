@@ -23,6 +23,7 @@ import {
   toRoman,
 } from "../constants";
 import { BossEngine } from "./BossEngine";
+import { toLocalDateStr } from "../utils/completions";
 
 export class OlenEngine {
   private settings: OlenSettings;
@@ -37,7 +38,7 @@ export class OlenEngine {
     this.now = now;
     const d = new Date(now);
     d.setHours(0, 0, 0, 0);
-    this.today = d.toISOString().slice(0, 10);
+    this.today = toLocalDateStr(d);
     this.bossEngine = new BossEngine(settings);
   }
 
@@ -56,9 +57,7 @@ export class OlenEngine {
   }
 
   getEffectiveToday(): string {
-    const d = this.getEffectiveNow();
-    d.setHours(0, 0, 0, 0);
-    return d.toISOString().slice(0, 10);
+    return toLocalDateStr(this.getEffectiveNow());
   }
 
   // --- Data Access ---
@@ -719,7 +718,7 @@ export class OlenEngine {
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = toLocalDateStr(d);
       const dayCompletions = new Map<Category, number>();
 
       for (const activity of this.getEnabledActivities()) {
@@ -810,7 +809,7 @@ export class OlenEngine {
     for (let i = 0; i < 7; i++) {
       const d = new Date(lastWeekStart);
       d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = toLocalDateStr(d);
       for (const activity of this.getEnabledActivities()) {
         const comps = this.getCompletionsForActivity(activity.id);
         if (comps.some((c) => c.date === dateStr && c.completed)) lastWeekTotal++;

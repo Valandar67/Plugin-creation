@@ -5,6 +5,7 @@
 
 import { App, TFile } from "obsidian";
 import type { OlenSettings, ActivityConfig } from "../types";
+import { toLocalDateStr } from "../utils/completions";
 
 interface SkillStats {
   name: string;
@@ -89,7 +90,7 @@ function getSkillStats(app: App, activity: ActivityConfig): SkillStats[] {
     if (!fm || !Array.isArray(fm.skills)) continue;
 
     const date = fm.Timestamp
-      ? new Date(fm.Timestamp).toISOString().slice(0, 10)
+      ? toLocalDateStr(new Date(fm.Timestamp))
       : file.basename;
 
     for (const skill of fm.skills) {

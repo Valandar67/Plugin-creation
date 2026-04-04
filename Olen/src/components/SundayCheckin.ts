@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { OlenSettings } from "../types";
+import { toLocalDateStr } from "../utils/completions";
 
 export interface SundayBannerCallbacks {
   onLetHimIn: () => void;
@@ -20,7 +21,7 @@ export function shouldShowSundayBanner(settings: OlenSettings, now: Date): boole
   const isSunday = now.getDay() === 0;
   if (!isSunday) return false;
 
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = toLocalDateStr(now);
   if (checkin.lastCheckinDate === todayStr) return false;
 
   return true;

@@ -9,6 +9,7 @@ import type { ActivityConfig, Category, TempleTask, Gender, WeightLogFrequency, 
 import { DEFAULT_ACTIVITIES, DEFAULT_DEV_CONFIG, DEFAULT_POMODORO_SETTINGS, LIFE_EXPECTANCY_MALE, LIFE_EXPECTANCY_FEMALE } from "../constants";
 import { THEME_PRESETS, THEME_LABELS } from "../data/themes";
 import { BUILTIN_TEMPLATE_IDS } from "../templates/builtins";
+import { toLocalDateStr } from "../utils/completions";
 
 export class OlenSettingTab extends PluginSettingTab {
   plugin: OlenPlugin;
@@ -320,7 +321,7 @@ export class OlenSettingTab extends PluginSettingTab {
             new Notice("Enter your current weight first");
             return;
           }
-          const today = new Date().toISOString().slice(0, 10);
+          const today = toLocalDateStr(new Date());
           // Avoid duplicate for today
           const existing = this.plugin.settings.personalStats.weightLog.find((e) => e.date === today);
           if (existing) {
@@ -984,7 +985,7 @@ export class OlenSettingTab extends PluginSettingTab {
       const now = this.plugin.settings.simulatedDate
         ? new Date(this.plugin.settings.simulatedDate)
         : new Date();
-      const today = now.toISOString().slice(0, 10);
+      const today = toLocalDateStr(now);
 
       const todayTasks = this.plugin.settings.calendar.quickTasks.filter(
         (qt) => qt.date === today

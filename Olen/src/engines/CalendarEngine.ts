@@ -12,6 +12,7 @@ import type {
   DayMapEntry,
   CalendarTaskSource,
 } from "../types";
+import { toLocalDateStr } from "../utils/completions";
 
 export class CalendarEngine {
   private app: App;
@@ -23,7 +24,7 @@ export class CalendarEngine {
     this.settings = settings;
     const d = new Date(now);
     d.setHours(0, 0, 0, 0);
-    this.today = d.toISOString().slice(0, 10);
+    this.today = toLocalDateStr(d);
   }
 
   // --- Main entry: get all calendar tasks for today ---
@@ -331,7 +332,7 @@ export class CalendarEngine {
   async postponeTask(task: CalendarTask): Promise<void> {
     const tomorrow = new Date(this.today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const tomorrowStr = toLocalDateStr(tomorrow);
 
     if (task.source === "quick-task") {
       // Update in settings

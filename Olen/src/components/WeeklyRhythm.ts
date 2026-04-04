@@ -5,6 +5,7 @@
 
 import type { OlenSettings, Category } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
+import { toLocalDateStr } from "../utils/completions";
 
 export function renderWeeklyRhythm(
   container: HTMLElement,
@@ -39,7 +40,7 @@ export function renderWeeklyRhythm(
   // Bar chart
   const weeklyData = engine.getWeeklyCompletionsByDay();
   const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
-  const todayStr = new Date(now).toISOString().slice(0, 10);
+  const todayStr = toLocalDateStr(new Date(now));
 
   // Find max total for scaling
   let maxTotal = 1;

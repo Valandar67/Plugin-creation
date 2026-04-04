@@ -18,6 +18,7 @@ import {
   type PerformanceTier,
 } from "../data/sundayDialogues";
 import { createJournalEntry } from "../utils/journal";
+import { toLocalDateStr } from "../utils/completions";
 
 export interface SundayModalCallbacks {
   onComplete: () => void;
@@ -65,7 +66,7 @@ export function openSundayModal(
           const effectiveDate = settings.simulatedDate
             ? new Date(settings.simulatedDate)
             : new Date();
-          settings.sundayCheckin.lastCheckinDate = effectiveDate.toISOString().slice(0, 10);
+          settings.sundayCheckin.lastCheckinDate = toLocalDateStr(effectiveDate);
           settings.sundayCheckin.consecutiveIgnores = 0;
           callbacks.onSaveSettings().then(() => {
             overlay.remove();
@@ -389,7 +390,7 @@ function renderStep2(
   const titleInput = document.createElement("input");
   titleInput.type = "text";
   titleInput.className = "olen-sunday-input";
-  titleInput.placeholder = `Sunday Reflection ${new Date().toISOString().slice(0, 10)}`;
+  titleInput.placeholder = `Sunday Reflection ${toLocalDateStr(new Date())}`;
   content.appendChild(titleInput);
 
   // Textarea
@@ -415,10 +416,10 @@ function renderStep2(
     const journalContent = textarea.value.trim();
     if (journalContent) {
       const title = titleInput.value.trim() ||
-        `Sunday Reflection ${new Date().toISOString().slice(0, 10)}`;
+        `Sunday Reflection ${toLocalDateStr(new Date())}`;
       await createJournalEntry(app, settings.sundayCheckin.journalFolder, title, journalContent, {
         type: "sunday-reflection",
-        date: new Date().toISOString().slice(0, 10),
+        date: toLocalDateStr(new Date()),
         performance: analysis.tier,
       });
     }

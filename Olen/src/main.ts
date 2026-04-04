@@ -5,7 +5,7 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView, Modal } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { getCompletionsFromFolder } from "./utils/completions";
+import { getCompletionsFromFolder, toLocalDateStr } from "./utils/completions";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS, DEFAULT_SUNDAY_CHECKIN } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
@@ -744,7 +744,7 @@ export default class OlenPlugin extends Plugin {
         if (m) return m[0] === dateStr;
       }
       if (file.stat?.ctime) {
-        return new Date(file.stat.ctime).toISOString().slice(0, 10) === dateStr;
+        return toLocalDateStr(new Date(file.stat.ctime)) === dateStr;
       }
       return false;
     });
@@ -841,7 +841,7 @@ export default class OlenPlugin extends Plugin {
       const now = this.settings.simulatedDate
         ? new Date(this.settings.simulatedDate)
         : new Date();
-      const today = now.toISOString().slice(0, 10);
+      const today = toLocalDateStr(now);
 
       this.settings.calendar.quickTasks.push({
         id: `qt-${Date.now()}`,

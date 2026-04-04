@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { App } from "obsidian";
+import { toLocalDateStr } from "./completions";
 
 /**
  * Create a journal entry as a markdown file.
@@ -24,7 +25,7 @@ export async function createJournalEntry(
   }
 
   // Build filename
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toLocalDateStr(new Date());
   const baseName = title.trim() || today;
   const sanitized = baseName.replace(/[\\/:*?"<>|]/g, "-");
 
@@ -68,6 +69,6 @@ export function getRecentJournalEntries(
   return files.map((f) => ({
     name: f.basename,
     path: f.path,
-    date: new Date(f.stat.mtime).toISOString().slice(0, 10),
+    date: toLocalDateStr(new Date(f.stat.mtime)),
   }));
 }

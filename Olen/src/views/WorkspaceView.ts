@@ -12,6 +12,7 @@ import { VIEW_TYPE_WORKSPACE, FALLBACK_QUOTES, DEFAULT_POMODORO_SETTINGS } from 
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
 import { playAlertSound, vibrateAlert, stopAlertSound } from "../utils/alertSound";
+import { toLocalDateStr } from "../utils/completions";
 
 export class WorkspaceView extends ItemView {
   plugin: OlenPlugin;
@@ -174,7 +175,7 @@ export class WorkspaceView extends ItemView {
     const now = this.plugin.settings.simulatedDate
       ? new Date(this.plugin.settings.simulatedDate)
       : new Date();
-    const dateStr = now.toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(now);
     const folder = activity.folder;
     const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
 
@@ -1013,7 +1014,7 @@ export class WorkspaceView extends ItemView {
 
     const endTime = new Date(result.endTime);
     const startTime = new Date(result.startTime);
-    const dateStr = endTime.toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(endTime);
     // Naming: "Workspace YYYY-MM-DD HHMM"
     const timeStr = `${String(endTime.getHours()).padStart(2, "0")}${String(endTime.getMinutes()).padStart(2, "0")}`;
     const fileName = `Workspace ${dateStr} ${timeStr}`;

@@ -5,6 +5,7 @@
 
 import { App } from "obsidian";
 import type { OlenSettings, ActivityConfig } from "../types";
+import { toLocalDateStr } from "../utils/completions";
 
 interface TimeStats {
   avgDuration: number; // minutes
@@ -98,7 +99,7 @@ function getTimeStats(app: App, activity: ActivityConfig, settings: OlenSettings
   const files = app.vault.getMarkdownFiles();
   const normalizedFolder = activity.folder.endsWith("/") ? activity.folder : activity.folder + "/";
   const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const weekAgo = toLocalDateStr(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
   const durations: Array<{ date: string; minutes: number; type: string }> = [];
@@ -117,7 +118,7 @@ function getTimeStats(app: App, activity: ActivityConfig, settings: OlenSettings
     if (minutes <= 0) continue;
 
     const date = fm.Timestamp
-      ? new Date(fm.Timestamp).toISOString().slice(0, 10)
+      ? toLocalDateStr(new Date(fm.Timestamp))
       : file.basename;
 
     const type = (fm[`${activity.property}-Type`] as string) ?? "Discipline";

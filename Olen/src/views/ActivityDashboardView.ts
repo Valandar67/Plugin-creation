@@ -6,7 +6,7 @@
 import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import type OlenPlugin from "../main";
 import type { ActivityConfig, CompletionMap } from "../types";
-import { getCompletionsFromFolder, findTodayCompletionFile } from "../utils/completions";
+import { getCompletionsFromFolder, findTodayCompletionFile, toLocalDateStr } from "../utils/completions";
 import { VIEW_TYPE_OLEN } from "../constants";
 import { THEME_PRESETS } from "../data/themes";
 import { applyAccentColor } from "../utils/accentColor";
@@ -220,7 +220,7 @@ export class ActivityDashboardView extends ItemView {
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = toLocalDateStr(d);
       const isFuture = i + 1 > adjustedDay;
       const isDone = completedDates.has(dateStr);
 
@@ -308,7 +308,7 @@ export class ActivityDashboardView extends ItemView {
       const now = this.plugin.settings.simulatedDate
         ? new Date(this.plugin.settings.simulatedDate)
         : new Date();
-      const dateStr = now.toISOString().slice(0, 10);
+      const dateStr = toLocalDateStr(now);
       const folder = activity.folder;
       const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
 

@@ -5,6 +5,7 @@
 
 import type { OlenSettings, Category } from "../types";
 import type { OlenEngine } from "../engines/OlenEngine";
+import { toLocalDateStr } from "../utils/completions";
 
 type AnalyticsPeriod = "D" | "W" | "M" | "Y";
 
@@ -124,7 +125,7 @@ function renderWeeklyView(
 
   // Bar chart (reuse same pattern as WeeklyRhythm)
   const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
-  const todayStr = new Date(now).toISOString().slice(0, 10);
+  const todayStr = toLocalDateStr(new Date(now));
 
   let maxTotal = 1;
   for (const day of stats.byDay) {
@@ -217,7 +218,7 @@ function renderMonthlyView(
     cellIdx++;
   }
 
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = toLocalDateStr(now);
   for (const day of stats.calendarGrid) {
     if (cellIdx > 0 && cellIdx % 7 === 0) {
       currentRow = heatmap.createDiv({ cls: "olen-analytics-heatmap-row" });

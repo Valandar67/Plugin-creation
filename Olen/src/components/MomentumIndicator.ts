@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { OlenSettings, ActivityConfig, CompletionMap } from "../types";
+import { toLocalDateStr } from "../utils/completions";
 
 type MomentumState = "rising" | "steady" | "falling";
 
@@ -74,7 +75,7 @@ function calculateMomentum(
   for (let i = 0; i < 7; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(d);
     if (completedDates.has(dateStr)) recentCount++;
   }
 
@@ -83,7 +84,7 @@ function calculateMomentum(
   for (let i = 7; i < 14; i++) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = toLocalDateStr(d);
     if (completedDates.has(dateStr)) priorCount++;
   }
 
