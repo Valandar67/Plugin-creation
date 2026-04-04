@@ -291,7 +291,17 @@ export class OlenEngine {
    * The directive card uses this to cycle through options on "Not now".
    */
   getAllSuggestions(): DirectiveSuggestion[] {
-    const activities = this.getEnabledActivities();
+    const allActivities = this.getEnabledActivities();
+    if (allActivities.length === 0) return [];
+
+    // Filter out activities already done today AND skipped today
+    const effectiveToday = this.getEffectiveToday();
+    const skippedIds = this.settings.skippedToday?.date === effectiveToday
+      ? new Set(this.settings.skippedToday.activityIds)
+      : new Set<string>();
+    const activities = allActivities.filter(
+      (a) => !this.isDoneToday(a.id) && !skippedIds.has(a.id)
+    );
     if (activities.length === 0) return [];
 
     const suggestions: DirectiveSuggestion[] = [];
@@ -360,9 +370,9 @@ export class OlenEngine {
       addIfNew(this.buildSuggestion(a, "time", "The time is right. Begin."));
     }
 
-    // 7. BALANCED FALLBACK — all remaining not-done activities
+    // 7. BALANCED FALLBACK — all remaining activities not yet suggested
     const remaining = activities
-      .filter((a) => !this.isDoneToday(a.id) && !used.has(a.id))
+      .filter((a) => !used.has(a.id))
       .sort((a, b) => this.getDaysSinceLastDone(b.id) - this.getDaysSinceLastDone(a.id));
 
     for (const a of remaining) {

@@ -28,7 +28,8 @@ export function renderDirectiveCard(
   staggerIndex: number,
   onEnterWorkspace?: (activityId: string) => void,
   onTempleComplete?: (taskId: string) => void,
-  onLogWeight?: () => void
+  onLogWeight?: () => void,
+  onSkipActivity?: (activityId: string) => void
 ): void {
   // ── Sleep Lock Check ──
   if (isSleepTime(settings)) {
@@ -113,6 +114,10 @@ export function renderDirectiveCard(
       text: "Skip",
     });
     skipBtn.addEventListener("click", () => {
+      // Persist skip for activity types so they don't come back today
+      if (command.type === "activity" && command.activityId && onSkipActivity) {
+        onSkipActivity(command.activityId);
+      }
       dismissed.add(currentIndex);
       currentIndex++;
       renderCurrent();

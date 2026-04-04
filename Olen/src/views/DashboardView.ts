@@ -134,6 +134,7 @@ export class DashboardView extends ItemView {
             (activityId) => this.handleEnterWorkspace(activityId),
             (taskId) => this.handleTempleComplete(taskId),
             () => this.handleLogWeight(),
+            (activityId) => this.handleSkipActivity(activityId, engine),
           );
           break;
 
