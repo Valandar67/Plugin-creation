@@ -1161,6 +1161,18 @@ export class OlenSettingTab extends PluginSettingTab {
       );
 
     new Setting(body)
+      .setName("Directive debug deck")
+      .setDesc("Show debug panel below directive — reveals exactly what the completion pipeline sees")
+      .addToggle((t) =>
+        t
+          .setValue(this.plugin.settings.devConfig.showDirectiveDebug ?? false)
+          .onChange(async (v) => {
+            this.plugin.settings.devConfig.showDirectiveDebug = v;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(body)
       .setName("Quote folder")
       .setDesc("Vault folder containing quote files")
       .addText((t) =>

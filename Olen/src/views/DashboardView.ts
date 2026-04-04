@@ -25,6 +25,7 @@ import { renderDayTimeline } from "../components/DayTimeline";
 import { renderWeightNotification } from "../components/WeightProgress";
 import { renderProgressAnalytics } from "../components/ProgressAnalytics";
 import { renderMementoMoriCompact } from "../components/MementoMori";
+import { renderDirectiveDebug } from "../components/DirectiveDebug";
 import { shouldShowSundayBanner, renderSundayBanner, renderOptOutModal } from "../components/SundayCheckin";
 import { openSundayModal } from "../modals/SundayModal";
 // MyWhyModal is no longer used — tapping "My Why" navigates to DreamBoardView
@@ -137,6 +138,10 @@ export class DashboardView extends ItemView {
             () => this.handleLogWeight(),
             (activityId) => this.handleSkipActivity(activityId, engine),
           );
+          // Debug deck — shows exactly what the completion pipeline sees
+          if (settings.devConfig.showDirectiveDebug) {
+            await renderDirectiveDebug(root, this.app, settings, engine, completionData, staggerIdx++);
+          }
           break;
 
         case "boss":

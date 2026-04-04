@@ -161,6 +161,7 @@ export const DEFAULT_DEV_CONFIG: DevConfig = {
   ],
   hiddenSections: [],
   activityGridColumns: 2,
+  showDirectiveDebug: true,
 };
 
 // --- Default Personal Stats ---

@@ -397,6 +397,9 @@ export interface DevConfig {
   sectionOrder: string[];
   hiddenSections: string[];
   activityGridColumns: number;
+
+  // Debug
+  showDirectiveDebug: boolean;
 }
 
 // --- Main Settings ---
