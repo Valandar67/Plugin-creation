@@ -5,6 +5,7 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView, Modal } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
+import { isActivityDoneOnDate } from "./utils/completions";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS, DEFAULT_SUNDAY_CHECKIN } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
@@ -771,18 +772,9 @@ export default class OlenPlugin extends Plugin {
           const categories = new Set<string>();
           for (const activity of this.settings.activities) {
             if (!activity.enabled) continue;
-            const folder = activity.folder;
-            const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
-            const files = this.app.vault.getMarkdownFiles();
-            const file = files.find(
-              (f) => (f.path === folder || f.path.startsWith(normalizedFolder)) && f.basename === dateStr
-            );
-            if (file) {
-              const cache = this.app.metadataCache.getFileCache(file);
-              if (cache?.frontmatter?.[activity.property] === true) {
-                completions++;
-                categories.add(activity.category);
-              }
+            if (isActivityDoneOnDate(this.app, activity.folder, activity.property, dateStr)) {
+              completions++;
+              categories.add(activity.category);
             }
           }
 

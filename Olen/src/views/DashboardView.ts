@@ -5,7 +5,8 @@
 
 import { ItemView, WorkspaceLeaf, TFile, Notice } from "obsidian";
 import type OlenPlugin from "../main";
-import type { CompletionMap, Completion, CalendarTask } from "../types";
+import type { CompletionMap, CalendarTask } from "../types";
+import { getCompletionsFromFolder, findTodayCompletionFile } from "../utils/completions";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE } from "../constants";
 import { stopAlertSound } from "../utils/alertSound";
 import { THEME_PRESETS } from "../data/themes";
@@ -304,50 +305,10 @@ export class DashboardView extends ItemView {
 
     for (const activity of this.plugin.settings.activities) {
       if (!activity.enabled) continue;
-      data[activity.id] = this.getCompletionsFromFolder(activity.folder, activity.property);
+      data[activity.id] = getCompletionsFromFolder(this.app, activity.folder, activity.property);
     }
 
     return data;
-  }
-
-  private getCompletionsFromFolder(folderPath: string, fieldName: string): Completion[] {
-    const files = this.app.vault.getMarkdownFiles();
-    const normalizedFolder = folderPath.endsWith("/") ? folderPath : folderPath + "/";
-    const dateRegex = /\d{4}-\d{2}-\d{2}/;
-
-    return files
-      .filter((file) => file.path === folderPath || file.path.startsWith(normalizedFolder))
-      .map((file) => {
-        const cache = this.app.metadataCache.getFileCache(file);
-        const frontmatter = cache?.frontmatter;
-        if (!frontmatter || typeof frontmatter[fieldName] !== "boolean") {
-          return null;
-        }
-
-        // Extract date: use basename if it's a pure date (YYYY-MM-DD),
-        // otherwise extract date from Timestamp frontmatter or filename
-        let date = file.basename;
-        if (!dateRegex.test(date) || date !== date.match(dateRegex)?.[0]) {
-          // Not a pure date filename — try Timestamp frontmatter
-          const ts = frontmatter["Timestamp"];
-          if (typeof ts === "string") {
-            const match = ts.match(dateRegex);
-            if (match) date = match[0];
-            else return null;
-          } else {
-            // Try extracting date from filename (e.g. "Workspace 2026-04-04 1048")
-            const match = file.basename.match(dateRegex);
-            if (match) date = match[0];
-            else return null;
-          }
-        }
-
-        return {
-          date,
-          completed: frontmatter[fieldName] === true,
-        };
-      })
-      .filter((c): c is Completion => c !== null);
   }
 
   // --- Calendar Gathering ---
@@ -544,11 +505,8 @@ export class DashboardView extends ItemView {
     const folder = activity.folder;
     const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
 
-    // Look for today's file
-    const files = this.app.vault.getMarkdownFiles();
-    const todayFile = files.find(
-      (f) => (f.path === folder || f.path.startsWith(normalizedFolder)) && f.basename === dateStr
-    );
+    // Look for any file in the folder that matches today (workspace files or date files)
+    const todayFile = findTodayCompletionFile(this.app, folder, activity.property, dateStr);
 
     if (todayFile) {
       await this.app.fileManager.processFrontMatter(todayFile, (fm) => {
