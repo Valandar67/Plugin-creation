@@ -977,17 +977,14 @@ export class WorkspaceView extends ItemView {
       await this.createWorkspaceFile(result, activity.folder);
     }
 
-    // 2. Update the activity's daily note frontmatter
-    await this.markActivityDone(workspace, result);
-
-    // 3. Apply XP
+    // 2. Apply XP
     const state = this.plugin.settings.workspaceCompletionStates.find((s) => s.id === result.type);
     if (state && state.xpMultiplier > 0) {
       const xpGain = Math.round(this.plugin.settings.devConfig.xpPerCompletion * state.xpMultiplier);
       this.plugin.settings.categoryXP[workspace.category] += xpGain;
     }
 
-    // 4. Apply boss damage (unless skipped)
+    // 3. Apply boss damage (unless skipped)
     if (result.type !== "skipped") {
       const act = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
       if (act) {
@@ -998,15 +995,15 @@ export class WorkspaceView extends ItemView {
       }
     }
 
-    // 5. Clear active workspace
+    // 4. Clear active workspace
     this.plugin.settings.activeWorkspace = null;
     await this.plugin.saveSettings();
 
-    // 6. Show notice
+    // 5. Show notice
     const stateLabel = this.plugin.settings.workspaceCompletionStates.find((s) => s.id === result.type)?.name ?? result.type;
     new Notice(`${workspace.emoji} ${workspace.activityName} — ${stateLabel} · ${result.durationMinutes}m`);
 
-    // 7. Switch back to dashboard
+    // 6. Switch back to dashboard
     this.plugin.activateDashboardView();
   }
 
@@ -1088,47 +1085,7 @@ export class WorkspaceView extends ItemView {
     await this.app.vault.create(finalPath, content);
   }
 
-  private async markActivityDone(workspace: ActiveWorkspace, result?: WorkspaceResult): Promise<void> {
-    // Find today's note in the activity folder and set the property to true
-    const activity = this.plugin.settings.activities.find((a) => a.id === workspace.activityId);
-    if (!activity) return;
 
-    const now = this.plugin.settings.simulatedDate
-      ? new Date(this.plugin.settings.simulatedDate)
-      : new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-    const folder = activity.folder;
-    const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
-
-    // Look for a file matching today's date
-    const files = this.app.vault.getMarkdownFiles();
-    const todayFile = files.find(
-      (f) => (f.path === folder || f.path.startsWith(normalizedFolder)) && f.basename === dateStr
-    );
-
-    if (todayFile) {
-      // Update frontmatter — set property and completion type
-      await this.app.fileManager.processFrontMatter(todayFile, (frontmatter) => {
-        frontmatter[activity.property] = true;
-        if (result) {
-          const typeName = result.type.charAt(0).toUpperCase() + result.type.slice(1);
-          frontmatter[`${activity.property}-Type`] = typeName;
-        }
-      });
-    } else {
-      // Create the daily note with the property set
-      const filePath = `${normalizedFolder}${dateStr}.md`;
-      const typeLine = result
-        ? `\n${activity.property}-Type: "${result.type.charAt(0).toUpperCase() + result.type.slice(1)}"`
-        : "";
-      const content = `---\n${activity.property}: true${typeLine}\n---\n`;
-      try {
-        await this.app.vault.create(filePath, content);
-      } catch {
-        // File might already exist with a different name
-      }
-    }
-  }
 
   private formatTime(seconds: number): string {
     const h = Math.floor(seconds / 3600);

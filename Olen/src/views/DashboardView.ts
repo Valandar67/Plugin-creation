@@ -313,6 +313,7 @@ export class DashboardView extends ItemView {
   private getCompletionsFromFolder(folderPath: string, fieldName: string): Completion[] {
     const files = this.app.vault.getMarkdownFiles();
     const normalizedFolder = folderPath.endsWith("/") ? folderPath : folderPath + "/";
+    const dateRegex = /\d{4}-\d{2}-\d{2}/;
 
     return files
       .filter((file) => file.path === folderPath || file.path.startsWith(normalizedFolder))
@@ -322,8 +323,27 @@ export class DashboardView extends ItemView {
         if (!frontmatter || typeof frontmatter[fieldName] !== "boolean") {
           return null;
         }
+
+        // Extract date: use basename if it's a pure date (YYYY-MM-DD),
+        // otherwise extract date from Timestamp frontmatter or filename
+        let date = file.basename;
+        if (!dateRegex.test(date) || date !== date.match(dateRegex)?.[0]) {
+          // Not a pure date filename — try Timestamp frontmatter
+          const ts = frontmatter["Timestamp"];
+          if (typeof ts === "string") {
+            const match = ts.match(dateRegex);
+            if (match) date = match[0];
+            else return null;
+          } else {
+            // Try extracting date from filename (e.g. "Workspace 2026-04-04 1048")
+            const match = file.basename.match(dateRegex);
+            if (match) date = match[0];
+            else return null;
+          }
+        }
+
         return {
-          date: file.basename,
+          date,
           completed: frontmatter[fieldName] === true,
         };
       })
