@@ -10,9 +10,9 @@ const DATE_REGEX = /\d{4}-\d{2}-\d{2}/;
 
 /**
  * Get all completion records from files in a folder.
- * Handles both pure-date filenames (2026-04-04.md) and
- * workspace filenames (Workspace 2026-04-04 1157.md) by
- * extracting the date from frontmatter Timestamp or filename.
+ * Purely content-based: checks the frontmatter property field,
+ * and extracts the date from the Timestamp frontmatter field
+ * (or file creation time as fallback). Filename is irrelevant.
  */
 export function getCompletionsFromFolder(
   app: App,
@@ -101,24 +101,21 @@ export function isActivityDoneOnDate(
 
 /**
  * Extract a YYYY-MM-DD date string from a file.
- * Tries: basename → Timestamp frontmatter → filename regex.
+ * Content-based: reads Timestamp from frontmatter first,
+ * then falls back to file creation time. Filename is irrelevant.
  */
 function extractDateFromFile(file: TFile, frontmatter: Record<string, unknown>): string | null {
-  // Pure date basename (e.g. "2026-04-04")
-  if (DATE_REGEX.test(file.basename) && file.basename === file.basename.match(DATE_REGEX)?.[0]) {
-    return file.basename;
-  }
-
-  // Timestamp frontmatter field
+  // 1. Timestamp frontmatter field (most reliable — set when file is created)
   const ts = frontmatter["Timestamp"];
   if (typeof ts === "string") {
     const match = ts.match(DATE_REGEX);
     if (match) return match[0];
   }
 
-  // Date embedded in filename (e.g. "Workspace 2026-04-04 1157")
-  const match = file.basename.match(DATE_REGEX);
-  if (match) return match[0];
+  // 2. Fall back to file creation time
+  if (file.stat?.ctime) {
+    return new Date(file.stat.ctime).toISOString().slice(0, 10);
+  }
 
   return null;
 }

@@ -5,7 +5,7 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView, Modal } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { isActivityDoneOnDate } from "./utils/completions";
+import { isActivityDoneOnDate, getCompletionsFromFolder } from "./utils/completions";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS, DEFAULT_SUNDAY_CHECKIN } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
@@ -645,40 +645,14 @@ export default class OlenPlugin extends Plugin {
   }
 
   /**
-   * Lightweight version of gatherCompletionData for widgets.
-   * Reads completion data from vault folders.
+   * Gather completion data for widgets using the shared utility.
    */
   private gatherCompletionDataForWidgets(): Record<string, Array<{ date: string; completed: boolean }>> {
     const data: Record<string, Array<{ date: string; completed: boolean }>> = {};
-
     for (const activity of this.settings.activities) {
       if (!activity.enabled || !activity.folder) continue;
-
-      const folder = this.app.vault.getAbstractFileByPath(activity.folder);
-      if (!folder) continue;
-
-      const completions: Array<{ date: string; completed: boolean }> = [];
-
-      // Get all files in the activity folder
-      const files = this.app.vault.getFiles().filter((f) =>
-        f.path.startsWith(activity.folder + "/") && f.extension === "md"
-      );
-
-      for (const file of files) {
-        const cache = this.app.metadataCache.getFileCache(file);
-        const fm = cache?.frontmatter;
-        if (!fm) continue;
-
-        const dateStr = fm.date as string | undefined;
-        const completed = fm[activity.property] as boolean | undefined;
-        if (dateStr) {
-          completions.push({ date: dateStr, completed: completed === true });
-        }
-      }
-
-      data[activity.id] = completions;
+      data[activity.id] = getCompletionsFromFolder(this.app, activity.folder, activity.property);
     }
-
     return data;
   }
 
