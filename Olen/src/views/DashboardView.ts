@@ -86,8 +86,8 @@ export class DashboardView extends ItemView {
       this.renderActiveWorkspaceBanner(root, ws);
     }
 
-    // Gather completion data from vault
-    const completionData = this.gatherCompletionData();
+    // Gather completion data from vault (reads file content directly)
+    const completionData = await this.gatherCompletionData();
 
     // Initialize engines
     const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
@@ -300,12 +300,12 @@ export class DashboardView extends ItemView {
 
   // --- Data Gathering ---
 
-  gatherCompletionData(): CompletionMap {
+  async gatherCompletionData(): Promise<CompletionMap> {
     const data: CompletionMap = {};
 
     for (const activity of this.plugin.settings.activities) {
       if (!activity.enabled) continue;
-      data[activity.id] = getCompletionsFromFolder(this.app, activity.folder, activity.property);
+      data[activity.id] = await getCompletionsFromFolder(this.app, activity.folder, activity.property);
     }
 
     return data;
@@ -506,7 +506,7 @@ export class DashboardView extends ItemView {
     const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
 
     // Look for any file in the folder that matches today (workspace files or date files)
-    const todayFile = findTodayCompletionFile(this.app, folder, activity.property, dateStr);
+    const todayFile = await findTodayCompletionFile(this.app, folder, activity.property, dateStr);
 
     if (todayFile) {
       await this.app.fileManager.processFrontMatter(todayFile, (fm) => {

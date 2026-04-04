@@ -97,7 +97,7 @@ export class ActivityDashboardView extends ItemView {
     this.applyThemeOverrides(root);
 
     // Gather completion data
-    const completionData = this.gatherCompletionData();
+    const completionData = await this.gatherCompletionData();
     const now = settings.simulatedDate ? new Date(settings.simulatedDate) : new Date();
     const engine = new OlenEngine(settings, completionData, now);
 
@@ -313,7 +313,7 @@ export class ActivityDashboardView extends ItemView {
       const normalizedFolder = folder.endsWith("/") ? folder : folder + "/";
 
       // Find any existing file for today (workspace files or date files)
-      const todayFile = findTodayCompletionFile(this.app, folder, activity.property, dateStr);
+      const todayFile = await findTodayCompletionFile(this.app, folder, activity.property, dateStr);
 
       if (todayFile) {
         await this.app.fileManager.processFrontMatter(todayFile, (fm) => {
@@ -380,11 +380,11 @@ export class ActivityDashboardView extends ItemView {
 
   // --- Data Gathering ---
 
-  private gatherCompletionData(): CompletionMap {
+  private async gatherCompletionData(): Promise<CompletionMap> {
     const data: CompletionMap = {};
     for (const activity of this.plugin.settings.activities) {
       if (!activity.enabled) continue;
-      data[activity.id] = getCompletionsFromFolder(this.app, activity.folder, activity.property);
+      data[activity.id] = await getCompletionsFromFolder(this.app, activity.folder, activity.property);
     }
     return data;
   }

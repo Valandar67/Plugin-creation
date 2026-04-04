@@ -5,7 +5,7 @@
 
 import { Plugin, debounce, TFile, Notice, MarkdownView, Modal } from "obsidian";
 import type { OlenSettings, TrackHabitRankData, ActivityConfig } from "./types";
-import { isActivityDoneOnDate, getCompletionsFromFolder } from "./utils/completions";
+import { getCompletionsFromFolder } from "./utils/completions";
 import { VIEW_TYPE_OLEN, VIEW_TYPE_WORKSPACE, VIEW_TYPE_ACTIVITY_DASHBOARD, VIEW_TYPE_ONBOARDING, VIEW_TYPE_DREAMBOARD, DEFAULT_OLEN_SETTINGS, DEFAULT_ACTIVITIES, DEFAULT_CALENDAR_SETTINGS, DEFAULT_PERSONAL_STATS, DEFAULT_SUNDAY_CHECKIN } from "./constants";
 import { DashboardView } from "./views/DashboardView";
 import { WorkspaceView } from "./views/WorkspaceView";
@@ -547,7 +547,7 @@ export default class OlenPlugin extends Plugin {
       const { renderDirectiveCard } = await import("./components/DirectiveCard");
       const { OlenEngine } = await import("./engines/OlenEngine");
 
-      const completionData = this.gatherCompletionDataForWidgets();
+      const completionData = await this.gatherCompletionDataForWidgets();
       const now = this.settings.simulatedDate ? new Date(this.settings.simulatedDate) : new Date();
       const engine = new OlenEngine(this.settings, completionData, now);
 
@@ -568,7 +568,7 @@ export default class OlenPlugin extends Plugin {
       const { renderDayTimeline } = await import("./components/DayTimeline");
       const { OlenEngine } = await import("./engines/OlenEngine");
 
-      const completionData = this.gatherCompletionDataForWidgets();
+      const completionData = await this.gatherCompletionDataForWidgets();
       const now = this.settings.simulatedDate ? new Date(this.settings.simulatedDate) : new Date();
       const engine = new OlenEngine(this.settings, completionData, now);
 
@@ -587,7 +587,7 @@ export default class OlenPlugin extends Plugin {
       const { renderEudaimoniaBar } = await import("./components/EudaimoniaBar");
       const { OlenEngine } = await import("./engines/OlenEngine");
 
-      const completionData = this.gatherCompletionDataForWidgets();
+      const completionData = await this.gatherCompletionDataForWidgets();
       const now = this.settings.simulatedDate ? new Date(this.settings.simulatedDate) : new Date();
       const engine = new OlenEngine(this.settings, completionData, now);
 
@@ -647,11 +647,11 @@ export default class OlenPlugin extends Plugin {
   /**
    * Gather completion data for widgets using the shared utility.
    */
-  private gatherCompletionDataForWidgets(): Record<string, Array<{ date: string; completed: boolean }>> {
+  private async gatherCompletionDataForWidgets(): Promise<Record<string, Array<{ date: string; completed: boolean }>>> {
     const data: Record<string, Array<{ date: string; completed: boolean }>> = {};
     for (const activity of this.settings.activities) {
       if (!activity.enabled || !activity.folder) continue;
-      data[activity.id] = getCompletionsFromFolder(this.app, activity.folder, activity.property);
+      data[activity.id] = await getCompletionsFromFolder(this.app, activity.folder, activity.property);
     }
     return data;
   }
@@ -730,6 +730,26 @@ export default class OlenPlugin extends Plugin {
 
   // --- Calendar Plugin Integration ---
 
+  /** Sync check for calendar dots (best-effort via metadata cache). */
+  private isActivityDoneSync(folderPath: string, fieldName: string, dateStr: string): boolean {
+    const DATE_RE = /\d{4}-\d{2}-\d{2}/;
+    const normalizedFolder = folderPath.endsWith("/") ? folderPath : folderPath + "/";
+    return this.app.vault.getMarkdownFiles().some((file) => {
+      if (!file.path.startsWith(normalizedFolder)) return false;
+      const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+      if (!fm || fm[fieldName] !== true) return false;
+      const ts = fm["Timestamp"];
+      if (typeof ts === "string") {
+        const m = ts.match(DATE_RE);
+        if (m) return m[0] === dateStr;
+      }
+      if (file.stat?.ctime) {
+        return new Date(file.stat.ctime).toISOString().slice(0, 10) === dateStr;
+      }
+      return false;
+    });
+  }
+
   private registerCalendarPluginSource(): void {
     // Listen for the Calendar plugin's "calendar:open" event
     // and inject Olen's activity completion data as colored dots
@@ -746,7 +766,7 @@ export default class OlenPlugin extends Plugin {
           const categories = new Set<string>();
           for (const activity of this.settings.activities) {
             if (!activity.enabled) continue;
-            if (isActivityDoneOnDate(this.app, activity.folder, activity.property, dateStr)) {
+            if (this.isActivityDoneSync(activity.folder, activity.property, dateStr)) {
               completions++;
               categories.add(activity.category);
             }
