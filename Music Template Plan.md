@@ -85,6 +85,7 @@ The user must create an Activity in Olen settings with:
 | `currentSegmentIndex` | number | Where user left off | `saveState()` |
 | `totalPracticeTime` | number | Seconds practiced this session | `saveState()` |
 | `recordings` | array | Metadata for recorded takes | `saveState()` |
+| `scrollAnchors` | array | `[{ beat, scrollY }]` pairs for scroll transcription | Calibration UI (saved to piece's .md) |
 
 ### 3.4 Completion Detection (How WorkspaceView Knows We're Done)
 
@@ -206,24 +207,63 @@ FINISH MODAL
 
 ### 5.2 Auto-Scroll Sheet Music
 
-The core innovation. Given:
-- `bpm` — beats per minute
-- `beatsPerBar` — from time signature (e.g. 4 for 4/4)
-- `barsPerRow` — how many bars fit in one row of the sheet
-- `rowsPerPage` — how many rows per page/view
+The core innovation. Two scroll modes:
 
-Calculate:
+#### Mode A: Uniform Layout (Quick Start)
+
+For pieces where the user doesn't want to calibrate. Given:
+- `bpm`, `beatsPerBar`, `barsPerRow`, `rowsPerPage`
+
+The template auto-generates evenly-spaced anchors:
 ```
 secondsPerBar = (beatsPerBar / bpm) * 60
 secondsPerRow = secondsPerBar * barsPerRow
-secondsPerPage = secondsPerRow * rowsPerPage
+totalBars = barsPerRow * rowsPerPage
+// Auto-generate one anchor per row
+for (row = 0; row < rowsPerPage; row++) {
+  anchors.push({ beat: row * barsPerRow * beatsPerBar, scrollY: row / rowsPerPage })
+}
 ```
 
-Scroll behavior:
-- **Option A (smooth)**: CSS `transform: translateY()` at constant rate matching the BPM
-- **Option B (row-snap)**: Jump to next row every `secondsPerRow` seconds with smooth transition
+#### Mode B: User-Transcribed Scroll Anchors (Primary Method)
 
-Sheet music display:
+The user manually maps time positions to scroll positions. This handles irregular layouts, variable bar widths, repeats, codas, and multi-page sheets perfectly.
+
+**Anchor data structure:**
+```javascript
+// Stored in piece's .md frontmatter as "scrollAnchors"
+[
+  { beat: 0,   scrollY: 0.0  },  // Start of piece → top of image
+  { beat: 16,  scrollY: 0.12 },  // Bar 5 → 12% down
+  { beat: 32,  scrollY: 0.25 },  // Bar 9 → 25% down
+  { beat: 48,  scrollY: 0.40 },  // Bar 13 → 40% down (taller row)
+  { beat: 128, scrollY: 1.0  },  // End → bottom of image
+]
+```
+
+**Interpolation during playback:**
+```
+Given current beat B:
+  Find anchors A_prev (last anchor ≤ B) and A_next (first anchor > B)
+  progress = (B - A_prev.beat) / (A_next.beat - A_prev.beat)
+  scrollY = A_prev.scrollY + progress * (A_next.scrollY - A_prev.scrollY)
+  Apply scrollY to image container via transform: translateY()
+```
+
+**Transcription/Calibration UI (built into the template):**
+1. User enters calibration mode from the piece's settings
+2. Sheet image displayed fullscreen with metronome running
+3. User scrolls the image to the right position, then taps "Set Anchor" — this locks current beat number + current scroll position as a pair
+4. Visual markers appear on the image showing placed anchors (small dots/lines on the side)
+5. User can delete, drag, or re-place anchors
+6. "Preview" button — plays back with the anchored scroll so user can verify sync
+7. "Save" — writes anchor array to the piece's `.md` frontmatter
+8. Anchors are reusable across sessions — only need to calibrate once per piece/image
+
+**Why this is better than barsPerRow math:** Real sheet music has pickup bars, different staff sizes, headers, page numbers, multi-stave systems with varying heights, repeat sections. The user knows their sheet — let them tell the template where to be and when.
+
+#### Sheet music display
+
 - Use `<img>` for image files (.png, .jpg)
 - For PDFs: render via `<canvas>` using Obsidian's built-in PDF.js, or embed as `<iframe>`
 - Read files from vault using `readFile()` or `app.vault.readBinary()`
@@ -251,9 +291,9 @@ Loaded via `getFilesInFolder()` + `getFileMetadata()` filtering for `type: prese
 ### 5.4 Practice Mode Flow
 
 1. User presses **Play**
-2. **Vocal count-in**: Use `SpeechSynthesisUtterance` or pre-generated audio tones for "1, 2, 3, 4" at the configured BPM
-3. Sheet music starts auto-scrolling from the configured start point
-4. Metronome begins clicking
+2. **Vocal count-in**: Pre-recorded voice clips ("one", "two", "three", "four"...) scheduled via `AudioContext.currentTime` for sample-accurate beat alignment. Falls back to generated tones at tempos above ~200 BPM where the clips are too long to fit. Count length matches time signature (e.g. count to 3 for 3/4, to 4 for 4/4, to 6 for 6/8).
+3. Sheet music starts auto-scrolling from the first anchor point (or start of image)
+4. Metronome begins clicking (synced to same `AudioContext` clock)
 5. Timer starts counting practice duration
 6. On **Stop/Pause**: metronome stops, scroll pauses, timer pauses
 7. User can navigate to different segments manually
@@ -289,7 +329,8 @@ barsPerRow: 4
 rowsPerPage: 4
 defaultBpm: 72
 timeSignature: "4/4"
-sheetFile: "attachments/moonlight-sonata.pdf"
+sheetFile: "attachments/moonlight-sonata.png"
+backingTrack: "attachments/moonlight-backing.mp3"
 segments:
   - name: "Exposition"
     startBar: 1
@@ -297,8 +338,21 @@ segments:
   - name: "Development"
     startBar: 15
     endBar: 28
+scrollAnchors:
+  - beat: 0
+    scrollY: 0.0
+  - beat: 16
+    scrollY: 0.12
+  - beat: 32
+    scrollY: 0.25
+  - beat: 48
+    scrollY: 0.40
+  - beat: 128
+    scrollY: 1.0
 ---
 ```
+
+Note: `scrollAnchors` are created via the template's calibration UI, not hand-written. The `barsPerRow`/`rowsPerPage` fields are used as a quick-start fallback if no anchors exist yet.
 
 Template reads these via `getFileMetadata()` to populate the session setup screen.
 
@@ -498,7 +552,7 @@ function createModal(title, contentBuilder) {
 12. Piece selector (reads sheet music DB files via `getFilesInFolder` + `getFileMetadata`)
 13. BPM input + tap tempo
 14. Time signature selector
-15. Bars-per-row / rows-per-page configuration
+15. Bars-per-row / rows-per-page configuration (for uniform fallback)
 16. Segment selector (from piece's frontmatter segments)
 
 ### Phase 4: Metronome
@@ -510,28 +564,38 @@ function createModal(title, contentBuilder) {
 ### Phase 5: Sheet Music Viewer + Auto-Scroll
 21. Image rendering for .png/.jpg sheet music
 22. PDF rendering (canvas-based or iframe)
-23. Auto-scroll calculation based on BPM, bars, rows
-24. Smooth scroll or row-snap mode
-25. Manual scroll override
+23. Uniform auto-scroll fallback (barsPerRow / rowsPerPage → auto-generated anchors)
+24. Anchor-based interpolated scrolling (read anchors from frontmatter, interpolate between them)
+25. Manual scroll override (user can grab and scroll freely, resumes anchor-based on play)
+
+### Phase 5.5: Scroll Anchor Transcription UI
+26. Calibration mode entry (button on piece settings)
+27. Image display with metronome running
+28. "Set Anchor" button — captures current beat + scroll position
+29. Visual anchor markers on the image edge
+30. Delete/edit existing anchors
+31. Preview mode — playback with anchored scroll for verification
+32. Save anchors to piece's `.md` frontmatter
 
 ### Phase 6: Practice Controls
-26. Play / Pause / Stop buttons
-27. Vocal count-in (SpeechSynthesis or tone-based)
-28. Practice timer
-29. Segment navigation (next/prev)
-30. BPM adjustment during practice
+33. Play / Pause / Stop buttons
+34. Vocal count-in — base64-decoded voice clips scheduled via AudioContext.currentTime
+35. Tone fallback for high tempos (>200 BPM)
+36. Practice timer
+37. Segment navigation (next/prev)
+38. BPM adjustment during practice
 
 ### Phase 7: Recording (Stretch)
-31. getUserMedia audio capture
-32. MediaRecorder integration
-33. Recording playback within session
-34. Save recording metadata to frontmatter
-35. Optional: persist .webm to vault via `app.vault.createBinary()`
+39. getUserMedia audio capture
+40. MediaRecorder integration
+41. Recording playback within session
+42. Save recording metadata to frontmatter
+43. Optional: persist .webm to vault via `app.vault.createBinary()`
 
 ### Phase 8: Analytics (Stretch)
-36. Total practice time trends (weekly/monthly)
-37. Per-piece practice history
-38. BPM progression tracking over time
+44. Total practice time trends (weekly/monthly)
+45. Per-piece practice history
+46. BPM progression tracking over time
 
 ---
 

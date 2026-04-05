@@ -4,14 +4,49 @@
 
 ## Resources Needed
 
-### Audio
+### Audio — Metronome Sounds
 
-| Resource | Purpose | Options |
-|----------|---------|---------|
-| **Metronome click** | Beat keeping during practice | Generate via `AudioContext` + `OscillatorNode` (no file needed). Short sine/square wave burst at 880Hz (downbeat) and 440Hz (off-beats). Works but sounds sterile. |
-| **Metronome samples** | Higher quality clicks (wood block, rimshot, hi-hat) | Need `.wav` or `.mp3` samples (~5-10KB each). Could bundle as base64 strings inside the `.tpl` file, or ship as vault assets the user drops in a folder. |
-| **Count-in voice** | Human voice saying "1, 2, 3, 4" before playback starts | `SpeechSynthesisUtterance` API — free, no files, but robotic and timing is unreliable (browser controls pacing, not us). Real human voice clips would need recording or sourcing royalty-free samples. |
-| **Count-in tones** | Fallback for voice count-in | Generate ascending tones via `AudioContext` — e.g. 4 beeps with the last one higher pitched. Reliable timing, no external files. |
+These are generated at runtime via `AudioContext`, no files needed. But for higher quality, pre-recorded samples can be bundled as base64 or loaded from vault.
+
+| Sound | Purpose | Generation | Sample Alternative |
+|-------|---------|------------|--------------------|
+| **Downbeat click** | First beat of each bar (accent) | `OscillatorNode` — 880Hz sine wave, 30ms duration, sharp attack | Wood block hit `.wav` (~3KB) |
+| **Off-beat click** | Beats 2, 3, 4, etc. | `OscillatorNode` — 440Hz sine wave, 20ms duration | Rimshot or sidestick `.wav` (~3KB) |
+| **Subdivision tick** (optional) | Eighth/sixteenth note subdivisions | `OscillatorNode` — 660Hz sine wave, 10ms, very quiet | Hi-hat closed `.wav` (~2KB) |
+
+### Audio — Count-In Sounds
+
+Pre-recorded or pre-generated audio clips loaded as `AudioBuffer` and scheduled with `AudioContext.currentTime` for precise beat-locked playback.
+
+**Full count-in sound list:**
+
+| Clip | Filename | Content | Duration | Notes |
+|------|----------|---------|----------|-------|
+| **"One"** | `count-1.mp3` | Human voice saying "one" | ~300ms | Needs to fit within one beat at up to 200 BPM (300ms) |
+| **"Two"** | `count-2.mp3` | Human voice saying "two" | ~300ms | |
+| **"Three"** | `count-3.mp3` | Human voice saying "three" | ~350ms | Longest word — may need to be trimmed tight |
+| **"Four"** | `count-4.mp3` | Human voice saying "four" | ~300ms | |
+| **"Five"** | `count-5.mp3` | Human voice saying "five" | ~300ms | For 5/4, 5/8 time signatures |
+| **"Six"** | `count-6.mp3` | Human voice saying "six" | ~300ms | For 6/8, 6/4 time signatures |
+| **"Seven"** | `count-7.mp3` | Human voice saying "seven" | ~350ms | For 7/8 time signatures |
+| **"And"** | `count-and.mp3` | Human voice saying "and" | ~200ms | For compound count-ins: "1 and 2 and 3 and 4" |
+| **Tone fallback — high** | (generated) | 880Hz beep, 50ms | ~50ms | Used if voice clips unavailable; accent on last count |
+| **Tone fallback — low** | (generated) | 440Hz beep, 50ms | ~50ms | Used for non-accent count beats |
+
+**Sourcing options for voice clips:**
+- Record them yourself (cleanest, any voice/style)
+- Generate via TTS tool offline, then trim and export as mp3
+- Use royalty-free vocal count samples from sample packs
+
+**Delivery method:** Base64-encode all clips and embed in the `.tpl` file (~5KB per clip, ~40-50KB total for all 8+2 clips). Decoded into `AudioBuffer` on first load. This avoids external file dependencies while keeping precise `AudioContext.currentTime` scheduling.
+
+### Audio — Other Sounds
+
+| Sound | Purpose | Source |
+|-------|---------|--------|
+| **Session start chime** (optional) | Audio cue that practice has begun after count-in | Generated tone — ascending two-note chime via `OscillatorNode` |
+| **Session end chime** (optional) | Audio cue when user finishes | Generated tone — descending two-note chime |
+| **Recording start beep** (optional) | Confirms recording has started | Single short 1000Hz beep |
 
 ### Sheet Music Display
 
@@ -31,19 +66,13 @@
 
 ## Parts That Can't Be Implemented (or Are Hard)
 
-### 1. Reliable Vocal Count-In
+### 1. Vocal Count-In — Timing Precision
 
-**Problem**: `SpeechSynthesis` API has unpredictable timing. The browser queues utterances and delivers them whenever it wants — you can't guarantee "say '1' exactly on beat 1, '2' exactly on beat 2." At 120 BPM that's 500ms per beat, and speech synthesis latency can vary by 50-200ms.
+**Problem**: `SpeechSynthesis` API has unpredictable timing (50-200ms latency variance). Can't use it for beat-locked count-ins.
 
-**Why it matters**: A count-in that drifts off the beat defeats its purpose.
+**Solution**: Pre-recorded voice clips (see Audio section above) loaded as `AudioBuffer` and scheduled via `AudioContext.currentTime`. This gives sample-accurate timing. The clips are base64-encoded in the `.tpl` file so there are no external dependencies.
 
-**Possible solutions**:
-- **Tone-based count-in** — generate 4 pitched beeps via `AudioContext` with precise `setTimeout` or `AudioContext.currentTime` scheduling. Reliable but not "human."
-- **Pre-recorded voice clips** — 4 short `.wav` files ("one", "two", "three", "four") loaded as `AudioBuffer` and scheduled with `AudioContext.currentTime`. Precise timing, human voice, but needs the audio files.
-- **Base64-encoded audio** — embed tiny voice clips as base64 strings in the `.tpl` file itself. Decode at runtime into `AudioBuffer`. No external files, precise timing, but adds ~20-40KB to the template source.
-- **Hybrid** — use tones by default, let user drop voice clips into a vault folder if they want human voice.
-
-**Recommendation**: Base64-encoded tones for v1. Document a "voice pack" folder convention for later.
+**Remaining challenge**: The word "three" and "seven" are longer than one beat at high tempos (200+ BPM = 300ms per beat). Clips must be trimmed to fit, which may sound clipped. At extreme tempos, fall back to tone-only count-in automatically.
 
 ---
 
@@ -117,12 +146,55 @@
 **Why it matters**: Row-snap scrolling and segment jumping require knowing bar positions.
 
 **Possible solutions**:
-- **User-annotated metadata** — the piece's `.md` frontmatter includes `barsPerRow` and `rowsPerPage`. Template assumes uniform bar widths and equal row heights, then calculates pixel positions mathematically: `rowHeight = imageHeight / rowsPerPage`. Good enough for most printed sheet music.
-- **Manual bar markers** — user defines pixel offsets for each row in frontmatter. Tedious but precise.
-- **MusicXML** — if the user has MusicXML source, parse it for structural data. Very complex, huge scope.
-- **Multiple images per row** — user splits sheet music into one image per row. Template displays them sequentially. Easier to scroll precisely.
 
-**Recommendation**: Assume uniform layout + `barsPerRow` / `rowsPerPage` metadata for v1. The math is simple: divide image height by rows, divide row width by bars. This works for 90% of typeset sheet music.
+- **Uniform layout assumption** — the piece's `.md` frontmatter includes `barsPerRow` and `rowsPerPage`. Template assumes equal bar widths and row heights. Simple math: `rowHeight = imageHeight / rowsPerPage`. Works for most typeset sheet music but fails for variable-width bars or different row heights.
+
+- **User-transcribed scroll anchors (RECOMMENDED)** — the user manually maps time positions to scroll positions on the sheet image. This is a "scroll transcription" mode built into the template:
+
+  **How it works:**
+  1. User opens the piece in a **calibration/transcription mode**
+  2. The sheet image is displayed with the metronome running
+  3. User clicks/taps the image at key moments to set **anchors**: "at beat X, the sheet should be showing this position"
+  4. At minimum, user sets a **start anchor** (where on the image playback begins) and an **end anchor** (where it ends)
+  5. User can add as many **intermediate anchors** as needed — e.g. at the start of each row, at time signature changes, at repeats, at sections with different bar densities
+  6. Template stores anchors as an array of `{ beat: number, scrollY: number }` (or `scrollY` as a percentage of total image height)
+  7. During playback, template interpolates linearly between adjacent anchors to compute scroll position at any given beat
+
+  **Anchor data structure (stored in piece frontmatter):**
+  ```yaml
+  scrollAnchors:
+    - beat: 0
+      scrollY: 0        # Top of image — start here
+    - beat: 16
+      scrollY: 0.12     # End of first row (4 bars × 4 beats)
+    - beat: 32
+      scrollY: 0.25     # End of second row
+    - beat: 48
+      scrollY: 0.40     # Third row is taller (wider bars)
+    - beat: 128
+      scrollY: 1.0      # Bottom of image — end
+  ```
+
+  **Interpolation during playback:**
+  ```
+  Given current beat B, find anchors A_prev and A_next where A_prev.beat ≤ B < A_next.beat
+  progress = (B - A_prev.beat) / (A_next.beat - A_prev.beat)
+  scrollY = A_prev.scrollY + progress * (A_next.scrollY - A_prev.scrollY)
+  ```
+
+  **Transcription UI:**
+  - Split screen: sheet image on top, timeline/controls on bottom
+  - "Set Anchor" button — locks current beat + current scroll position
+  - Visual markers on the image showing where anchors are placed
+  - Ability to delete/edit anchors
+  - "Preview" mode — plays back with the anchored scroll to verify sync
+  - Anchors saved to the piece's `.md` frontmatter via `setData()`
+
+  **Advantages:** Works with any layout — irregular bars, multiple pages, coda jumps, repeats. The user knows their sheet music better than any algorithm.
+
+- **MusicXML** — if the user has MusicXML source, parse it for structural data. Very complex, huge scope. Not planned.
+
+**Recommendation**: Support both. Use uniform layout (`barsPerRow`/`rowsPerPage`) as a quick-start default for pieces where the user doesn't want to bother with calibration. Offer the **anchor transcription mode** for pieces where precision matters. The anchor system is the primary scroll method — the uniform assumption is just a convenience fallback that auto-generates evenly-spaced anchors.
 
 ---
 
@@ -140,22 +212,38 @@
 
 ## Resource Summary
 
-### Required for v1 (no external files)
+### Required for v1 (bundled in .tpl, no external files)
 
 | What | How |
 |------|-----|
 | Metronome audio | `AudioContext` + `OscillatorNode`, generated at runtime |
-| Count-in | Pitched tones via `AudioContext`, 4 beeps before start |
+| Count-in voice clips | Base64-encoded mp3s embedded in the `.tpl` (~40-50KB total for 8 clips) |
+| Count-in tone fallback | Generated via `AudioContext` for extreme tempos |
 | Sheet music display | `<img>` tag with vault binary read, user provides .png files |
+| Scroll anchors UI | Built-in transcription/calibration mode for mapping beats → scroll positions |
 | Timing/sync | `AudioContext.currentTime` + `requestAnimationFrame` loop |
 | All styling | Injected `<style>` tag, dark monochrome, `.otm-` prefix |
+
+### Audio files to create/source before implementation
+
+| File | Content | Est. Size | Format |
+|------|---------|-----------|--------|
+| `count-1.mp3` | Voice: "one" | ~5KB | mp3, 44.1kHz mono |
+| `count-2.mp3` | Voice: "two" | ~5KB | mp3, 44.1kHz mono |
+| `count-3.mp3` | Voice: "three" | ~5KB | mp3, 44.1kHz mono |
+| `count-4.mp3` | Voice: "four" | ~5KB | mp3, 44.1kHz mono |
+| `count-5.mp3` | Voice: "five" | ~5KB | mp3, 44.1kHz mono |
+| `count-6.mp3` | Voice: "six" | ~5KB | mp3, 44.1kHz mono |
+| `count-7.mp3` | Voice: "seven" | ~5KB | mp3, 44.1kHz mono |
+| `count-and.mp3` | Voice: "and" | ~3KB | mp3, 44.1kHz mono |
+| **Total** | | **~38KB** | Embedded as base64 in .tpl |
 
 ### Required for v2 (user-provided files)
 
 | What | How |
 |------|-----|
 | Higher quality metronome | User drops .wav samples into a designated folder |
-| Human voice count-in | User drops voice clips into a "voice pack" folder |
+| Custom voice count-in | User drops voice clips into a "voice pack" folder to override defaults |
 | Backing tracks | User drops .mp3/.ogg per song, referenced in frontmatter |
 | PDF sheet music | Attempt `window.pdfjsLib`, fall back to image |
 | Recordings | Saved as .webm to vault via `app.vault.createBinary()` |
