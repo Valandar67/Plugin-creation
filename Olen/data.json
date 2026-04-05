@@ -1,0 +1,207 @@
+{
+  "userName": "User",
+  "myWhy": "",
+  "aphorism": "",
+  "goals": [],
+  "completedGoals": [],
+  "scrollingBackground": "",
+  "backgroundDarkness": 75,
+  "homepage": "",
+  "activities": [],
+  "categoryColors": {
+    "body": "#c9a84c",
+    "mind": "#6b8cce",
+    "spirit": "#928d85"
+  },
+  "titleOverride": "",
+  "categoryXP": {
+    "body": 0,
+    "mind": 0,
+    "spirit": 0
+  },
+  "currentTier": 1,
+  "bossMaxHP": 35,
+  "bossCurrentHP": 35,
+  "bossName": "The Sirens",
+  "bossRank": "Doomscroller",
+  "inTartarus": false,
+  "titansWrathApplied": false,
+  "tartarusPenanceTasks": [],
+  "tartarusStartDate": null,
+  "failedThresholdDays": 0,
+  "consecutivePerfectWeeks": 1,
+  "templeTasks": [
+    {
+      "id": "bathing",
+      "name": "Bathing",
+      "lastCompleted": null,
+      "intervalDays": 1,
+      "emoji": "🚿"
+    },
+    {
+      "id": "facial-hair",
+      "name": "Facial hair",
+      "lastCompleted": null,
+      "intervalDays": 2,
+      "emoji": "🪒"
+    },
+    {
+      "id": "nails",
+      "name": "Nails",
+      "lastCompleted": null,
+      "intervalDays": 7,
+      "emoji": "✂️"
+    },
+    {
+      "id": "haircut",
+      "name": "Haircut",
+      "lastCompleted": null,
+      "intervalDays": 21,
+      "emoji": "💈"
+    }
+  ],
+  "pendingRewards": [
+    {
+      "id": "pending-1775377371579-g6imaj5w0",
+      "rewardTier": "micro",
+      "rewardType": "streak",
+      "earnedAt": "2026-04-05T08:22:51.579Z",
+      "expiresAt": "2026-04-12T08:22:51.579Z"
+    }
+  ],
+  "claimedRewards": [],
+  "bankedRewards": [],
+  "systemState": "active",
+  "pauseStartTime": null,
+  "totalPausedTime": 0,
+  "migrated": true,
+  "simulatedDate": null,
+  "themeMode": "dark",
+  "themeOverrides": {},
+  "devConfig": {
+    "labels": {
+      "greeting_morning": "Good morning",
+      "greeting_afternoon": "Good afternoon",
+      "greeting_evening": "Good evening",
+      "greeting_night": "Good night",
+      "directive_title": "THE DIRECTIVE",
+      "boss_status_title": "BOSS STATUS",
+      "weekly_rhythm_title": "WEEKLY RHYTHM",
+      "analytics_title": "PROGRESS",
+      "activity_grid_title": "ACTIVITIES",
+      "temple_title": "ROUTINES",
+      "eudaimonia_title": "Eudaimonia Index",
+      "daymap_title": "YOUR DAY",
+      "begin_workspace": "ENTER WORKSPACE",
+      "not_now": "NOT NOW"
+    },
+    "xpPerCompletion": 10,
+    "streakBonusMultiplier": 1.5,
+    "bufferMinutes": 15,
+    "morningStart": 6,
+    "morningEnd": 12,
+    "afternoonEnd": 18,
+    "eveningEnd": 23,
+    "themeOverrides": {},
+    "animationStaggerMs": 80,
+    "heroHeight": 350,
+    "sectionOrder": [
+      "hero",
+      "heatmap",
+      "statsrow",
+      "eudaimonia",
+      "directive",
+      "daymap",
+      "boss",
+      "weekly",
+      "analytics",
+      "activities",
+      "monthlyheatmap",
+      "temple",
+      "quote"
+    ],
+    "hiddenSections": [],
+    "activityGridColumns": 2,
+    "showDirectiveDebug": false
+  },
+  "workspaceCompletionStates": [
+    {
+      "id": "discipline",
+      "name": "Discipline",
+      "icon": "◆",
+      "color": "#928d85",
+      "enabled": true,
+      "quoteFolderPath": "",
+      "xpMultiplier": 1
+    },
+    {
+      "id": "flow",
+      "name": "Flow",
+      "icon": "≈",
+      "color": "#c9a84c",
+      "enabled": true,
+      "quoteFolderPath": "",
+      "xpMultiplier": 1.5
+    },
+    {
+      "id": "skipped",
+      "name": "Skipped",
+      "icon": "○",
+      "color": "#8b2d35",
+      "enabled": true,
+      "quoteFolderPath": "",
+      "xpMultiplier": 0
+    }
+  ],
+  "activeWorkspace": null,
+  "calendar": {
+    "enableDailyNotes": true,
+    "dailyNotesFolder": "",
+    "dailyNotesFormat": "YYYY-MM-DD",
+    "enableTasksPlugin": false,
+    "enableQuickTasks": true,
+    "quickTasks": []
+  },
+  "personalStats": {
+    "gender": "",
+    "height": 0,
+    "birthdate": "",
+    "currentWeight": 0,
+    "weightLog": [],
+    "weightLogFrequency": "every-week",
+    "weightLogCustomDays": 7,
+    "lastWeightLogDate": null,
+    "sleepTime": 0,
+    "lifeExpectancy": 0
+  },
+  "quoteFolderPath": "",
+  "lastQuoteIndex": 8,
+  "recentQuoteIds": [
+    11,
+    7,
+    8
+  ],
+  "quoteMaxLength": 0,
+  "dreamBoardImages": [],
+  "skippedToday": {
+    "date": "",
+    "activityIds": []
+  },
+  "dayMapOrder": null,
+  "onboardingComplete": false,
+  "enableTartarus": false,
+  "sundayCheckin": {
+    "enabled": true,
+    "lastCheckinDate": null,
+    "consecutiveIgnores": 0,
+    "journalFolder": "Journal"
+  },
+  "findingWhyProgress": {
+    "lastCompletedScreen": -1,
+    "tookConfrontationPath": false,
+    "completedCommands": {},
+    "selectedSubAreas": [],
+    "customSubAreas": [],
+    "flowComplete": false
+  }
+}
